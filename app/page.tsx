@@ -10,7 +10,7 @@ export default function Home(){
     setMode(saved);
     fetch('/api/today').then(r=>r.json()).then(setToday); 
   },[]);
-  const act = async (m:'office'|'remote')=>{ setStatus(''); localStorage.setItem('mode', m); const r = await fetch('/api/checkin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ fullName:name, mode:m })}); const j = await r.json(); setStatus(r.ok?`Checked in at ${new Date(j.session.checkin_ts).toLocaleTimeString()}`:j.error||'Error'); fetch('/api/today').then(r=>r.json()).then(setToday); };
+  const act = async (m:'office'|'remote')=>{ setStatus(''); if(typeof window!== 'undefined') localStorage.setItem('mode', m); const r = await fetch('/api/checkin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ fullName:name, mode:m })}); const j = await r.json(); setStatus(r.ok?`Checked in at ${new Date(j.session.checkin_ts).toLocaleTimeString()}`:j.error||'Error'); fetch('/api/today').then(r=>r.json()).then(setToday); };
   return (
     <main className="container-narrow">
       <section className="section">
