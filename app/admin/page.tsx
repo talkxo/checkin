@@ -17,7 +17,7 @@ import {
   Legend,
   PointElement,
 } from 'chart.js';
-import { AlertTriangle, Clock, Users, TrendingUp, LogOut } from 'lucide-react';
+import { AlertTriangle, Clock, Users, TrendingUp, LogOut, Download, FileSpreadsheet } from 'lucide-react';
 
 ChartJS.register(
   CategoryScale,
@@ -47,6 +47,16 @@ interface UserStats {
   daysPresent: number;
 }
 
+interface TodayData {
+  name: string;
+  firstIn: string;
+  lastOut: string;
+  totalHours: string;
+  mode: string;
+  status: string;
+  sessions: number;
+}
+
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
@@ -56,6 +66,7 @@ export default function AdminPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [userStats, setUserStats] = useState<UserStats[]>([]);
   const [chartData, setChartData] = useState<any>(null);
+  const [todayData, setTodayData] = useState<TodayData[]>([]);
   
   // Session reset states
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -86,6 +97,7 @@ export default function AdminPage() {
       loadStats();
       loadUserStats();
       loadChartData();
+      loadTodayData();
     }
   }, [isAuthenticated, timeRange]);
 
@@ -125,6 +137,59 @@ export default function AdminPage() {
     }
   };
 
+  const loadTodayData = async () => {
+    try {
+      const response = await fetch('/api/today/summary');
+      if (response.ok) {
+        const data = await response.json();
+        // Transform data to match TodayData interface
+        const transformedData = data.map((emp: any) => ({
+          name: emp.full_name,
+          firstIn: emp.lastIn || 'N/A',
+          lastOut: emp.lastOut || 'N/A',
+          totalHours: emp.workedHours,
+          mode: emp.mode || 'N/A',
+          status: emp.open ? 'Active' : (emp.lastIn ? 'Complete' : 'Not Started'),
+          sessions: emp.open ? 1 : 0 // Simplified session count
+        }));
+        setTodayData(transformedData);
+      }
+    } catch (error) {
+      console.error('Error loading today data:', error);
+    }
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      const response = await fetch('/api/admin/today-export');
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `attendance_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        alert('Failed to export CSV');
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Failed to export CSV');
+    }
+  };
+
+  const handleExportGoogleSheets = () => {
+    // For Google Sheets integration, we would need:
+    // 1. Google Sheets API credentials
+    // 2. OAuth2 setup
+    // 3. Service account or user authentication
+    // 4. API calls to create/update sheets
+    alert('Google Sheets export requires additional setup. For now, please use CSV export.');
+  };
+
   // Session reset functions
   const handleResetSessions = () => {
     setShowResetDialog(true);
@@ -146,6 +211,7 @@ export default function AdminPage() {
           // Reload stats after reset
           loadStats();
           loadUserStats();
+          loadTodayData();
         }
       })
       .catch(error => {
@@ -311,6 +377,66 @@ export default function AdminPage() {
             </Card>
           </div>
         )}
+
+        {/* Today's Attendance Summary */}
+        <Card>
+          <CardHeader className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              Today's Attendance
+            </CardTitle>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleExportCSV}
+                disabled={todayData.length === 0}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export CSV
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleExportGoogleSheets}
+                disabled={todayData.length === 0}
+              >
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                Export Google Sheets
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>First In</TableHead>
+                  <TableHead>Last Out</TableHead>
+                  <TableHead>Total Hours</TableHead>
+                  <TableHead>Mode</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Sessions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {todayData.map((emp, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{emp.name}</TableCell>
+                    <TableCell>{emp.firstIn}</TableCell>
+                    <TableCell>{emp.lastOut}</TableCell>
+                    <TableCell>{emp.totalHours}</TableCell>
+                    <TableCell>{emp.mode}</TableCell>
+                    <TableCell>
+                      <Badge variant={emp.status === 'Active' ? 'default' : emp.status === 'Complete' ? 'secondary' : 'outline'}>
+                        {emp.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{emp.sessions}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
         {/* Time Range Selector */}
         <Card>
