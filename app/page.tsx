@@ -16,6 +16,7 @@ export default function HomePage(){
   const [holdProgress, setHoldProgress] = useState(0);
   const [isHolding, setIsHolding] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [showNameInput, setShowNameInput] = useState(true);
 
   useEffect(()=>{
     const saved = (typeof window!== 'undefined' ? (localStorage.getItem('mode') as any) : null) || 'office';
@@ -27,6 +28,7 @@ export default function HomePage(){
         const sessionData = JSON.parse(session);
         setCurrentSession(sessionData);
         setName(sessionData.employee.full_name);
+        setShowNameInput(false);
         // Check if session is still open
         checkSessionStatus(sessionData.employee.slug);
       } catch (e) {
@@ -153,8 +155,6 @@ export default function HomePage(){
     setHoldProgress(0);
   };
 
-
-
   const act = async (checkMode: 'office' | 'remote') => {
     if (!name.trim()) return;
     setIsSubmitting(true);
@@ -166,6 +166,7 @@ export default function HomePage(){
       localStorage.setItem('currentSession', JSON.stringify(j));
       setCurrentSession(j);
       setHasOpen(true);
+      setShowNameInput(false);
       setMsg(`Checked in at ${new Date(j.session.checkin_ts).toLocaleTimeString()}`);
       fetchMySummary(j.employee.slug);
       fetchTodaySummary();
@@ -196,6 +197,23 @@ export default function HomePage(){
     setIsSubmitting(false);
   };
 
+  const handleNameSubmit = () => {
+    if (name.trim()) {
+      setShowNameInput(false);
+      fetchMySummary(name);
+    }
+  };
+
+  const resetSession = () => {
+    localStorage.removeItem('currentSession');
+    setCurrentSession(null);
+    setName('');
+    setHasOpen(false);
+    setElapsedTime(0);
+    setShowNameInput(true);
+    setMsg('');
+  };
+
   useEffect(()=>{ if(typeof window!== 'undefined') localStorage.setItem('mode', mode); },[mode]);
   useEffect(()=>{ fetchTodaySummary(); },[]);
   useEffect(()=>{ if(me) fetchMySummary(me.slug); },[me]);
@@ -211,225 +229,197 @@ export default function HomePage(){
 
   return (
     <main className="container-narrow section">
-      {/* Header with user info */}
-      {currentSession && (
-        <div className="level mb-4">
-          <div className="level-left">
-            <div className="level-item">
-              <div className="has-text-left">
-                <div className="is-flex is-align-items-center">
-                  <div className="mr-3">
-                    <div className="image is-48x48">
-                      <div className="is-rounded has-background-primary has-text-white is-flex is-align-items-center is-justify-content-center" style={{width: '48px', height: '48px'}}>
-                        <span className="has-text-weight-bold">{currentSession.employee.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="has-text-weight-semibold">{currentSession.employee.full_name}</p>
-                    <p className="has-text-grey is-size-7">Updated</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="level-right">
-            <div className="level-item">
-              <span className="icon has-text-grey">
-                <i className="fas fa-bell"></i>
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Current Time Display */}
       <div className="has-text-centered mb-5">
         <h1 className="title is-1 has-text-weight-bold mb-2">{timeString}</h1>
         <p className="has-text-grey">{dateString}</p>
       </div>
       
-      <div className="box">
-        {!currentSession ? (
-          <>
-            <div className="field">
-              <label className="label">Name</label>
-              <div className="control">
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="Enter your name"
-                  disabled={isSubmitting}
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    searchEmployees(e.target.value);
-                  }}
-                  onFocus={() => {
-                    if (name.length >= 2) {
-                      searchEmployees(name);
-                    }
-                  }}
-                />
+      {showNameInput ? (
+        // Name Input Screen
+        <div className="box">
+          <h2 className="title is-4 has-text-centered mb-4">Welcome to TalkXO Check-in</h2>
+          <div className="field">
+            <label className="label">Enter your name</label>
+            <div className="control">
+              <input
+                type="text"
+                className="input is-medium"
+                placeholder="Type your name"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  searchEmployees(e.target.value);
+                }}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleNameSubmit();
+                  }
+                }}
+                autoFocus
+              />
+            </div>
+            {suggestions.length > 0 && (
+              <div className="dropdown is-active" style={{position: 'absolute', zIndex: 10, width: '100%'}}>
+                <div className="dropdown-menu">
+                  <div className="dropdown-content">
+                    {suggestions.map((emp) => (
+                      <a
+                        key={emp.id}
+                        className="dropdown-item"
+                        onClick={() => {
+                          setName(emp.full_name);
+                          setSuggestions([]);
+                          handleNameSubmit();
+                        }}
+                      >
+                        {emp.full_name}
+                      </a>
+                    ))}
+                  </div>
+                </div>
               </div>
-              {suggestions.length > 0 && (
-                <div className="dropdown is-active" style={{position: 'absolute', zIndex: 10, width: '100%'}}>
-                  <div className="dropdown-menu">
-                    <div className="dropdown-content">
-                      {suggestions.map((emp) => (
-                        <a
-                          key={emp.id}
-                          className="dropdown-item"
-                          onClick={() => {
-                            setName(emp.full_name);
-                            setSuggestions([]);
-                            fetchMySummary(emp.slug);
-                          }}
-                        >
-                          {emp.full_name}
-                        </a>
-                      ))}
+            )}
+          </div>
+          <div className="buttons is-centered">
+            <button 
+              className="button is-primary is-medium" 
+              onClick={handleNameSubmit}
+              disabled={!name.trim()}
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      ) : (
+        // Main Check-in/out Screen
+        <div className="box">
+          {/* User Profile Header */}
+          {currentSession && (
+            <div className="level mb-4">
+              <div className="level-left">
+                <div className="level-item">
+                  <div className="has-text-left">
+                    <div className="is-flex is-align-items-center">
+                      <div className="mr-3">
+                        <div className="image is-48x48">
+                          <div className="is-rounded has-background-primary has-text-white is-flex is-align-items-center is-justify-content-center" style={{width: '48px', height: '48px'}}>
+                            <span className="has-text-weight-bold">{currentSession.employee.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="has-text-weight-semibold">{currentSession.employee.full_name}</p>
+                        <p className="has-text-grey is-size-7">Ready to check in/out</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
-
-            <div className="field">
-              <label className="label">Mode</label>
-              <div className="buttons">
-                <button className={`button ${mode==='office'?'is-primary':''}`} onClick={()=>setMode('office')}>Office</button>
-                <button className={`button ${mode==='remote'?'is-link is-light':''}`} onClick={()=>setMode('remote')}>Remote</button>
               </div>
-            </div>
-
-            {/* Large Action Button */}
-            <div className="has-text-centered">
-              <div className="mb-4">
-                <div 
-                  className={`is-clickable ${!name.trim() || isSubmitting ? 'is-disabled' : ''}`}
-                  style={{
-                    width: '120px',
-                    height: '120px',
-                    borderRadius: '50%',
-                    margin: '0 auto',
-                    background: holdProgress > 0 
-                      ? `conic-gradient(from 0deg, #48c774 ${holdProgress * 3.6}deg, #f5f5f5 ${holdProgress * 3.6}deg)`
-                      : 'linear-gradient(135deg, #48c774, #00d1b2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: name.trim() && !isSubmitting ? 'pointer' : 'not-allowed',
-                    opacity: name.trim() && !isSubmitting ? 1 : 0.6,
-                    transition: 'all 0.3s ease',
-                    boxShadow: holdProgress > 0 ? '0 0 20px rgba(72, 199, 116, 0.5)' : '0 4px 12px rgba(0,0,0,0.15)'
-                  }}
-                  onMouseDown={name.trim() && !isSubmitting ? handleHoldStart : undefined}
-                  onMouseUp={handleHoldEnd}
-                  onMouseLeave={handleHoldEnd}
-                  onTouchStart={name.trim() && !isSubmitting ? handleHoldStart : undefined}
-                  onTouchEnd={handleHoldEnd}
-                >
-                  <div className="has-text-white has-text-centered">
-                    <span className="icon is-large">
-                      <i className={`fas ${hasOpen ? 'fa-sign-out-alt' : 'fa-sign-in-alt'}`}></i>
-                    </span>
-                    <p className="has-text-weight-semibold mt-2">
-                      {hasOpen ? 'Clock Out' : 'Clock In'}
-                    </p>
-                  </div>
-                </div>
-                {holdProgress > 0 && (
-                  <p className="has-text-grey is-size-7 mt-2">Hold to confirm ({Math.round(holdProgress)}%)</p>
-                )}
-              </div>
-            </div>
-
-            {/* Location Display */}
-            <div className="has-text-centered mb-4">
-              <span className="icon has-text-grey">
-                <i className="fas fa-map-marker-alt"></i>
-              </span>
-              <span className="has-text-grey">Location: {mode === 'office' ? 'Sequire Tower Office' : 'Remote'}</span>
-            </div>
-          </>
-        ) : (
-          <div className="has-text-centered">
-            <h2 className="title is-5">Welcome back, {currentSession.employee.full_name}!</h2>
-            {hasOpen ? (
-              <div className="mb-4">
-                <p className="has-text-grey">Session started at {new Date(currentSession.session.checkin_ts).toLocaleTimeString()}</p>
-                <p className="title is-3 has-text-primary">{formatTime(elapsedTime)}</p>
-                <p className="has-text-grey-light">Elapsed time</p>
-              </div>
-            ) : (
-              <p className="has-text-grey">Your session has ended</p>
-            )}
-            
-            {/* Large Action Button for logged in users */}
-            {hasOpen && (
-              <div className="mb-4">
-                <div 
-                  className="is-clickable"
-                  style={{
-                    width: '120px',
-                    height: '120px',
-                    borderRadius: '50%',
-                    margin: '0 auto',
-                    background: holdProgress > 0 
-                      ? `conic-gradient(from 0deg, #f14668 ${holdProgress * 3.6}deg, #f5f5f5 ${holdProgress * 3.6}deg)`
-                      : 'linear-gradient(135deg, #f14668, #ff3860)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    boxShadow: holdProgress > 0 ? '0 0 20px rgba(241, 70, 104, 0.5)' : '0 4px 12px rgba(0,0,0,0.15)'
-                  }}
-                  onMouseDown={handleHoldStart}
-                  onMouseUp={handleHoldEnd}
-                  onMouseLeave={handleHoldEnd}
-                  onTouchStart={handleHoldStart}
-                  onTouchEnd={handleHoldEnd}
-                >
-                  <div className="has-text-white has-text-centered">
-                    <span className="icon is-large">
+              <div className="level-right">
+                <div className="level-item">
+                  <button className="button is-small is-light" onClick={resetSession}>
+                    <span className="icon">
                       <i className="fas fa-sign-out-alt"></i>
                     </span>
-                    <p className="has-text-weight-semibold mt-2">Clock Out</p>
-                  </div>
+                    <span>Switch User</span>
+                  </button>
                 </div>
-                {holdProgress > 0 && (
-                  <p className="has-text-grey is-size-7 mt-2">Hold to confirm ({Math.round(holdProgress)}%)</p>
-                )}
               </div>
-            )}
-            
-            <div className="buttons is-centered">
-              {!hasOpen && (
-                <button className="button is-light" onClick={() => {
-                  localStorage.removeItem('currentSession');
-                  setCurrentSession(null);
-                  setName('');
-                  setHasOpen(false);
-                  setElapsedTime(0);
-                }}>Start New Session</button>
+            </div>
+          )}
+
+          {/* Mode Toggle - Only show if not in session */}
+          {!hasOpen && (
+            <div className="field mb-4">
+              <label className="label">Work Mode</label>
+              <div className="buttons has-addons">
+                <button 
+                  className={`button ${mode==='office'?'is-primary':'is-light'}`} 
+                  onClick={()=>setMode('office')}
+                  style={{transition: 'all 0.2s ease'}}
+                >
+                  <span className="icon">
+                    <i className="fas fa-building"></i>
+                  </span>
+                  <span>Office</span>
+                </button>
+                <button 
+                  className={`button ${mode==='remote'?'is-link':'is-light'}`} 
+                  onClick={()=>setMode('remote')}
+                  style={{transition: 'all 0.2s ease'}}
+                >
+                  <span className="icon">
+                    <i className="fas fa-home"></i>
+                  </span>
+                  <span>Remote</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Large Action Button */}
+          <div className="has-text-centered">
+            <div className="mb-4">
+              <div 
+                className="is-clickable"
+                style={{
+                  width: '140px',
+                  height: '140px',
+                  borderRadius: '50%',
+                  margin: '0 auto',
+                  background: holdProgress > 0 
+                    ? `conic-gradient(from 0deg, ${hasOpen ? '#f14668' : '#48c774'} ${holdProgress * 3.6}deg, #f5f5f5 ${holdProgress * 3.6}deg)`
+                    : `linear-gradient(135deg, ${hasOpen ? '#f14668' : '#48c774'}, ${hasOpen ? '#ff3860' : '#00d1b2'})`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: holdProgress > 0 ? `0 0 20px rgba(${hasOpen ? '241, 70, 104' : '72, 199, 116'}, 0.5)` : '0 4px 12px rgba(0,0,0,0.15)'
+                }}
+                onMouseDown={handleHoldStart}
+                onMouseUp={handleHoldEnd}
+                onMouseLeave={handleHoldEnd}
+                onTouchStart={handleHoldStart}
+                onTouchEnd={handleHoldEnd}
+              >
+                <div className="has-text-white has-text-centered">
+                  <span className="icon is-large">
+                    <i className={`fas ${hasOpen ? 'fa-sign-out-alt' : 'fa-sign-in-alt'}`}></i>
+                  </span>
+                  <p className="has-text-weight-semibold mt-2">
+                    {hasOpen ? 'Clock Out' : 'Clock In'}
+                  </p>
+                </div>
+              </div>
+              {holdProgress > 0 && (
+                <p className="has-text-grey is-size-7 mt-2">Hold to confirm ({Math.round(holdProgress)}%)</p>
               )}
             </div>
           </div>
-        )}
 
-        {msg && <p className="mt-3 has-text-centered">{msg}</p>}
+          {/* Session Timer */}
+          {hasOpen && currentSession && (
+            <div className="has-text-centered mb-4">
+              <p className="has-text-grey">Session started at {new Date(currentSession.session.checkin_ts).toLocaleTimeString()}</p>
+              <p className="title is-3 has-text-primary">{formatTime(elapsedTime)}</p>
+              <p className="has-text-grey-light">Elapsed time</p>
+            </div>
+          )}
 
-        {me && (
-          <div className="tags">
-            <span className="tag is-info is-light">Last In: {me.lastIn ? new Date(me.lastIn).toLocaleTimeString() : 'N/A'}</span>
-            <span className="tag is-warning is-light">Last Out: {me.lastOut ? new Date(me.lastOut).toLocaleTimeString() : 'N/A'}</span>
-            <span className="tag is-success is-light">Worked: {me.workedMinutes}m</span>
-            <span className="tag is-primary is-light">Mode: {me.mode}</span>
-          </div>
-        )}
-      </div>
+          {msg && <p className="mt-3 has-text-centered">{msg}</p>}
+
+          {me && (
+            <div className="tags is-centered">
+              <span className="tag is-info is-light">Last In: {me.lastIn ? new Date(me.lastIn).toLocaleTimeString() : 'N/A'}</span>
+              <span className="tag is-warning is-light">Last Out: {me.lastOut ? new Date(me.lastOut).toLocaleTimeString() : 'N/A'}</span>
+              <span className="tag is-success is-light">Worked: {me.workedMinutes}m</span>
+              <span className="tag is-primary is-light">Mode: {me.mode}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       <h2 className="title is-5">Today's Snapshot</h2>
       <div className="content">
