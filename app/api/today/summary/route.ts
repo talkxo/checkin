@@ -32,17 +32,26 @@ export async function GET() {
     const empSessions = sessions?.filter(s => s.employee_id === emp.id) || [];
     
     let workedMs = 0;
-    let lastIn: string | null = null;
+    let firstIn: string | null = null;
     let lastOut: string | null = null;
     let open = false;
     let mode = '';
 
     for (const session of empSessions) {
-      lastIn = session.checkin_ts;
+      // Track first check-in of the day
+      if (!firstIn) {
+        firstIn = session.checkin_ts;
+      }
+      
       mode = session.mode;
       const out = session.checkout_ts ? new Date(session.checkout_ts) : now;
       if (!session.checkout_ts) open = true;
-      else lastOut = session.checkout_ts;
+      else {
+        // Track the latest check-out time
+        if (!lastOut || new Date(session.checkout_ts) > new Date(lastOut)) {
+          lastOut = session.checkout_ts;
+        }
+      }
       workedMs += new Date(out).getTime() - new Date(session.checkin_ts).getTime();
     }
 
@@ -54,7 +63,7 @@ export async function GET() {
       id: emp.id,
       full_name: emp.full_name,
       slug: emp.slug,
-      lastIn: lastIn ? hhmmIST(lastIn) : null,
+      lastIn: firstIn ? hhmmIST(firstIn) : null,
       lastOut: lastOut ? hhmmIST(lastOut) : null,
       workedHours: `${hours}h ${minutes}m`,
       mode,

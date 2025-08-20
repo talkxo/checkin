@@ -375,19 +375,17 @@ export default function HomePage(){
         
         {showNameInput ? (
           // Name Input Screen
-          <div className="notion-card p-6 slide-up">
-            <div className="text-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Welcome to TalkXO</h2>
-              <p className="text-gray-600">Enter your name to get started</p>
+          <div className="notion-card p-8 slide-up">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-4">Welcome to TalkXO</h2>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
                 <input
                   type="text"
-                  className={`notion-input ${selectedEmployee ? 'border-green-500 bg-green-50' : ''}`}
-                  placeholder="Type your full name"
+                  className={`notion-input text-center text-lg py-4 ${selectedEmployee ? 'border-green-500 bg-green-50' : ''}`}
+                  placeholder="Enter your name"
                   value={name}
                   onChange={(e) => {
                     handleNameChange(e.target.value);
@@ -400,8 +398,8 @@ export default function HomePage(){
                   autoFocus
                 />
                 {selectedEmployee && (
-                  <p className="text-sm text-green-600 mt-1 flex items-center">
-                    <i className="fas fa-check-circle mr-1"></i>
+                  <p className="text-sm text-green-600 mt-3 text-center flex items-center justify-center">
+                    <i className="fas fa-check-circle mr-2"></i>
                     Valid employee selected
                   </p>
                 )}
@@ -413,7 +411,7 @@ export default function HomePage(){
                     {suggestions.map((emp) => (
                       <button
                         key={emp.id}
-                        className="w-full text-left px-3 py-2 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors text-sm"
+                        className="w-full text-left px-4 py-3 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors text-sm"
                         onClick={() => handleEmployeeSelect(emp)}
                       >
                         {emp.full_name}
@@ -424,7 +422,7 @@ export default function HomePage(){
               )}
               
               <button 
-                className="notion-button-primary w-full"
+                className="notion-button-primary w-full py-4 text-lg"
                 onClick={handleNameSubmit}
                 disabled={!name.trim() || !selectedEmployee}
               >
@@ -553,14 +551,13 @@ export default function HomePage(){
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
-                      <table className="w-full">
+                      <table className="w-full min-w-[600px]">
                         <thead>
                           <tr className="bg-gray-50">
                             <th className="px-3 py-2 text-left text-sm font-medium text-gray-700">Name</th>
                             <th className="px-3 py-2 text-left text-sm font-medium text-gray-700">In</th>
                             <th className="px-3 py-2 text-left text-sm font-medium text-gray-700">Out</th>
                             <th className="px-3 py-2 text-left text-sm font-medium text-gray-700">Hours</th>
-                            <th className="px-3 py-2 text-left text-sm font-medium text-gray-700">Mode</th>
                             <th className="px-3 py-2 text-left text-sm font-medium text-gray-700">Status</th>
                           </tr>
                         </thead>
@@ -589,11 +586,6 @@ export default function HomePage(){
                               <td className="px-3 py-2">
                                 <span className="notion-badge notion-badge-info text-xs">
                                   {emp.workedHours}
-                                </span>
-                              </td>
-                              <td className="px-3 py-2">
-                                <span className="notion-badge notion-badge-outline text-xs">
-                                  {emp.mode}
                                 </span>
                               </td>
                               <td className="px-3 py-2">
