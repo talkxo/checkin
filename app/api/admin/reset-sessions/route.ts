@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { nowIST } from '@/lib/time';
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,11 +21,11 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Check out all open sessions
-    const now = new Date().toISOString();
+    // Check out all open sessions with IST timestamp
+    const istTimestamp = nowIST().toISOString();
     const { error: updateError } = await supabaseAdmin
       .from('sessions')
-      .update({ checkout_ts: now })
+      .update({ checkout_ts: istTimestamp })
       .is('checkout_ts', null);
 
     if (updateError) {
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       message: `Successfully checked out ${openSessions.length} active sessions`,
       resetCount: openSessions.length,
-      timestamp: now
+      timestamp: istTimestamp
     });
 
   } catch (error) {

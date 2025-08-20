@@ -9,8 +9,12 @@ export async function GET() {
   const end = new Date(now);
   end.setHours(23, 59, 59, 999);
 
-  console.log('Today summary requested at:', now.toISOString());
-  console.log('Date range:', start.toISOString(), 'to', end.toISOString());
+  console.log('=== TODAY SUMMARY DEBUG ===');
+  console.log('Current IST time:', now.toISOString());
+  console.log('Current IST time (local):', now.toString());
+  console.log('Today start (IST):', start.toISOString());
+  console.log('Today end (IST):', end.toISOString());
+  console.log('Date range for query:', start.toISOString(), 'to', end.toISOString());
 
   // Get all employees
   const { data: employees, error: empError } = await supabaseAdmin
@@ -31,6 +35,13 @@ export async function GET() {
   if (sessError) return NextResponse.json({ error: sessError.message }, { status: 500 });
 
   console.log('Found sessions for today:', sessions?.length || 0);
+  if (sessions && sessions.length > 0) {
+    console.log('Sample session times:');
+    sessions.slice(0, 3).forEach((s, i) => {
+      console.log(`  Session ${i+1}: ${s.checkin_ts} (${new Date(s.checkin_ts).toLocaleString('en-US', {timeZone: 'Asia/Kolkata'})})`);
+    });
+  }
+  console.log('=== END DEBUG ===');
 
   // Process each employee's data
   const summary = employees?.map(emp => {

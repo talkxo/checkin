@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { nowIST } from '@/lib/time';
 
 export async function POST(req: NextRequest) {
   const { fullName, slug, mode } = await req.json();
@@ -43,10 +44,17 @@ export async function POST(req: NextRequest) {
     });
   }
   
-  // Create new session
+  // Create new session with explicit IST timestamp
+  const istTimestamp = nowIST().toISOString();
   const { data, error } = await supabaseAdmin
     .from('sessions')
-    .insert({ employee_id: emp.id, mode, ip, user_agent: ua })
+    .insert({ 
+      employee_id: emp.id, 
+      mode, 
+      ip, 
+      user_agent: ua,
+      checkin_ts: istTimestamp
+    })
     .select('*')
     .single();
   
