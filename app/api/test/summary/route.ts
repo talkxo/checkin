@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       await postCampfire(message);
       basecampResult = { success: true, message: 'Posted to Basecamp successfully' };
     } catch (error) {
-      basecampResult = { success: false, error: error.message };
+      basecampResult = { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
 
     return NextResponse.json({
@@ -73,8 +73,8 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     return NextResponse.json({
-      error: error.message,
-      stack: error.stack
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 });
   }
 }

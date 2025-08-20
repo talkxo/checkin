@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
         const token = await getAccessToken();
         accessTokenTest = { success: true, token: token.substring(0, 10) + '...' };
       } catch (error) {
-        accessTokenTest = { success: false, error: error.message };
+        accessTokenTest = { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     }
 
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
         await postCampfire('🧪 Test message from TalkXO Check-in app - ' + new Date().toISOString());
         campfireTest = { success: true };
       } catch (error) {
-        campfireTest = { success: false, error: error.message };
+        campfireTest = { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     }
 
@@ -62,8 +62,8 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     return NextResponse.json({
-      error: error.message,
-      stack: error.stack
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 });
   }
 }
