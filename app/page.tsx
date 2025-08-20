@@ -24,6 +24,14 @@ export default function HomePage(){
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState<'control' | 'snapshot'>('control');
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string, time: string} | null>(null);
+
+  // Show notification and auto-hide after 3 seconds
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    setNotification({ type, message, time });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   useEffect(()=>{
     const saved = (typeof window!== 'undefined' ? (localStorage.getItem('mode') as any) : null) || 'office';
@@ -203,7 +211,9 @@ export default function HomePage(){
 
   const fetchTodaySummary = async () => {
     try {
-      const r = await fetch('/api/today/summary');
+      // Add timestamp to prevent caching
+      const timestamp = new Date().getTime();
+      const r = await fetch(`/api/today/summary?t=${timestamp}`);
       if (!r.ok) return;
       const data = await r.json();
       setTodaySummary(data);
@@ -253,19 +263,23 @@ export default function HomePage(){
           // Existing session
           const message = `You already have an open session from ${new Date(j.session.checkin_ts).toLocaleTimeString()}`;
           setMsg(message);
+          showNotification('error', message);
         } else {
           // New session
           const message = `Checked in at ${new Date(j.session.checkin_ts).toLocaleTimeString()}`;
           setMsg(message);
+          showNotification('success', `Checked in successfully at ${new Date(j.session.checkin_ts).toLocaleTimeString()}`);
         }
         
         fetchMySummary(j.employee.slug);
         fetchTodaySummary();
       } else {
         setMsg(j.error || 'Error');
+        showNotification('error', j.error || 'Check-in failed');
       }
     } catch (error) {
       setMsg('Network error. Please try again.');
+      showNotification('error', 'Network error. Please try again.');
     }
     
     setIsSubmitting(false);
@@ -291,14 +305,17 @@ export default function HomePage(){
         setElapsedTime(0);
         const message = `Checked out at ${new Date(j.checkout_ts).toLocaleTimeString()}`;
         setMsg(message);
+        showNotification('success', `Checked out successfully at ${new Date(j.checkout_ts).toLocaleTimeString()}`);
         fetchTodaySummary();
       } else {
         setMsg(j.error || 'Error');
+        showNotification('error', j.error || 'Check-out failed');
         // If checkout failed, recheck session status
         checkSessionStatus(currentSession.employee.slug);
       }
     } catch (error) {
       setMsg('Network error. Please try again.');
+      showNotification('error', 'Network error. Please try again.');
     }
     
     setIsSubmitting(false);
@@ -433,6 +450,11 @@ export default function HomePage(){
         ) : (
           // Main App with Tabs
           <div className="notion-card slide-up">
+            {/* Welcome Header */}
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Hi, {name.split(' ')[0]}! 👋</h2>
+            </div>
+
             {/* Tab Navigation */}
             <div className="flex border-b border-gray-200">
               <button
@@ -490,7 +512,7 @@ export default function HomePage(){
                   <div className="text-center">
                     <div className="space-y-4">
                       <div 
-                        className="w-32 h-32 mx-auto rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 shadow-lg hover:shadow-xl"
+                        className="w-32 h-32 mx-auto rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 shadow-lg hover:shadow-xl select-none"
                         style={{
                           background: holdProgress > 0 
                             ? `conic-gradient(from 0deg, ${hasOpen ? '#dc2626' : '#16a34a'} ${holdProgress * 3.6}deg, #f3f4f6 ${holdProgress * 3.6}deg)`
@@ -503,7 +525,7 @@ export default function HomePage(){
                         onTouchStart={handleHoldStart}
                         onTouchEnd={handleHoldEnd}
                       >
-                        <div className="text-white text-center">
+                        <div className="text-white text-center select-none">
                           <i className={`fas ${hasOpen ? 'fa-sign-out-alt' : 'fa-sign-in-alt'} text-2xl mb-2`}></i>
                           <p className="font-semibold text-sm">
                             {hasOpen ? 'Clock Out' : 'Clock In'}
@@ -625,6 +647,31 @@ export default function HomePage(){
               <LogOut className="w-4 h-4" />
               Logout
             </button>
+          </div>
+        )}
+
+        {/* Notification */}
+        {notification && (
+          <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm transition-all duration-300 ${
+            notification.type === 'success' 
+              ? 'bg-green-500 text-white' 
+              : 'bg-red-500 text-white'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <i className={`fas ${notification.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2`}></i>
+                <div>
+                  <p className="font-medium">{notification.message}</p>
+                  <p className="text-xs opacity-90">{notification.time}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setNotification(null)}
+                className="ml-4 text-white hover:text-gray-200"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
           </div>
         )}
       </div>

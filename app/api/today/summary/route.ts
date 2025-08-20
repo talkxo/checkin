@@ -9,6 +9,9 @@ export async function GET() {
   const end = new Date(now);
   end.setHours(23, 59, 59, 999);
 
+  console.log('Today summary requested at:', now.toISOString());
+  console.log('Date range:', start.toISOString(), 'to', end.toISOString());
+
   // Get all employees
   const { data: employees, error: empError } = await supabaseAdmin
     .from('employees')
@@ -26,6 +29,8 @@ export async function GET() {
     .order('checkin_ts', { ascending: true });
 
   if (sessError) return NextResponse.json({ error: sessError.message }, { status: 500 });
+
+  console.log('Found sessions for today:', sessions?.length || 0);
 
   // Process each employee's data
   const summary = employees?.map(emp => {
@@ -71,7 +76,14 @@ export async function GET() {
     };
   }) || [];
 
-  return NextResponse.json(summary);
+  const response = NextResponse.json(summary);
+  
+  // Add cache-busting headers to ensure fresh data
+  response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  response.headers.set('Pragma', 'no-cache');
+  response.headers.set('Expires', '0');
+  
+  return response;
 }
 
 export const dynamic = 'force-dynamic';
