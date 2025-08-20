@@ -10,6 +10,7 @@ export default function Home(){
   const [slug,setSlug]=useState<string>('');
   const [hasOpen,setHasOpen]=useState(false);
   const [me,setMe]=useState<any|null>(null);
+  const [pending,setPending]=useState(false);
     useEffect(()=>{
     const saved = (typeof window!== 'undefined' ? (localStorage.getItem('mode') as any) : null) || 'office';
     setMode(saved);
@@ -29,8 +30,25 @@ export default function Home(){
     const j = await r.json(); setHasOpen(j.ok);
     const sm = await fetch('/api/summary/me?slug='+emp.slug).then(r=>r.json()); setMe(sm);
   };
-  const act = async (m:'office'|'remote')=>{ setStatus(''); if(typeof window!== 'undefined') localStorage.setItem('mode', m); const r = await fetch('/api/checkin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ fullName: slug? undefined : name, slug: slug || undefined, mode:m })}); const j = await r.json(); if(r.status===409){ setHasOpen(true); setStatus('Open session exists'); } else { setHasOpen(false); setStatus(r.ok?`Checked in at ${new Date(j.session.checkin_ts).toLocaleTimeString()}`:j.error||'Error'); fetch('/api/today').then(r=>r.json()).then(setToday); fetch('/api/today/summary').then(r=>r.json()).then(setTodaySummary); } };
-  const checkout = async ()=>{ if(!slug) return; const r = await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ slug })}); const j = await r.json(); setStatus(r.ok?`Checked out at ${new Date(j.checkout_ts||Date.now()).toLocaleTimeString()}`:j.error||'Error'); setHasOpen(false); fetch('/api/today').then(r=>r.json()).then(setToday); fetch('/api/today/summary').then(r=>r.json()).then(setTodaySummary); };
+  const act = async (m:'office'|'remote')=>{
+    if(pending) return; setPending(true); setStatus('');
+    if(typeof window!== 'undefined') localStorage.setItem('mode', m);
+    const r = await fetch('/api/checkin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ fullName: slug? undefined : name, slug: slug || undefined, mode:m })});
+    const j = await r.json();
+    if(r.status===409){ setHasOpen(true); setStatus('Open session exists'); }
+    else { setHasOpen(false); setStatus(r.ok?`Checked in at ${new Date(j.session.checkin_ts).toLocaleTimeString()}`:j.error||'Error'); await fetch('/api/today').then(r=>r.json()).then(setToday); await fetch('/api/today/summary').then(r=>r.json()).then(setTodaySummary); }
+    setPending(false);
+  };
+  const checkout = async ()=>{
+    if(!slug || pending) return; setPending(true);
+    const r = await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ slug })});
+    const j = await r.json();
+    setStatus(r.ok?`Checked out at ${new Date(j.checkout_ts||Date.now()).toLocaleTimeString()}`:j.error||'Error');
+    setHasOpen(false);
+    await fetch('/api/today').then(r=>r.json()).then(setToday);
+    await fetch('/api/today/summary').then(r=>r.json()).then(setTodaySummary);
+    setPending(false);
+  };
   return (
     <main className="container-narrow">
       <section className="section">
@@ -52,15 +70,15 @@ export default function Home(){
             </div>
           </div>
           <div className="buttons is-centered">
-            <button className={`button is-primary`} onClick={()=>act('office')}>Check In (Office)</button>
-            <button className={`button is-link is-light`} onClick={()=>act('remote')}>Check In (Remote)</button>
+            <button disabled={pending || !name} className={`button is-primary ${pending?'is-loading':''}`} onClick={()=>act('office')}>Check In (Office)</button>
+            <button disabled={pending || !name} className={`button is-link is-light ${pending?'is-loading':''}`} onClick={()=>act('remote')}>Check In (Remote)</button>
           </div>
           {hasOpen && (
             <div className="has-text-success mb-2">Open session exists</div>
           )}
           {hasOpen && (
             <div className="buttons is-centered">
-              <button className="button is-danger is-light" onClick={checkout}>Check Out</button>
+              <button disabled={pending} className={`button is-danger is-light ${pending?'is-loading':''}`} onClick={checkout}>Check Out</button>
             </div>
           )}
           {status && <p className="has-text-success mt-2">{status}</p>}

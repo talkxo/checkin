@@ -4,9 +4,13 @@ export async function POST(req: NextRequest){
   const { fullName, slug, mode } = await req.json();
   if(!mode || !['office','remote'].includes(mode)) return NextResponse.json({ error: 'mode must be office|remote' }, { status: 400 });
   let emp;
-  if(slug){ const { data } = await supabaseAdmin.from('employees').select('*').eq('slug', slug).single(); emp = data; }
-  if(!emp && fullName){ const { data } = await supabaseAdmin.from('employees').select('*').ilike('full_name', fullName).maybeSingle(); emp = data; }
-  if(!emp && fullName){ const ins = await supabaseAdmin.from('employees').insert({ full_name: fullName }).select('*').single(); emp = ins.data; }
+  // Prefer slug lookup; fallback to ilike match; if none, create safely
+  if(slug){ const { data } = await supabaseAdmin.from('employees').select('*').eq('slug', slug).maybeSingle(); emp = data as any; }
+  if(!emp && fullName){ const { data } = await supabaseAdmin.from('employees').select('*').ilike('full_name', fullName).maybeSingle(); emp = data as any; }
+  if(!emp && fullName){
+    const ins = await supabaseAdmin.from('employees').insert({ full_name: fullName }).select('*').maybeSingle();
+    emp = ins.data as any;
+  }
   if(!emp) return NextResponse.json({ error: 'employee not found' }, { status: 404 });
   const ip = req.headers.get('x-forwarded-for') || '0.0.0.0';
   const ua = req.headers.get('user-agent') || '';

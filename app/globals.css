@@ -25,3 +25,9 @@ html,body{min-height:100%;}
   }
 }
 
+/* Improve headings visibility in dark mode */
+@media (prefers-color-scheme: dark) {
+  .title { color: #e7e7e7; }
+  .subtitle { color: #cfcfcf; }
+}
+

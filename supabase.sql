@@ -21,6 +21,8 @@ create table if not exists public.settings (
   value jsonb not null
 );
 create index if not exists sessions_emp_checkin_idx on public.sessions(employee_id, checkin_ts desc);
+-- Ensure at most one open session per employee
+create unique index if not exists uniq_open_session_per_employee on public.sessions(employee_id) where checkout_ts is null;
 alter table public.employees enable row level security;
 alter table public.sessions enable row level security;
 alter table public.settings enable row level security;
