@@ -1,6 +1,11 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -270,82 +275,75 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md w-full">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h1 className="text-2xl font-semibold text-center mb-6 text-gray-800">
-              Admin Login
-            </h1>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50"
-              >
-                {isLoading ? 'Logging in...' : 'Login'}
-              </button>
-            </form>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-center">Admin Login</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Username
+                  </label>
+                  <Input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Password
+                  </label>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Logging in...' : 'Login'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
-          <button 
-            onClick={handleLogout}
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200"
-          >
+          <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
+          <Button variant="outline" onClick={handleLogout}>
             <i className="fas fa-sign-out-alt mr-2"></i>
             Logout
-          </button>
+          </Button>
         </div>
 
         {/* Time Range Selector */}
         <div className="mb-8">
-          <label className="block text-sm font-medium text-gray-700 mb-3">Time Range</label>
+          <label className="block text-sm font-medium text-foreground mb-3">Time Range</label>
           <div className="flex flex-wrap gap-2">
             {['week', 'fortnight', 'month', '6m', 'year'].map((range) => (
-              <button
+              <Button
                 key={range}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  timeRange === range
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+                variant={timeRange === range ? "default" : "outline"}
                 onClick={() => setTimeRange(range as any)}
               >
                 {range === '6m' ? '6 Months' : range.charAt(0).toUpperCase() + range.slice(1)}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -353,154 +351,182 @@ export default function AdminPage() {
         {/* Stats Cards */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-              <p className="text-sm font-medium text-gray-600 mb-2">Total Employees</p>
-              <p className="text-3xl font-bold text-gray-800">{stats.totalEmployees}</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-              <p className="text-sm font-medium text-gray-600 mb-2">Active Today</p>
-              <p className="text-3xl font-bold text-green-600">{stats.activeToday}</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-              <p className="text-sm font-medium text-gray-600 mb-2">In Office</p>
-              <p className="text-3xl font-bold text-blue-600">{stats.officeToday}</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-              <p className="text-sm font-medium text-gray-600 mb-2">Remote</p>
-              <p className="text-3xl font-bold text-purple-600">{stats.remoteToday}</p>
-            </div>
+            <Card>
+              <CardContent className="text-center pt-6">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Total Employees</p>
+                <p className="text-3xl font-bold text-foreground">{stats.totalEmployees}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="text-center pt-6">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Active Today</p>
+                <p className="text-3xl font-bold text-green-600">{stats.activeToday}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="text-center pt-6">
+                <p className="text-sm font-medium text-muted-foreground mb-2">In Office</p>
+                <p className="text-3xl font-bold text-blue-600">{stats.officeToday}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="text-center pt-6">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Remote</p>
+                <p className="text-3xl font-bold text-purple-600">{stats.remoteToday}</p>
+              </CardContent>
+            </Card>
           </div>
         )}
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Users vs Days Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Users vs Days Worked</h3>
-            <div className="h-80">
-              <Bar data={usersVsDaysData} options={barChartOptions} />
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Users vs Days Worked</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <Bar data={usersVsDaysData} options={barChartOptions} />
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Time Spent Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Time Spent: Office vs Remote</h3>
-            <div className="h-80">
-              <Bar data={timeSpentData} options={barChartOptions} />
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Time Spent: Office vs Remote</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <Bar data={timeSpentData} options={barChartOptions} />
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Attendance Trend Chart */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Attendance Trend</h3>
-            <div className="h-80">
-              <Line data={chartData} options={chartOptions} />
-            </div>
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Attendance Trend</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <Line data={chartData} options={chartOptions} />
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Today's Snapshot */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Today's Snapshot</h3>
-            <div className="max-h-80 overflow-y-auto space-y-3">
-              {todaySnapshot.length === 0 ? (
-                <p className="text-gray-500 text-center">No check-ins today</p>
-              ) : (
-                todaySnapshot.map((emp) => (
-                  <div key={emp.id} className="p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <p className="font-medium text-sm text-gray-800">{emp.full_name}</p>
-                        <p className="text-xs text-gray-600">
-                          {emp.lastIn ? `In: ${emp.lastIn}` : 'Not checked in'}
-                        </p>
+          <Card>
+            <CardHeader>
+              <CardTitle>Today's Snapshot</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="max-h-80 overflow-y-auto space-y-3">
+                {todaySnapshot.length === 0 ? (
+                  <p className="text-muted-foreground text-center">No check-ins today</p>
+                ) : (
+                  todaySnapshot.map((emp) => (
+                    <Card key={emp.id} className="p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <p className="font-medium text-sm text-foreground">{emp.full_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {emp.lastIn ? `In: ${emp.lastIn}` : 'Not checked in'}
+                          </p>
+                        </div>
+                        <div className="flex gap-1">
+                          <Badge variant="outline" className="text-xs">
+                            {emp.mode}
+                          </Badge>
+                          {emp.open && (
+                            <Badge variant="destructive" className="text-xs">
+                              Active
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex gap-1">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          emp.mode === 'office' ? 'bg-blue-100 text-blue-800' : 'bg-blue-100 text-blue-800'
-                        }`}>
-                          {emp.mode}
-                        </span>
-                        {emp.open && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                            Active
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {emp.workedHours !== '0h 0m' && (
-                      <p className="text-xs text-blue-600">Worked: {emp.workedHours}</p>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+                      {emp.workedHours !== '0h 0m' && (
+                        <p className="text-xs text-blue-600">Worked: {emp.workedHours}</p>
+                      )}
+                    </Card>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* User Statistics Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Individual User Statistics</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 font-medium text-gray-700">Employee</th>
-                  <th className="text-left py-3 font-medium text-gray-700">Days Worked</th>
-                  <th className="text-left py-3 font-medium text-gray-700">Office Hours</th>
-                  <th className="text-left py-3 font-medium text-gray-700">Remote Hours</th>
-                  <th className="text-left py-3 font-medium text-gray-700">Total Hours</th>
-                  <th className="text-left py-3 font-medium text-gray-700">Office %</th>
-                  <th className="text-left py-3 font-medium text-gray-700">Remote %</th>
-                </tr>
-              </thead>
-              <tbody>
-                {userStats.map((user) => {
-                  const totalMinutes = user.officeMinutes + user.remoteMinutes;
-                  const officePercentage = totalMinutes > 0 ? Math.round((user.officeMinutes / totalMinutes) * 100) : 0;
-                  const remotePercentage = totalMinutes > 0 ? Math.round((user.remoteMinutes / totalMinutes) * 100) : 0;
-                  
-                  return (
-                    <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 font-medium text-gray-800">{user.full_name}</td>
-                      <td className="py-3">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {user.daysWorked}
-                        </span>
-                      </td>
-                      <td className="py-3">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {user.officeHours}h
-                        </span>
-                      </td>
-                      <td className="py-3">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {user.remoteHours}h
-                        </span>
-                      </td>
-                      <td className="py-3">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          {user.totalHours}h
-                        </span>
-                      </td>
-                      <td className="py-3">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {officePercentage}%
-                        </span>
-                      </td>
-                      <td className="py-3">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {remotePercentage}%
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Individual User Statistics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Employee</TableHead>
+                    <TableHead>Days Worked</TableHead>
+                    <TableHead>Office Hours</TableHead>
+                    <TableHead>Remote Hours</TableHead>
+                    <TableHead>Total Hours</TableHead>
+                    <TableHead>Office %</TableHead>
+                    <TableHead>Remote %</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {userStats.map((user) => {
+                    const totalMinutes = user.officeMinutes + user.remoteMinutes;
+                    const officePercentage = totalMinutes > 0 ? Math.round((user.officeMinutes / totalMinutes) * 100) : 0;
+                    const remotePercentage = totalMinutes > 0 ? Math.round((user.remoteMinutes / totalMinutes) * 100) : 0;
+                    
+                    return (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">{user.full_name}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">
+                            {user.daysWorked}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {user.officeHours}h
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {user.remoteHours}h
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="default">
+                            {user.totalHours}h
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {officePercentage}%
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {remotePercentage}%
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

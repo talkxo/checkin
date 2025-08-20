@@ -1,5 +1,10 @@
 "use client";
 import { useEffect, useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function HomePage(){
   const [name,setName]=useState('');
@@ -268,24 +273,25 @@ export default function HomePage(){
   });
 
   return (
-    <div className="min-h-screen bg-white p-4">
+    <div className="min-h-screen bg-background p-4">
       <div className="max-w-md mx-auto">
         {/* Current Time Display */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-gray-800 mb-2">{timeString}</h1>
-          <p className="text-gray-600">{dateString}</p>
+          <h1 className="text-5xl font-bold text-foreground mb-2">{timeString}</h1>
+          <p className="text-muted-foreground">{dateString}</p>
         </div>
         
         {showNameInput ? (
           // Name Input Screen
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-2xl font-semibold text-center mb-6 text-gray-800">Welcome to TalkXO Check-in</h2>
-            <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-center">Welcome to TalkXO Check-in</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Enter your name</label>
-                <input
+                <label className="block text-sm font-medium text-foreground mb-2">Enter your name</label>
+                <Input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Type your name"
                   value={name}
                   onChange={(e) => {
@@ -302,11 +308,11 @@ export default function HomePage(){
               </div>
               {suggestions.length > 0 && (
                 <div className="relative">
-                  <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg">
+                  <div className="absolute z-10 w-full bg-background border border-border rounded-lg shadow-lg">
                     {suggestions.map((emp) => (
                       <button
                         key={emp.id}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                        className="w-full text-left px-4 py-2 hover:bg-muted focus:bg-muted focus:outline-none"
                         onClick={() => {
                           setName(emp.full_name);
                           setSuggestions([]);
@@ -319,19 +325,19 @@ export default function HomePage(){
                   </div>
                 </div>
               )}
-              <button 
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50"
+              <Button 
+                className="w-full"
                 onClick={handleNameSubmit}
                 disabled={!name.trim()}
               >
                 Continue
-              </button>
-            </div>
-          </div>
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           // Main Check-in/out Screen
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="space-y-6">
+          <Card>
+            <CardContent className="space-y-6 pt-6">
               {/* User Profile Header */}
               {currentSession && (
                 <div className="flex items-center justify-between">
@@ -340,8 +346,8 @@ export default function HomePage(){
                       {currentSession.employee.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-800">{currentSession.employee.full_name}</p>
-                      <p className="text-sm text-gray-500">Ready to check in/out</p>
+                      <p className="font-semibold text-foreground">{currentSession.employee.full_name}</p>
+                      <p className="text-sm text-muted-foreground">Ready to check in/out</p>
                     </div>
                   </div>
                 </div>
@@ -350,17 +356,15 @@ export default function HomePage(){
               {/* Location Tag */}
               <div className="text-center">
                 {isLocationLoading ? (
-                  <span className="inline-flex items-center px-3 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                  <Badge variant="secondary">
                     <i className="fas fa-spinner fa-spin mr-2"></i>
                     Detecting location...
-                  </span>
+                  </Badge>
                 ) : (
-                  <span className={`inline-flex items-center px-3 py-2 rounded-full text-sm font-medium ${
-                    mode === 'office' ? 'bg-blue-100 text-blue-800' : 'bg-blue-100 text-blue-800'
-                  }`}>
+                  <Badge variant="outline">
                     <i className={`fas ${mode === 'office' ? 'fa-building' : 'fa-home'} mr-2`}></i>
                     {location}
-                  </span>
+                  </Badge>
                 )}
               </div>
 
@@ -389,7 +393,7 @@ export default function HomePage(){
                     </div>
                   </div>
                   {holdProgress > 0 && (
-                    <p className="text-sm text-gray-600">Hold to confirm ({Math.round(holdProgress)}%)</p>
+                    <p className="text-sm text-muted-foreground">Hold to confirm ({Math.round(holdProgress)}%)</p>
                   )}
                 </div>
               </div>
@@ -398,116 +402,118 @@ export default function HomePage(){
               {hasOpen && currentSession && (
                 <div className="text-center">
                   <div className="space-y-2">
-                    <p className="text-gray-600 text-sm">
+                    <p className="text-muted-foreground text-sm">
                       Session started at {new Date(currentSession.session.checkin_ts).toLocaleTimeString()}
                     </p>
                     <p className="text-3xl font-bold text-green-600">{formatTime(elapsedTime)}</p>
-                    <p className="text-sm text-gray-500">Elapsed time</p>
+                    <p className="text-sm text-muted-foreground">Elapsed time</p>
                   </div>
                 </div>
               )}
 
               {msg && (
-                <p className="text-center text-sm text-gray-600">
+                <p className="text-center text-sm text-muted-foreground">
                   {msg}
                 </p>
               )}
 
               {me && (
                 <div className="flex flex-wrap gap-2 justify-center">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <Badge variant="secondary">
                     Last In: {me.lastIn ? new Date(me.lastIn).toLocaleTimeString() : 'N/A'}
-                  </span>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                  </Badge>
+                  <Badge variant="outline">
                     Last Out: {me.lastOut ? new Date(me.lastOut).toLocaleTimeString() : 'N/A'}
-                  </span>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  </Badge>
+                  <Badge variant="default">
                     Worked: {me.workedMinutes}m
-                  </span>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  </Badge>
+                  <Badge variant="secondary">
                     Mode: {me.mode}
-                  </span>
+                  </Badge>
                 </div>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Today's Snapshot */}
         <div className="mt-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Today's Snapshot</h2>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            {todaySummary.length === 0 ? (
-              <p className="text-gray-500 text-center">No check-ins yet.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-2 font-medium text-gray-700">Name</th>
-                      <th className="text-left py-2 font-medium text-gray-700">In</th>
-                      <th className="text-left py-2 font-medium text-gray-700">Out</th>
-                      <th className="text-left py-2 font-medium text-gray-700">Hours</th>
-                      <th className="text-left py-2 font-medium text-gray-700">Mode</th>
-                      <th className="text-left py-2 font-medium text-gray-700">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {todaySummary.map((emp: any) => (
-                      <tr key={emp.id} className="border-b border-gray-100">
-                        <td className="py-2 font-medium text-gray-800">{emp.full_name}</td>
-                        <td className="py-2">
-                          {emp.lastIn ? (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              {emp.lastIn}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">—</span>
-                          )}
-                        </td>
-                        <td className="py-2">
-                          {emp.lastOut ? (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                              {emp.lastOut}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">—</span>
-                          )}
-                        </td>
-                        <td className="py-2">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {emp.workedHours}
-                          </span>
-                        </td>
-                        <td className="py-2">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            emp.mode === 'office' ? 'bg-blue-100 text-blue-800' : 'bg-blue-100 text-blue-800'
-                          }`}>
-                            {emp.mode}
-                          </span>
-                        </td>
-                        <td className="py-2">
-                          {emp.open ? (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                              Active
-                            </span>
-                          ) : emp.lastIn ? (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              Complete
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                              Not Started
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+          <h2 className="text-xl font-semibold text-foreground mb-4">Today's Snapshot</h2>
+          <Card>
+            <CardContent className="p-0">
+              {todaySummary.length === 0 ? (
+                <div className="p-6 text-center">
+                  <p className="text-muted-foreground">No check-ins yet.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>In</TableHead>
+                        <TableHead>Out</TableHead>
+                        <TableHead>Hours</TableHead>
+                        <TableHead>Mode</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {todaySummary.map((emp: any) => (
+                        <TableRow key={emp.id}>
+                          <TableCell className="font-medium">{emp.full_name}</TableCell>
+                          <TableCell>
+                            {emp.lastIn ? (
+                              <Badge variant="default" className="text-xs">
+                                {emp.lastIn}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {emp.lastOut ? (
+                              <Badge variant="outline" className="text-xs">
+                                {emp.lastOut}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="text-xs">
+                              {emp.workedHours}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs">
+                              {emp.mode}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {emp.open ? (
+                              <Badge variant="destructive" className="text-xs">
+                                Active
+                              </Badge>
+                            ) : emp.lastIn ? (
+                              <Badge variant="default" className="text-xs">
+                                Complete
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-xs">
+                                Not Started
+                              </Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
