@@ -269,229 +269,174 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="container" style={{ maxWidth: '400px', marginTop: '100px' }}>
-        <div className="box">
-          <h1 className="title is-4 has-text-centered mb-4">Admin Login</h1>
-          <form onSubmit={handleLogin}>
-            <div className="field">
-              <label className="label">Username</label>
-              <div className="control">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <div className="card">
+            <h1 className="text-2xl font-semibold text-center mb-6 text-gray-800">Admin Login</h1>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
                 <input
-                  className="input"
+                  className="input-field"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
                 />
               </div>
-            </div>
-            <div className="field">
-              <label className="label">Password</label>
-              <div className="control">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
                 <input
-                  className="input"
+                  className="input-field"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </div>
-            </div>
-            <div className="field">
-              <div className="control">
-                <button
-                  className={`button is-primary is-fullwidth ${isLoading ? 'is-loading' : ''}`}
-                  type="submit"
-                  disabled={isLoading}
-                >
-                  Login
-                </button>
-              </div>
-            </div>
-          </form>
+              <button
+                className={`btn-primary w-full ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                type="submit"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Logging in...' : 'Login'}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container">
-      <div className="section">
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="level">
-          <div className="level-left">
-            <div className="level-item">
-              <h1 className="title is-3">Admin Dashboard</h1>
-            </div>
-          </div>
-          <div className="level-right">
-            <div className="level-item">
-              <button className="button is-light" onClick={handleLogout}>
-                <span className="icon">
-                  <i className="fas fa-sign-out-alt"></i>
-                </span>
-                <span>Logout</span>
-              </button>
-            </div>
-          </div>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+          <button className="btn-secondary" onClick={handleLogout}>
+            <i className="fas fa-sign-out-alt mr-2"></i>
+            Logout
+          </button>
         </div>
 
         {/* Time Range Selector */}
-        <div className="field">
-          <label className="label">Time Range</label>
-          <div className="control">
-            <div className="buttons has-addons">
-              <button 
-                className={`button ${timeRange === 'week' ? 'is-primary' : 'is-light'}`}
-                onClick={() => setTimeRange('week')}
+        <div className="mb-8">
+          <label className="block text-sm font-medium text-gray-700 mb-3">Time Range</label>
+          <div className="flex flex-wrap gap-2">
+            {['week', 'fortnight', 'month', '6m', 'year'].map((range) => (
+              <button
+                key={range}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  timeRange === range
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+                onClick={() => setTimeRange(range as any)}
               >
-                Week
+                {range === '6m' ? '6 Months' : range.charAt(0).toUpperCase() + range.slice(1)}
               </button>
-              <button 
-                className={`button ${timeRange === 'fortnight' ? 'is-primary' : 'is-light'}`}
-                onClick={() => setTimeRange('fortnight')}
-              >
-                Fortnight
-              </button>
-              <button 
-                className={`button ${timeRange === 'month' ? 'is-primary' : 'is-light'}`}
-                onClick={() => setTimeRange('month')}
-              >
-                Month
-              </button>
-              <button 
-                className={`button ${timeRange === '6m' ? 'is-primary' : 'is-light'}`}
-                onClick={() => setTimeRange('6m')}
-              >
-                6 Months
-              </button>
-              <button 
-                className={`button ${timeRange === 'year' ? 'is-primary' : 'is-light'}`}
-                onClick={() => setTimeRange('year')}
-              >
-                Year
-              </button>
-            </div>
+            ))}
           </div>
         </div>
 
         {/* Stats Cards */}
         {stats && (
-          <div className="columns is-multiline mb-5">
-            <div className="column is-3">
-              <div className="box has-text-centered">
-                <p className="heading">Total Employees</p>
-                <p className="title is-4">{stats.totalEmployees}</p>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="card text-center">
+              <p className="text-sm font-medium text-gray-600 mb-2">Total Employees</p>
+              <p className="text-3xl font-bold text-gray-800">{stats.totalEmployees}</p>
             </div>
-            <div className="column is-3">
-              <div className="box has-text-centered">
-                <p className="heading">Active Today</p>
-                <p className="title is-4 has-text-success">{stats.activeToday}</p>
-              </div>
+            <div className="card text-center">
+              <p className="text-sm font-medium text-gray-600 mb-2">Active Today</p>
+              <p className="text-3xl font-bold text-success-600">{stats.activeToday}</p>
             </div>
-            <div className="column is-3">
-              <div className="box has-text-centered">
-                <p className="heading">In Office</p>
-                <p className="title is-4 has-text-primary">{stats.officeToday}</p>
-              </div>
+            <div className="card text-center">
+              <p className="text-sm font-medium text-gray-600 mb-2">In Office</p>
+              <p className="text-3xl font-bold text-primary-600">{stats.officeToday}</p>
             </div>
-            <div className="column is-3">
-              <div className="box has-text-centered">
-                <p className="heading">Remote</p>
-                <p className="title is-4 has-text-link">{stats.remoteToday}</p>
-              </div>
+            <div className="card text-center">
+              <p className="text-sm font-medium text-gray-600 mb-2">Remote</p>
+              <p className="text-3xl font-bold text-purple-600">{stats.remoteToday}</p>
             </div>
           </div>
         )}
 
         {/* Charts Section */}
-        <div className="columns is-multiline">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Users vs Days Chart */}
-          <div className="column is-6">
-            <div className="box">
-              <h3 className="title is-5 mb-4">Users vs Days Worked</h3>
-              <div style={{ height: '300px', position: 'relative' }}>
-                <Bar data={usersVsDaysData} options={barChartOptions} />
-              </div>
+          <div className="card">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Users vs Days Worked</h3>
+            <div className="h-80">
+              <Bar data={usersVsDaysData} options={barChartOptions} />
             </div>
           </div>
 
           {/* Time Spent Chart */}
-          <div className="column is-6">
-            <div className="box">
-              <h3 className="title is-5 mb-4">Time Spent: Office vs Remote</h3>
-              <div style={{ height: '300px', position: 'relative' }}>
-                <Bar data={timeSpentData} options={barChartOptions} />
-              </div>
+          <div className="card">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Time Spent: Office vs Remote</h3>
+            <div className="h-80">
+              <Bar data={timeSpentData} options={barChartOptions} />
             </div>
           </div>
+        </div>
 
-          {/* Attendance Trend Chart */}
-          <div className="column is-8">
-            <div className="box">
-              <h3 className="title is-5 mb-4">Attendance Trend</h3>
-              <div style={{ height: '400px', position: 'relative' }}>
-                <Line data={chartData} options={chartOptions} />
-              </div>
+        {/* Attendance Trend Chart */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="lg:col-span-2 card">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Attendance Trend</h3>
+            <div className="h-80">
+              <Line data={chartData} options={chartOptions} />
             </div>
           </div>
 
           {/* Today's Snapshot */}
-          <div className="column is-4">
-            <div className="box">
-              <h3 className="title is-5 mb-4">Today's Snapshot</h3>
-              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                {todaySnapshot.length === 0 ? (
-                  <p className="has-text-grey">No check-ins today</p>
-                ) : (
-                  <div className="content">
-                    {todaySnapshot.map((emp) => (
-                      <div key={emp.id} className="mb-3 p-3 has-background-light" style={{ borderRadius: '6px' }}>
-                        <div className="is-flex is-justify-content-space-between is-align-items-center">
-                          <div>
-                            <p className="has-text-weight-semibold is-size-7">{emp.full_name}</p>
-                            <p className="is-size-7 has-text-grey">
-                              {emp.lastIn ? `In: ${emp.lastIn}` : 'Not checked in'}
-                            </p>
-                          </div>
-                          <div className="has-text-right">
-                            <span className={`tag is-${emp.mode === 'office' ? 'primary' : 'link'} is-light is-small`}>
-                              {emp.mode}
-                            </span>
-                            {emp.open && (
-                              <span className="tag is-danger is-light is-small ml-1">Active</span>
-                            )}
-                          </div>
-                        </div>
-                        {emp.workedHours !== '0h 0m' && (
-                          <p className="is-size-7 has-text-info mt-1">
-                            Worked: {emp.workedHours}
-                          </p>
-                        )}
+          <div className="card">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Today's Snapshot</h3>
+            <div className="max-h-80 overflow-y-auto space-y-3">
+              {todaySnapshot.length === 0 ? (
+                <p className="text-gray-500 text-center">No check-ins today</p>
+              ) : (
+                todaySnapshot.map((emp) => (
+                  <div key={emp.id} className="p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="font-medium text-sm text-gray-800">{emp.full_name}</p>
+                        <p className="text-xs text-gray-600">
+                          {emp.lastIn ? `In: ${emp.lastIn}` : 'Not checked in'}
+                        </p>
                       </div>
-                    ))}
+                      <div className="flex gap-1">
+                        <span className={`tag ${emp.mode === 'office' ? 'tag-primary' : 'tag-info'}`}>
+                          {emp.mode}
+                        </span>
+                        {emp.open && <span className="tag tag-danger">Active</span>}
+                      </div>
+                    </div>
+                    {emp.workedHours !== '0h 0m' && (
+                      <p className="text-xs text-blue-600">Worked: {emp.workedHours}</p>
+                    )}
                   </div>
-                )}
-              </div>
+                ))
+              )}
             </div>
           </div>
         </div>
 
         {/* User Statistics Table */}
-        <div className="box mt-5">
-          <h3 className="title is-5 mb-4">Individual User Statistics</h3>
-          <div className="table-container">
-            <table className="table is-striped is-hoverable is-fullwidth">
+        <div className="card">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Individual User Statistics</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
               <thead>
-                <tr>
-                  <th>Employee</th>
-                  <th>Days Worked</th>
-                  <th>Office Hours</th>
-                  <th>Remote Hours</th>
-                  <th>Total Hours</th>
-                  <th>Office %</th>
-                  <th>Remote %</th>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 font-medium text-gray-700">Employee</th>
+                  <th className="text-left py-3 font-medium text-gray-700">Days Worked</th>
+                  <th className="text-left py-3 font-medium text-gray-700">Office Hours</th>
+                  <th className="text-left py-3 font-medium text-gray-700">Remote Hours</th>
+                  <th className="text-left py-3 font-medium text-gray-700">Total Hours</th>
+                  <th className="text-left py-3 font-medium text-gray-700">Office %</th>
+                  <th className="text-left py-3 font-medium text-gray-700">Remote %</th>
                 </tr>
               </thead>
               <tbody>
@@ -501,27 +446,25 @@ export default function AdminPage() {
                   const remotePercentage = totalMinutes > 0 ? Math.round((user.remoteMinutes / totalMinutes) * 100) : 0;
                   
                   return (
-                    <tr key={user.id}>
-                      <td>
-                        <strong>{user.full_name}</strong>
+                    <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-3 font-medium text-gray-800">{user.full_name}</td>
+                      <td className="py-3">
+                        <span className="tag tag-info">{user.daysWorked}</span>
                       </td>
-                      <td>
-                        <span className="tag is-info is-light">{user.daysWorked}</span>
+                      <td className="py-3">
+                        <span className="tag tag-primary">{user.officeHours}h</span>
                       </td>
-                      <td>
-                        <span className="tag is-primary is-light">{user.officeHours}h</span>
+                      <td className="py-3">
+                        <span className="tag tag-info">{user.remoteHours}h</span>
                       </td>
-                      <td>
-                        <span className="tag is-link is-light">{user.remoteHours}h</span>
+                      <td className="py-3">
+                        <span className="tag tag-success">{user.totalHours}h</span>
                       </td>
-                      <td>
-                        <span className="tag is-success is-light">{user.totalHours}h</span>
+                      <td className="py-3">
+                        <span className="tag tag-primary">{officePercentage}%</span>
                       </td>
-                      <td>
-                        <span className="tag is-primary is-light">{officePercentage}%</span>
-                      </td>
-                      <td>
-                        <span className="tag is-link is-light">{remotePercentage}%</span>
+                      <td className="py-3">
+                        <span className="tag tag-info">{remotePercentage}%</span>
                       </td>
                     </tr>
                   );

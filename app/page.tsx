@@ -266,45 +266,45 @@ export default function HomePage(){
   });
 
   return (
-    <main className="container-narrow section">
-      {/* Current Time Display */}
-      <div className="has-text-centered mb-5">
-        <h1 className="title is-1 has-text-weight-bold mb-2">{timeString}</h1>
-        <p className="has-text-grey">{dateString}</p>
-      </div>
-      
-      {showNameInput ? (
-        // Name Input Screen
-        <div className="box">
-          <h2 className="title is-4 has-text-centered mb-4">Welcome to TalkXO Check-in</h2>
-          <div className="field">
-            <label className="label">Enter your name</label>
-            <div className="control">
-              <input
-                type="text"
-                className="input is-medium"
-                placeholder="Type your name"
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  searchEmployees(e.target.value);
-                }}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    handleNameSubmit();
-                  }
-                }}
-                autoFocus
-              />
-            </div>
-            {suggestions.length > 0 && (
-              <div className="dropdown is-active" style={{position: 'absolute', zIndex: 10, width: '100%'}}>
-                <div className="dropdown-menu">
-                  <div className="dropdown-content">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="max-w-md mx-auto">
+        {/* Current Time Display */}
+        <div className="text-center mb-8">
+          <h1 className="text-5xl font-bold text-gray-800 mb-2">{timeString}</h1>
+          <p className="text-gray-600">{dateString}</p>
+        </div>
+        
+        {showNameInput ? (
+          // Name Input Screen
+          <div className="card">
+            <h2 className="text-2xl font-semibold text-center mb-6 text-gray-800">Welcome to TalkXO Check-in</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Enter your name</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="Type your name"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    searchEmployees(e.target.value);
+                  }}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleNameSubmit();
+                    }
+                  }}
+                  autoFocus
+                />
+              </div>
+              {suggestions.length > 0 && (
+                <div className="relative">
+                  <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg">
                     {suggestions.map((emp) => (
-                      <a
+                      <button
                         key={emp.id}
-                        className="dropdown-item"
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
                         onClick={() => {
                           setName(emp.full_name);
                           setSuggestions([]);
@@ -312,89 +312,62 @@ export default function HomePage(){
                         }}
                       >
                         {emp.full_name}
-                      </a>
+                      </button>
                     ))}
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+              <button 
+                className="btn-primary w-full"
+                onClick={handleNameSubmit}
+                disabled={!name.trim()}
+              >
+                Continue
+              </button>
+            </div>
           </div>
-          <div className="buttons is-centered">
-            <button 
-              className="button is-primary is-medium" 
-              onClick={handleNameSubmit}
-              disabled={!name.trim()}
-            >
-              Continue
-            </button>
-          </div>
-        </div>
-      ) : (
-        // Main Check-in/out Screen
-        <div className="box">
-          {/* User Profile Header */}
-          {currentSession && (
-            <div className="level mb-4">
-              <div className="level-left">
-                <div className="level-item">
-                  <div className="has-text-left">
-                    <div className="is-flex is-align-items-center">
-                      <div className="mr-3">
-                        <div className="image is-48x48">
-                          <div className="is-rounded has-background-primary has-text-white is-flex is-align-items-center is-justify-content-center" style={{width: '48px', height: '48px'}}>
-                            <span className="has-text-weight-bold">{currentSession.employee.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="has-text-weight-semibold">{currentSession.employee.full_name}</p>
-                        <p className="has-text-grey is-size-7">Ready to check in/out</p>
-                      </div>
-                    </div>
+        ) : (
+          // Main Check-in/out Screen
+          <div className="card">
+            {/* User Profile Header */}
+            {currentSession && (
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    {currentSession.employee.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-800">{currentSession.employee.full_name}</p>
+                    <p className="text-sm text-gray-500">Ready to check in/out</p>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* Location Tag */}
-          <div className="has-text-centered mb-4">
-            {isLocationLoading ? (
-              <span className="tag is-light">
-                <span className="icon is-small">
-                  <i className="fas fa-spinner fa-spin"></i>
-                </span>
-                <span>Detecting location...</span>
-              </span>
-            ) : (
-              <span className={`tag is-${mode === 'office' ? 'primary' : 'link'} is-light`}>
-                <span className="icon is-small">
-                  <i className={`fas ${mode === 'office' ? 'fa-building' : 'fa-home'}`}></i>
-                </span>
-                <span>{location}</span>
-              </span>
             )}
-          </div>
 
-          {/* Large Action Button */}
-          <div className="has-text-centered">
-            <div className="mb-4">
+            {/* Location Tag */}
+            <div className="text-center mb-6">
+              {isLocationLoading ? (
+                <span className="tag tag-info">
+                  <i className="fas fa-spinner fa-spin mr-2"></i>
+                  Detecting location...
+                </span>
+              ) : (
+                <span className={`tag ${mode === 'office' ? 'tag-primary' : 'tag-info'}`}>
+                  <i className={`fas ${mode === 'office' ? 'fa-building' : 'fa-home'} mr-2`}></i>
+                  {location}
+                </span>
+              )}
+            </div>
+
+            {/* Large Action Button */}
+            <div className="text-center mb-6">
               <div 
-                className="is-clickable"
+                className="w-32 h-32 mx-auto rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 shadow-lg hover:shadow-xl"
                 style={{
-                  width: '140px',
-                  height: '140px',
-                  borderRadius: '50%',
-                  margin: '0 auto',
                   background: holdProgress > 0 
-                    ? `conic-gradient(from 0deg, ${hasOpen ? '#f14668' : '#48c774'} ${holdProgress * 3.6}deg, #f5f5f5 ${holdProgress * 3.6}deg)`
-                    : `linear-gradient(135deg, ${hasOpen ? '#f14668' : '#48c774'}, ${hasOpen ? '#ff3860' : '#00d1b2'})`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  boxShadow: holdProgress > 0 ? `0 0 20px rgba(${hasOpen ? '241, 70, 104' : '72, 199, 116'}, 0.5)` : '0 4px 12px rgba(0,0,0,0.15)'
+                    ? `conic-gradient(from 0deg, ${hasOpen ? '#ef4444' : '#22c55e'} ${holdProgress * 3.6}deg, #f3f4f6 ${holdProgress * 3.6}deg)`
+                    : `linear-gradient(135deg, ${hasOpen ? '#ef4444' : '#22c55e'}, ${hasOpen ? '#dc2626' : '#16a34a'})`,
+                  boxShadow: holdProgress > 0 ? `0 0 20px rgba(${hasOpen ? '239, 68, 68' : '34, 197, 94'}, 0.5)` : '0 10px 25px rgba(0,0,0,0.15)'
                 }}
                 onMouseDown={handleHoldStart}
                 onMouseUp={handleHoldEnd}
@@ -402,104 +375,104 @@ export default function HomePage(){
                 onTouchStart={handleHoldStart}
                 onTouchEnd={handleHoldEnd}
               >
-                <div className="has-text-white has-text-centered">
-                  <span className="icon is-large">
-                    <i className={`fas ${hasOpen ? 'fa-sign-out-alt' : 'fa-sign-in-alt'}`}></i>
-                  </span>
-                  <p className="has-text-weight-semibold mt-2">
+                <div className="text-white text-center">
+                  <i className={`fas ${hasOpen ? 'fa-sign-out-alt' : 'fa-sign-in-alt'} text-2xl mb-2`}></i>
+                  <p className="font-semibold text-sm">
                     {hasOpen ? 'Clock Out' : 'Clock In'}
                   </p>
                 </div>
               </div>
               {holdProgress > 0 && (
-                <p className="has-text-grey is-size-7 mt-2">Hold to confirm ({Math.round(holdProgress)}%)</p>
+                <p className="text-sm text-gray-600 mt-2">Hold to confirm ({Math.round(holdProgress)}%)</p>
               )}
             </div>
-          </div>
 
-          {/* Session Timer */}
-          {hasOpen && currentSession && (
-            <div className="has-text-centered mb-4">
-              <p className="has-text-grey">Session started at {new Date(currentSession.session.checkin_ts).toLocaleTimeString()}</p>
-              <p className="title is-3 has-text-primary">{formatTime(elapsedTime)}</p>
-              <p className="has-text-grey-light">Elapsed time</p>
-            </div>
-          )}
+            {/* Session Timer */}
+            {hasOpen && currentSession && (
+              <div className="text-center mb-6">
+                <p className="text-gray-600 text-sm">Session started at {new Date(currentSession.session.checkin_ts).toLocaleTimeString()}</p>
+                <p className="text-3xl font-bold text-green-600">{formatTime(elapsedTime)}</p>
+                <p className="text-sm text-gray-500">Elapsed time</p>
+              </div>
+            )}
 
-          {msg && <p className="mt-3 has-text-centered">{msg}</p>}
+            {msg && <p className="text-center text-sm text-gray-600 mb-4">{msg}</p>}
 
-          {me && (
-            <div className="tags is-centered">
-              <span className="tag is-info is-light">Last In: {me.lastIn ? new Date(me.lastIn).toLocaleTimeString() : 'N/A'}</span>
-              <span className="tag is-warning is-light">Last Out: {me.lastOut ? new Date(me.lastOut).toLocaleTimeString() : 'N/A'}</span>
-              <span className="tag is-success is-light">Worked: {me.workedMinutes}m</span>
-              <span className="tag is-primary is-light">Mode: {me.mode}</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      <h2 className="title is-5">Today's Snapshot</h2>
-      <div className="content">
-        {todaySummary.length === 0 && <p>No check-ins yet.</p>}
-        {todaySummary.length > 0 && (
-          <div className="table-container" style={{overflowX: 'auto', maxWidth: '100%'}}>
-            <table className="table is-striped is-hoverable" style={{minWidth: '600px'}}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>In</th>
-                  <th>Out</th>
-                  <th>Hours</th>
-                  <th>Mode</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {todaySummary.map((emp: any) => (
-                  <tr key={emp.id}>
-                    <td>
-                      <strong>{emp.full_name}</strong>
-                    </td>
-                    <td>
-                      {emp.lastIn ? (
-                        <span className="tag is-success is-light">{emp.lastIn}</span>
-                      ) : (
-                        <span className="has-text-grey-light">—</span>
-                      )}
-                    </td>
-                    <td>
-                      {emp.lastOut ? (
-                        <span className="tag is-warning is-light">{emp.lastOut}</span>
-                      ) : (
-                        <span className="has-text-grey-light">—</span>
-                      )}
-                    </td>
-                    <td>
-                      <span className="tag is-info is-light">{emp.workedHours}</span>
-                    </td>
-                    <td>
-                      <span className={`tag is-${emp.mode === 'office' ? 'primary' : 'link'} is-light`}>
-                        {emp.mode}
-                      </span>
-                    </td>
-                    <td>
-                      {emp.open ? (
-                        <span className="tag is-danger is-light">Active</span>
-                      ) : emp.lastIn ? (
-                        <span className="tag is-success is-light">Complete</span>
-                      ) : (
-                        <span className="tag is-light">Not Started</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {me && (
+              <div className="flex flex-wrap gap-2 justify-center">
+                <span className="tag tag-info">Last In: {me.lastIn ? new Date(me.lastIn).toLocaleTimeString() : 'N/A'}</span>
+                <span className="tag tag-warning">Last Out: {me.lastOut ? new Date(me.lastOut).toLocaleTimeString() : 'N/A'}</span>
+                <span className="tag tag-success">Worked: {me.workedMinutes}m</span>
+                <span className="tag tag-primary">Mode: {me.mode}</span>
+              </div>
+            )}
           </div>
         )}
+
+        {/* Today's Snapshot */}
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Today's Snapshot</h2>
+          <div className="card">
+            {todaySummary.length === 0 ? (
+              <p className="text-gray-500 text-center">No check-ins yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-2 font-medium text-gray-700">Name</th>
+                      <th className="text-left py-2 font-medium text-gray-700">In</th>
+                      <th className="text-left py-2 font-medium text-gray-700">Out</th>
+                      <th className="text-left py-2 font-medium text-gray-700">Hours</th>
+                      <th className="text-left py-2 font-medium text-gray-700">Mode</th>
+                      <th className="text-left py-2 font-medium text-gray-700">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {todaySummary.map((emp: any) => (
+                      <tr key={emp.id} className="border-b border-gray-100">
+                        <td className="py-2 font-medium text-gray-800">{emp.full_name}</td>
+                        <td className="py-2">
+                          {emp.lastIn ? (
+                            <span className="tag tag-success">{emp.lastIn}</span>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                        <td className="py-2">
+                          {emp.lastOut ? (
+                            <span className="tag tag-warning">{emp.lastOut}</span>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                        <td className="py-2">
+                          <span className="tag tag-info">{emp.workedHours}</span>
+                        </td>
+                        <td className="py-2">
+                          <span className={`tag ${emp.mode === 'office' ? 'tag-primary' : 'tag-info'}`}>
+                            {emp.mode}
+                          </span>
+                        </td>
+                        <td className="py-2">
+                          {emp.open ? (
+                            <span className="tag tag-danger">Active</span>
+                          ) : emp.lastIn ? (
+                            <span className="tag tag-success">Complete</span>
+                          ) : (
+                            <span className="tag tag-secondary">Not Started</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }
 
