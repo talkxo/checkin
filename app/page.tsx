@@ -305,12 +305,12 @@ export default function HomePage(){
   };
 
   const handleNameSubmit = () => {
-    if (name.trim()) {
-      // Store user name for persistence
-      localStorage.setItem('userName', name);
+    if (name.trim() && selectedEmployee) {
+      // Only allow submission if a valid employee is selected
+      localStorage.setItem('userName', selectedEmployee.full_name);
       setIsLoggedIn(true);
       setShowNameInput(false);
-      fetchMySummary(name);
+      fetchMySummary(selectedEmployee.full_name);
     }
   };
 
@@ -319,6 +319,12 @@ export default function HomePage(){
     setSelectedEmployee(employee);
     setSuggestions([]);
     // Don't auto-submit, let user click Continue
+  };
+
+  const handleNameChange = (value: string) => {
+    setName(value);
+    setSelectedEmployee(null); // Clear selection when user types
+    searchEmployees(value);
   };
 
   const handleLogout = () => {
@@ -380,12 +386,11 @@ export default function HomePage(){
                 <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
                 <input
                   type="text"
-                  className="notion-input"
+                  className={`notion-input ${selectedEmployee ? 'border-green-500 bg-green-50' : ''}`}
                   placeholder="Type your full name"
                   value={name}
                   onChange={(e) => {
-                    setName(e.target.value);
-                    searchEmployees(e.target.value);
+                    handleNameChange(e.target.value);
                   }}
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
@@ -394,6 +399,12 @@ export default function HomePage(){
                   }}
                   autoFocus
                 />
+                {selectedEmployee && (
+                  <p className="text-sm text-green-600 mt-1 flex items-center">
+                    <i className="fas fa-check-circle mr-1"></i>
+                    Valid employee selected
+                  </p>
+                )}
               </div>
               
               {suggestions.length > 0 && (
@@ -415,9 +426,9 @@ export default function HomePage(){
               <button 
                 className="notion-button-primary w-full"
                 onClick={handleNameSubmit}
-                disabled={!name.trim()}
+                disabled={!name.trim() || !selectedEmployee}
               >
-                Continue
+                {selectedEmployee ? 'Continue with ' + selectedEmployee.full_name : 'Select a valid employee'}
               </button>
             </div>
           </div>
@@ -527,7 +538,7 @@ export default function HomePage(){
                         Worked: {me.workedMinutes}m
                       </span>
                       <span className="notion-badge notion-badge-primary">
-                        Mode: {me.mode}
+                        Mode: {me.mode || 'N/A'}
                       </span>
                     </div>
                   )}

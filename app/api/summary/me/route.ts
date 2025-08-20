@@ -27,14 +27,19 @@ export async function GET(req: NextRequest){
   let lastIn: string | null = null;
   let lastOut: string | null = null;
   let open = false;
+  let mode: string | null = null;
+  
   for(const s of sessions||[]){
     lastIn = s.checkin_ts;
     const out = s.checkout_ts ? new Date(s.checkout_ts) : now;
     if(!s.checkout_ts) open = true; else lastOut = s.checkout_ts;
     workedMs += new Date(out).getTime() - new Date(s.checkin_ts).getTime();
+    // Get mode from the most recent session
+    mode = s.mode;
   }
+  
   const workedMinutes = Math.max(0, Math.round(workedMs/60000));
-  return NextResponse.json({ employee: emp, open, lastIn, lastOut, workedMinutes });
+  return NextResponse.json({ employee: emp, open, lastIn, lastOut, workedMinutes, mode });
 }
 
 export const dynamic = 'force-dynamic';
