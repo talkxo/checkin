@@ -221,7 +221,7 @@ export default function HomePage(){
                   <div className="mr-3">
                     <div className="image is-48x48">
                       <div className="is-rounded has-background-primary has-text-white is-flex is-align-items-center is-justify-content-center" style={{width: '48px', height: '48px'}}>
-                        <span className="has-text-weight-bold">{currentSession.employee.full_name.split(' ').map(n => n[0]).join('').toUpperCase()}</span>
+                        <span className="has-text-weight-bold">{currentSession.employee.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}</span>
                       </div>
                     </div>
                   </div>
