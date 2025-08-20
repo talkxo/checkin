@@ -5,14 +5,16 @@ export default function Home(){
   const [status,setStatus]=useState<string>('');
   const [mode,setMode]=useState<'office'|'remote'>('office');
   const [today,setToday]=useState<any[]>([]);
+  const [todaySummary,setTodaySummary]=useState<any[]>([]);
   const [suggestions,setSuggestions]=useState<any[]>([]);
   const [slug,setSlug]=useState<string>('');
   const [hasOpen,setHasOpen]=useState(false);
   const [me,setMe]=useState<any|null>(null);
-  useEffect(()=>{ 
+    useEffect(()=>{
     const saved = (typeof window!== 'undefined' ? (localStorage.getItem('mode') as any) : null) || 'office';
     setMode(saved);
-    fetch('/api/today').then(r=>r.json()).then(setToday); 
+    fetch('/api/today').then(r=>r.json()).then(setToday);
+    fetch('/api/today/summary').then(r=>r.json()).then(setTodaySummary);
   },[]);
   const onNameChange = async (val:string)=>{
     setName(val); setSlug(''); setHasOpen(false);
@@ -27,8 +29,8 @@ export default function Home(){
     const j = await r.json(); setHasOpen(j.ok);
     const sm = await fetch('/api/summary/me?slug='+emp.slug).then(r=>r.json()); setMe(sm);
   };
-  const act = async (m:'office'|'remote')=>{ setStatus(''); if(typeof window!== 'undefined') localStorage.setItem('mode', m); const r = await fetch('/api/checkin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ fullName: slug? undefined : name, slug: slug || undefined, mode:m })}); const j = await r.json(); if(r.status===409){ setHasOpen(true); setStatus('Open session exists'); } else { setHasOpen(false); setStatus(r.ok?`Checked in at ${new Date(j.session.checkin_ts).toLocaleTimeString()}`:j.error||'Error'); fetch('/api/today').then(r=>r.json()).then(setToday); } };
-  const checkout = async ()=>{ if(!slug) return; const r = await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ slug })}); const j = await r.json(); setStatus(r.ok?`Checked out at ${new Date(j.checkout_ts||Date.now()).toLocaleTimeString()}`:j.error||'Error'); setHasOpen(false); fetch('/api/today').then(r=>r.json()).then(setToday); };
+  const act = async (m:'office'|'remote')=>{ setStatus(''); if(typeof window!== 'undefined') localStorage.setItem('mode', m); const r = await fetch('/api/checkin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ fullName: slug? undefined : name, slug: slug || undefined, mode:m })}); const j = await r.json(); if(r.status===409){ setHasOpen(true); setStatus('Open session exists'); } else { setHasOpen(false); setStatus(r.ok?`Checked in at ${new Date(j.session.checkin_ts).toLocaleTimeString()}`:j.error||'Error'); fetch('/api/today').then(r=>r.json()).then(setToday); fetch('/api/today/summary').then(r=>r.json()).then(setTodaySummary); } };
+  const checkout = async ()=>{ if(!slug) return; const r = await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ slug })}); const j = await r.json(); setStatus(r.ok?`Checked out at ${new Date(j.checkout_ts||Date.now()).toLocaleTimeString()}`:j.error||'Error'); setHasOpen(false); fetch('/api/today').then(r=>r.json()).then(setToday); fetch('/api/today/summary').then(r=>r.json()).then(setTodaySummary); };
   return (
     <main className="container-narrow">
       <section className="section">
@@ -65,15 +67,63 @@ export default function Home(){
         </div>
         <h2 className="title is-5">Today's Snapshot</h2>
         <div className="content">
-          {me && (
-            <div className="box" style={{display:'flex',gap:'1rem',flexWrap:'wrap'}}>
-              <span className="tag is-success is-medium">{me.lastIn?`In: ${new Date(me.lastIn).toLocaleTimeString()}`:'—'}</span>
-              <span className="tag is-warning is-medium">{me.lastOut?`Out: ${new Date(me.lastOut).toLocaleTimeString()}`:'—'}</span>
-              <span className="tag is-info is-medium">Worked: {Math.floor((me.workedMinutes||0)/60)}h {(me.workedMinutes||0)%60}m</span>
+          {todaySummary.length === 0 && <p>No check-ins yet.</p>}
+          {todaySummary.length > 0 && (
+            <div className="table-container">
+              <table className="table is-fullwidth is-striped is-hoverable">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>In</th>
+                    <th>Out</th>
+                    <th>Hours</th>
+                    <th>Mode</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {todaySummary.map((emp: any) => (
+                    <tr key={emp.id}>
+                      <td>
+                        <strong>{emp.full_name}</strong>
+                      </td>
+                      <td>
+                        {emp.lastIn ? (
+                          <span className="tag is-success is-light">{emp.lastIn}</span>
+                        ) : (
+                          <span className="has-text-grey-light">—</span>
+                        )}
+                      </td>
+                      <td>
+                        {emp.lastOut ? (
+                          <span className="tag is-warning is-light">{emp.lastOut}</span>
+                        ) : (
+                          <span className="has-text-grey-light">—</span>
+                        )}
+                      </td>
+                      <td>
+                        <span className="tag is-info is-light">{emp.workedHours}</span>
+                      </td>
+                      <td>
+                        <span className={`tag is-${emp.mode === 'office' ? 'primary' : 'link'} is-light`}>
+                          {emp.mode}
+                        </span>
+                      </td>
+                      <td>
+                        {emp.open ? (
+                          <span className="tag is-danger is-light">Active</span>
+                        ) : emp.lastIn ? (
+                          <span className="tag is-success is-light">Complete</span>
+                        ) : (
+                          <span className="tag is-light">Not Started</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
-          {today.length===0 && <p>No check-ins yet.</p>}
-          {today.length>0 && <ul>{today.map((t:any,i:number)=> <li key={i}>• {t.full_name} — {t.mode} — {new Date(t.checkin_ts).toLocaleTimeString()}</li>)}</ul>}
         </div>
       </section>
     </main>
