@@ -13,6 +13,9 @@ export default function HomePage(){
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentSession, setCurrentSession] = useState<any>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [holdProgress, setHoldProgress] = useState(0);
+  const [isHolding, setIsHolding] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(()=>{
     const saved = (typeof window!== 'undefined' ? (localStorage.getItem('mode') as any) : null) || 'office';
@@ -32,6 +35,14 @@ export default function HomePage(){
     }
   },[]);
 
+  // Update current time every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Timer effect for elapsed time
   useEffect(() => {
     if (!currentSession || !hasOpen) return;
@@ -44,6 +55,32 @@ export default function HomePage(){
 
     return () => clearInterval(interval);
   }, [currentSession, hasOpen]);
+
+  // Hold progress effect
+  useEffect(() => {
+    if (!isHolding) {
+      setHoldProgress(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setHoldProgress(prev => {
+        if (prev >= 100) {
+          setIsHolding(false);
+          // Trigger the action when hold is complete
+          if (hasOpen) {
+            checkout();
+          } else {
+            act('office');
+          }
+          return 100;
+        }
+        return prev + 2; // Complete in ~2.5 seconds
+      });
+    }, 50);
+
+    return () => clearInterval(interval);
+  }, [isHolding, hasOpen]);
 
   const checkSessionStatus = async (slug: string) => {
     try {
@@ -106,6 +143,18 @@ export default function HomePage(){
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleHoldStart = () => {
+    setIsHolding(true);
+    setHoldProgress(0);
+  };
+
+  const handleHoldEnd = () => {
+    setIsHolding(false);
+    setHoldProgress(0);
+  };
+
+
+
   const act = async (checkMode: 'office' | 'remote') => {
     if (!name.trim()) return;
     setIsSubmitting(true);
@@ -152,9 +201,53 @@ export default function HomePage(){
   useEffect(()=>{ if(me) fetchMySummary(me.slug); },[me]);
   useEffect(()=>{ if(currentSession) checkSessionStatus(currentSession.employee.slug); },[currentSession]);
 
+  // Format current time and date
+  const timeString = currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const dateString = currentTime.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+
   return (
     <main className="container-narrow section">
-      <h1 className="title is-4 has-text-centered mb-5">TalkXO Check-in</h1>
+      {/* Header with user info */}
+      {currentSession && (
+        <div className="level mb-4">
+          <div className="level-left">
+            <div className="level-item">
+              <div className="has-text-left">
+                <div className="is-flex is-align-items-center">
+                  <div className="mr-3">
+                    <div className="image is-48x48">
+                      <div className="is-rounded has-background-primary has-text-white is-flex is-align-items-center is-justify-content-center" style={{width: '48px', height: '48px'}}>
+                        <span className="has-text-weight-bold">{currentSession.employee.full_name.split(' ').map(n => n[0]).join('').toUpperCase()}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="has-text-weight-semibold">{currentSession.employee.full_name}</p>
+                    <p className="has-text-grey is-size-7">Updated</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="level-right">
+            <div className="level-item">
+              <span className="icon has-text-grey">
+                <i className="fas fa-bell"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Current Time Display */}
+      <div className="has-text-centered mb-5">
+        <h1 className="title is-1 has-text-weight-bold mb-2">{timeString}</h1>
+        <p className="has-text-grey">{dateString}</p>
+      </div>
       
       <div className="box">
         {!currentSession ? (
@@ -210,15 +303,54 @@ export default function HomePage(){
               </div>
             </div>
 
-            <div className="buttons is-centered">
-              {!hasOpen ? (
-                <>
-                  <button disabled={isSubmitting || !name} className={`button is-primary ${isSubmitting?'is-loading':''}`} onClick={()=>act('office')}>Check In</button>
-                  <button disabled={isSubmitting || !name} className={`button is-link is-light ${isSubmitting?'is-loading':''}`} onClick={()=>act('remote')}>Remote</button>
-                </>
-              ) : (
-                <button disabled={isSubmitting} className={`button is-danger is-light ${isSubmitting?'is-loading':''}`} onClick={checkout}>Check Out</button>
-              )}
+            {/* Large Action Button */}
+            <div className="has-text-centered">
+              <div className="mb-4">
+                <div 
+                  className={`is-clickable ${!name.trim() || isSubmitting ? 'is-disabled' : ''}`}
+                  style={{
+                    width: '120px',
+                    height: '120px',
+                    borderRadius: '50%',
+                    margin: '0 auto',
+                    background: holdProgress > 0 
+                      ? `conic-gradient(from 0deg, #48c774 ${holdProgress * 3.6}deg, #f5f5f5 ${holdProgress * 3.6}deg)`
+                      : 'linear-gradient(135deg, #48c774, #00d1b2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: name.trim() && !isSubmitting ? 'pointer' : 'not-allowed',
+                    opacity: name.trim() && !isSubmitting ? 1 : 0.6,
+                    transition: 'all 0.3s ease',
+                    boxShadow: holdProgress > 0 ? '0 0 20px rgba(72, 199, 116, 0.5)' : '0 4px 12px rgba(0,0,0,0.15)'
+                  }}
+                  onMouseDown={name.trim() && !isSubmitting ? handleHoldStart : undefined}
+                  onMouseUp={handleHoldEnd}
+                  onMouseLeave={handleHoldEnd}
+                  onTouchStart={name.trim() && !isSubmitting ? handleHoldStart : undefined}
+                  onTouchEnd={handleHoldEnd}
+                >
+                  <div className="has-text-white has-text-centered">
+                    <span className="icon is-large">
+                      <i className={`fas ${hasOpen ? 'fa-sign-out-alt' : 'fa-sign-in-alt'}`}></i>
+                    </span>
+                    <p className="has-text-weight-semibold mt-2">
+                      {hasOpen ? 'Clock Out' : 'Clock In'}
+                    </p>
+                  </div>
+                </div>
+                {holdProgress > 0 && (
+                  <p className="has-text-grey is-size-7 mt-2">Hold to confirm ({Math.round(holdProgress)}%)</p>
+                )}
+              </div>
+            </div>
+
+            {/* Location Display */}
+            <div className="has-text-centered mb-4">
+              <span className="icon has-text-grey">
+                <i className="fas fa-map-marker-alt"></i>
+              </span>
+              <span className="has-text-grey">Location: {mode === 'office' ? 'Sequire Tower Office' : 'Remote'}</span>
             </div>
           </>
         ) : (
@@ -233,10 +365,48 @@ export default function HomePage(){
             ) : (
               <p className="has-text-grey">Your session has ended</p>
             )}
+            
+            {/* Large Action Button for logged in users */}
+            {hasOpen && (
+              <div className="mb-4">
+                <div 
+                  className="is-clickable"
+                  style={{
+                    width: '120px',
+                    height: '120px',
+                    borderRadius: '50%',
+                    margin: '0 auto',
+                    background: holdProgress > 0 
+                      ? `conic-gradient(from 0deg, #f14668 ${holdProgress * 3.6}deg, #f5f5f5 ${holdProgress * 3.6}deg)`
+                      : 'linear-gradient(135deg, #f14668, #ff3860)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: holdProgress > 0 ? '0 0 20px rgba(241, 70, 104, 0.5)' : '0 4px 12px rgba(0,0,0,0.15)'
+                  }}
+                  onMouseDown={handleHoldStart}
+                  onMouseUp={handleHoldEnd}
+                  onMouseLeave={handleHoldEnd}
+                  onTouchStart={handleHoldStart}
+                  onTouchEnd={handleHoldEnd}
+                >
+                  <div className="has-text-white has-text-centered">
+                    <span className="icon is-large">
+                      <i className="fas fa-sign-out-alt"></i>
+                    </span>
+                    <p className="has-text-weight-semibold mt-2">Clock Out</p>
+                  </div>
+                </div>
+                {holdProgress > 0 && (
+                  <p className="has-text-grey is-size-7 mt-2">Hold to confirm ({Math.round(holdProgress)}%)</p>
+                )}
+              </div>
+            )}
+            
             <div className="buttons is-centered">
-              {hasOpen ? (
-                <button disabled={isSubmitting} className={`button is-danger is-light ${isSubmitting?'is-loading':''}`} onClick={checkout}>Check Out</button>
-              ) : (
+              {!hasOpen && (
                 <button className="button is-light" onClick={() => {
                   localStorage.removeItem('currentSession');
                   setCurrentSession(null);
