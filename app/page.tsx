@@ -69,8 +69,8 @@ export default function Home(){
         <div className="content">
           {todaySummary.length === 0 && <p>No check-ins yet.</p>}
           {todaySummary.length > 0 && (
-            <div className="table-container">
-              <table className="table is-fullwidth is-striped is-hoverable">
+            <div className="table-container" style={{overflowX: 'auto', maxWidth: '100%'}}>
+              <table className="table is-striped is-hoverable" style={{minWidth: '600px'}}>
                 <thead>
                   <tr>
                     <th>Name</th>
