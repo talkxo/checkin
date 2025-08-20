@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { nowIST } from '@/lib/time';
+import { nowIST, hhmmIST } from '@/lib/time';
 
 export async function GET() {
   const now = nowIST();
@@ -54,8 +54,8 @@ export async function GET() {
       id: emp.id,
       full_name: emp.full_name,
       slug: emp.slug,
-      lastIn: lastIn ? new Date(lastIn).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : null,
-      lastOut: lastOut ? new Date(lastOut).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : null,
+      lastIn: lastIn ? hhmmIST(lastIn) : null,
+      lastOut: lastOut ? hhmmIST(lastOut) : null,
       workedHours: `${hours}h ${minutes}m`,
       mode,
       open

@@ -56,9 +56,12 @@ module.exports = {
           800: '#991b1b',
           900: '#7f1d1d',
         },
+        text: {
+          DEFAULT: '#222222',
+        },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Source Sans Pro', 'system-ui', 'sans-serif'],
       },
     },
   },

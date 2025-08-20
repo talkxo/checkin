@@ -215,7 +215,8 @@ export default function HomePage(){
       setCurrentSession(j);
       setHasOpen(true);
       setShowNameInput(false);
-      setMsg(`Checked in at ${new Date(j.session.checkin_ts).toLocaleTimeString()}`);
+      const message = `Checked in at ${new Date(j.session.checkin_ts).toLocaleTimeString()}`;
+      setMsg(message);
       fetchMySummary(j.employee.slug);
       fetchTodaySummary();
     } else {
@@ -235,7 +236,8 @@ export default function HomePage(){
       setCurrentSession(null);
       setHasOpen(false);
       setElapsedTime(0);
-      setMsg(`Checked out at ${new Date(j.checkout_ts).toLocaleTimeString()}`);
+      const message = `Checked out at ${new Date(j.checkout_ts).toLocaleTimeString()}`;
+      setMsg(message);
       fetchTodaySummary();
     } else {
       setMsg(j.error || 'Error');
@@ -266,7 +268,7 @@ export default function HomePage(){
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-white p-4">
       <div className="max-w-md mx-auto">
         {/* Current Time Display */}
         <div className="text-center mb-8">
@@ -276,14 +278,14 @@ export default function HomePage(){
         
         {showNameInput ? (
           // Name Input Screen
-          <div className="card">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-2xl font-semibold text-center mb-6 text-gray-800">Welcome to TalkXO Check-in</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Enter your name</label>
                 <input
                   type="text"
-                  className="input-field"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Type your name"
                   value={name}
                   onChange={(e) => {
@@ -318,7 +320,7 @@ export default function HomePage(){
                 </div>
               )}
               <button 
-                className="btn-primary w-full"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50"
                 onClick={handleNameSubmit}
                 disabled={!name.trim()}
               >
@@ -328,91 +330,113 @@ export default function HomePage(){
           </div>
         ) : (
           // Main Check-in/out Screen
-          <div className="card">
-            {/* User Profile Header */}
-            {currentSession && (
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                    {currentSession.employee.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-800">{currentSession.employee.full_name}</p>
-                    <p className="text-sm text-gray-500">Ready to check in/out</p>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="space-y-6">
+              {/* User Profile Header */}
+              {currentSession && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                      {currentSession.employee.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">{currentSession.employee.full_name}</p>
+                      <p className="text-sm text-gray-500">Ready to check in/out</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* Location Tag */}
-            <div className="text-center mb-6">
-              {isLocationLoading ? (
-                <span className="tag tag-info">
-                  <i className="fas fa-spinner fa-spin mr-2"></i>
-                  Detecting location...
-                </span>
-              ) : (
-                <span className={`tag ${mode === 'office' ? 'tag-primary' : 'tag-info'}`}>
-                  <i className={`fas ${mode === 'office' ? 'fa-building' : 'fa-home'} mr-2`}></i>
-                  {location}
-                </span>
               )}
-            </div>
 
-            {/* Large Action Button */}
-            <div className="text-center mb-6">
-              <div 
-                className="w-32 h-32 mx-auto rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 shadow-lg hover:shadow-xl"
-                style={{
-                  background: holdProgress > 0 
-                    ? `conic-gradient(from 0deg, ${hasOpen ? '#ef4444' : '#22c55e'} ${holdProgress * 3.6}deg, #f3f4f6 ${holdProgress * 3.6}deg)`
-                    : `linear-gradient(135deg, ${hasOpen ? '#ef4444' : '#22c55e'}, ${hasOpen ? '#dc2626' : '#16a34a'})`,
-                  boxShadow: holdProgress > 0 ? `0 0 20px rgba(${hasOpen ? '239, 68, 68' : '34, 197, 94'}, 0.5)` : '0 10px 25px rgba(0,0,0,0.15)'
-                }}
-                onMouseDown={handleHoldStart}
-                onMouseUp={handleHoldEnd}
-                onMouseLeave={handleHoldEnd}
-                onTouchStart={handleHoldStart}
-                onTouchEnd={handleHoldEnd}
-              >
-                <div className="text-white text-center">
-                  <i className={`fas ${hasOpen ? 'fa-sign-out-alt' : 'fa-sign-in-alt'} text-2xl mb-2`}></i>
-                  <p className="font-semibold text-sm">
-                    {hasOpen ? 'Clock Out' : 'Clock In'}
-                  </p>
+              {/* Location Tag */}
+              <div className="text-center">
+                {isLocationLoading ? (
+                  <span className="inline-flex items-center px-3 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                    <i className="fas fa-spinner fa-spin mr-2"></i>
+                    Detecting location...
+                  </span>
+                ) : (
+                  <span className={`inline-flex items-center px-3 py-2 rounded-full text-sm font-medium ${
+                    mode === 'office' ? 'bg-blue-100 text-blue-800' : 'bg-blue-100 text-blue-800'
+                  }`}>
+                    <i className={`fas ${mode === 'office' ? 'fa-building' : 'fa-home'} mr-2`}></i>
+                    {location}
+                  </span>
+                )}
+              </div>
+
+              {/* Large Action Button */}
+              <div className="text-center">
+                <div className="space-y-4">
+                  <div 
+                    className="w-32 h-32 mx-auto rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 shadow-lg hover:shadow-xl"
+                    style={{
+                      background: holdProgress > 0 
+                        ? `conic-gradient(from 0deg, ${hasOpen ? '#ef4444' : '#22c55e'} ${holdProgress * 3.6}deg, #f3f4f6 ${holdProgress * 3.6}deg)`
+                        : `linear-gradient(135deg, ${hasOpen ? '#ef4444' : '#22c55e'}, ${hasOpen ? '#dc2626' : '#16a34a'})`,
+                      boxShadow: holdProgress > 0 ? `0 0 20px rgba(${hasOpen ? '239, 68, 68' : '34, 197, 94'}, 0.5)` : '0 10px 25px rgba(0,0,0,0.15)'
+                    }}
+                    onMouseDown={handleHoldStart}
+                    onMouseUp={handleHoldEnd}
+                    onMouseLeave={handleHoldEnd}
+                    onTouchStart={handleHoldStart}
+                    onTouchEnd={handleHoldEnd}
+                  >
+                    <div className="text-white text-center">
+                      <i className={`fas ${hasOpen ? 'fa-sign-out-alt' : 'fa-sign-in-alt'} text-2xl mb-2`}></i>
+                      <p className="font-semibold text-sm">
+                        {hasOpen ? 'Clock Out' : 'Clock In'}
+                      </p>
+                    </div>
+                  </div>
+                  {holdProgress > 0 && (
+                    <p className="text-sm text-gray-600">Hold to confirm ({Math.round(holdProgress)}%)</p>
+                  )}
                 </div>
               </div>
-              {holdProgress > 0 && (
-                <p className="text-sm text-gray-600 mt-2">Hold to confirm ({Math.round(holdProgress)}%)</p>
+
+              {/* Session Timer */}
+              {hasOpen && currentSession && (
+                <div className="text-center">
+                  <div className="space-y-2">
+                    <p className="text-gray-600 text-sm">
+                      Session started at {new Date(currentSession.session.checkin_ts).toLocaleTimeString()}
+                    </p>
+                    <p className="text-3xl font-bold text-green-600">{formatTime(elapsedTime)}</p>
+                    <p className="text-sm text-gray-500">Elapsed time</p>
+                  </div>
+                </div>
+              )}
+
+              {msg && (
+                <p className="text-center text-sm text-gray-600">
+                  {msg}
+                </p>
+              )}
+
+              {me && (
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Last In: {me.lastIn ? new Date(me.lastIn).toLocaleTimeString() : 'N/A'}
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                    Last Out: {me.lastOut ? new Date(me.lastOut).toLocaleTimeString() : 'N/A'}
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Worked: {me.workedMinutes}m
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Mode: {me.mode}
+                  </span>
+                </div>
               )}
             </div>
-
-            {/* Session Timer */}
-            {hasOpen && currentSession && (
-              <div className="text-center mb-6">
-                <p className="text-gray-600 text-sm">Session started at {new Date(currentSession.session.checkin_ts).toLocaleTimeString()}</p>
-                <p className="text-3xl font-bold text-green-600">{formatTime(elapsedTime)}</p>
-                <p className="text-sm text-gray-500">Elapsed time</p>
-              </div>
-            )}
-
-            {msg && <p className="text-center text-sm text-gray-600 mb-4">{msg}</p>}
-
-            {me && (
-              <div className="flex flex-wrap gap-2 justify-center">
-                <span className="tag tag-info">Last In: {me.lastIn ? new Date(me.lastIn).toLocaleTimeString() : 'N/A'}</span>
-                <span className="tag tag-warning">Last Out: {me.lastOut ? new Date(me.lastOut).toLocaleTimeString() : 'N/A'}</span>
-                <span className="tag tag-success">Worked: {me.workedMinutes}m</span>
-                <span className="tag tag-primary">Mode: {me.mode}</span>
-              </div>
-            )}
           </div>
         )}
 
         {/* Today's Snapshot */}
         <div className="mt-8">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Today's Snapshot</h2>
-          <div className="card">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             {todaySummary.length === 0 ? (
               <p className="text-gray-500 text-center">No check-ins yet.</p>
             ) : (
@@ -434,33 +458,47 @@ export default function HomePage(){
                         <td className="py-2 font-medium text-gray-800">{emp.full_name}</td>
                         <td className="py-2">
                           {emp.lastIn ? (
-                            <span className="tag tag-success">{emp.lastIn}</span>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              {emp.lastIn}
+                            </span>
                           ) : (
                             <span className="text-gray-400">—</span>
                           )}
                         </td>
                         <td className="py-2">
                           {emp.lastOut ? (
-                            <span className="tag tag-warning">{emp.lastOut}</span>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                              {emp.lastOut}
+                            </span>
                           ) : (
                             <span className="text-gray-400">—</span>
                           )}
                         </td>
                         <td className="py-2">
-                          <span className="tag tag-info">{emp.workedHours}</span>
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {emp.workedHours}
+                          </span>
                         </td>
                         <td className="py-2">
-                          <span className={`tag ${emp.mode === 'office' ? 'tag-primary' : 'tag-info'}`}>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            emp.mode === 'office' ? 'bg-blue-100 text-blue-800' : 'bg-blue-100 text-blue-800'
+                          }`}>
                             {emp.mode}
                           </span>
                         </td>
                         <td className="py-2">
                           {emp.open ? (
-                            <span className="tag tag-danger">Active</span>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              Active
+                            </span>
                           ) : emp.lastIn ? (
-                            <span className="tag tag-success">Complete</span>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Complete
+                            </span>
                           ) : (
-                            <span className="tag tag-secondary">Not Started</span>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              Not Started
+                            </span>
                           )}
                         </td>
                       </tr>

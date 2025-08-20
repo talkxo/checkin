@@ -91,6 +91,7 @@ export default function AdminPage() {
       localStorage.setItem('adminAuth', 'true');
       setIsAuthenticated(true);
       fetchDashboardData();
+      alert('Login successful!');
     } else {
       alert('Invalid credentials');
     }
@@ -269,35 +270,41 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full">
-          <div className="card">
-            <h1 className="text-2xl font-semibold text-center mb-6 text-gray-800">Admin Login</h1>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h1 className="text-2xl font-semibold text-center mb-6 text-gray-800">
+              Admin Login
+            </h1>
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Username
+                </label>
                 <input
-                  className="input-field"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password
+                </label>
                 <input
-                  className="input-field"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <button
-                className={`btn-primary w-full ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 type="submit"
                 disabled={isLoading}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50"
               >
                 {isLoading ? 'Logging in...' : 'Login'}
               </button>
@@ -314,7 +321,10 @@ export default function AdminPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
-          <button className="btn-secondary" onClick={handleLogout}>
+          <button 
+            onClick={handleLogout}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+          >
             <i className="fas fa-sign-out-alt mr-2"></i>
             Logout
           </button>
@@ -329,7 +339,7 @@ export default function AdminPage() {
                 key={range}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   timeRange === range
-                    ? 'bg-primary-600 text-white'
+                    ? 'bg-blue-600 text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
                 onClick={() => setTimeRange(range as any)}
@@ -343,19 +353,19 @@ export default function AdminPage() {
         {/* Stats Cards */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="card text-center">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
               <p className="text-sm font-medium text-gray-600 mb-2">Total Employees</p>
               <p className="text-3xl font-bold text-gray-800">{stats.totalEmployees}</p>
             </div>
-            <div className="card text-center">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
               <p className="text-sm font-medium text-gray-600 mb-2">Active Today</p>
-              <p className="text-3xl font-bold text-success-600">{stats.activeToday}</p>
+              <p className="text-3xl font-bold text-green-600">{stats.activeToday}</p>
             </div>
-            <div className="card text-center">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
               <p className="text-sm font-medium text-gray-600 mb-2">In Office</p>
-              <p className="text-3xl font-bold text-primary-600">{stats.officeToday}</p>
+              <p className="text-3xl font-bold text-blue-600">{stats.officeToday}</p>
             </div>
-            <div className="card text-center">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
               <p className="text-sm font-medium text-gray-600 mb-2">Remote</p>
               <p className="text-3xl font-bold text-purple-600">{stats.remoteToday}</p>
             </div>
@@ -365,7 +375,7 @@ export default function AdminPage() {
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Users vs Days Chart */}
-          <div className="card">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Users vs Days Worked</h3>
             <div className="h-80">
               <Bar data={usersVsDaysData} options={barChartOptions} />
@@ -373,7 +383,7 @@ export default function AdminPage() {
           </div>
 
           {/* Time Spent Chart */}
-          <div className="card">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Time Spent: Office vs Remote</h3>
             <div className="h-80">
               <Bar data={timeSpentData} options={barChartOptions} />
@@ -383,7 +393,7 @@ export default function AdminPage() {
 
         {/* Attendance Trend Chart */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2 card">
+          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Attendance Trend</h3>
             <div className="h-80">
               <Line data={chartData} options={chartOptions} />
@@ -391,7 +401,7 @@ export default function AdminPage() {
           </div>
 
           {/* Today's Snapshot */}
-          <div className="card">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Today's Snapshot</h3>
             <div className="max-h-80 overflow-y-auto space-y-3">
               {todaySnapshot.length === 0 ? (
@@ -407,10 +417,16 @@ export default function AdminPage() {
                         </p>
                       </div>
                       <div className="flex gap-1">
-                        <span className={`tag ${emp.mode === 'office' ? 'tag-primary' : 'tag-info'}`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          emp.mode === 'office' ? 'bg-blue-100 text-blue-800' : 'bg-blue-100 text-blue-800'
+                        }`}>
                           {emp.mode}
                         </span>
-                        {emp.open && <span className="tag tag-danger">Active</span>}
+                        {emp.open && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            Active
+                          </span>
+                        )}
                       </div>
                     </div>
                     {emp.workedHours !== '0h 0m' && (
@@ -424,7 +440,7 @@ export default function AdminPage() {
         </div>
 
         {/* User Statistics Table */}
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Individual User Statistics</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -449,22 +465,34 @@ export default function AdminPage() {
                     <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 font-medium text-gray-800">{user.full_name}</td>
                       <td className="py-3">
-                        <span className="tag tag-info">{user.daysWorked}</span>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {user.daysWorked}
+                        </span>
                       </td>
                       <td className="py-3">
-                        <span className="tag tag-primary">{user.officeHours}h</span>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {user.officeHours}h
+                        </span>
                       </td>
                       <td className="py-3">
-                        <span className="tag tag-info">{user.remoteHours}h</span>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {user.remoteHours}h
+                        </span>
                       </td>
                       <td className="py-3">
-                        <span className="tag tag-success">{user.totalHours}h</span>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          {user.totalHours}h
+                        </span>
                       </td>
                       <td className="py-3">
-                        <span className="tag tag-primary">{officePercentage}%</span>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {officePercentage}%
+                        </span>
                       </td>
                       <td className="py-3">
-                        <span className="tag tag-info">{remotePercentage}%</span>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {remotePercentage}%
+                        </span>
                       </td>
                     </tr>
                   );
