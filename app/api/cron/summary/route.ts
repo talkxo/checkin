@@ -12,5 +12,6 @@ export async function POST(){
   await postCampfire(lines.join('\n'));
   return NextResponse.json({ ok: true, office: office.length, remote: remote.length });
 }
+export const dynamic = 'force-dynamic';
 
 

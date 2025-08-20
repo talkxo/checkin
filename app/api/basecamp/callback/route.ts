@@ -11,5 +11,6 @@ export async function GET(req: NextRequest){
   await setSetting('basecamp_oauth', { access_token: tok.access_token, refresh_token: tok.refresh_token, expires_at: Date.now() + (tok.expires_in ?? 3600)*1000 });
   return NextResponse.redirect(new URL('/', base));
 }
+export const dynamic = 'force-dynamic';
 
 

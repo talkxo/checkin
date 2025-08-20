@@ -16,5 +16,6 @@ export async function POST(req: NextRequest){
   if(error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ employee: { id: emp.id, full_name: emp.full_name, slug: emp.slug }, session: data });
 }
+export const dynamic = 'force-dynamic';
 
 
