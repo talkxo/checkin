@@ -1,10 +1,5 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LogOut } from 'lucide-react';
 
 export default function HomePage(){
@@ -344,37 +339,39 @@ export default function HomePage(){
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background p-4">
-        <div className="max-w-md mx-auto">
-          <div className="text-center">
-            <p className="text-muted-foreground">Loading...</p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="preline-card p-8 text-center fade-in">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
+    <div className="min-h-screen p-4">
       <div className="max-w-md mx-auto">
         {/* Current Time Display */}
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-foreground mb-2">{timeString}</h1>
-          <p className="text-muted-foreground">{dateString}</p>
+        <div className="text-center mb-8 slide-up">
+          <h1 className="text-6xl font-bold text-white mb-2 drop-shadow-lg">{timeString}</h1>
+          <p className="text-white/90 text-lg">{dateString}</p>
         </div>
         
         {showNameInput ? (
           // Name Input Screen
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-center">Welcome to TalkXO Check-in</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <div className="preline-card p-8 slide-up">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold gradient-text mb-2">Welcome to TalkXO</h2>
+              <p className="text-gray-600">Enter your name to get started</p>
+            </div>
+            
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Enter your name</label>
-                <Input
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Your Name</label>
+                <input
                   type="text"
-                  placeholder="Type your name"
+                  className="preline-input"
+                  placeholder="Type your full name"
                   value={name}
                   onChange={(e) => {
                     setName(e.target.value);
@@ -388,13 +385,14 @@ export default function HomePage(){
                   autoFocus
                 />
               </div>
+              
               {suggestions.length > 0 && (
                 <div className="relative">
-                  <div className="absolute z-10 w-full bg-background border border-border rounded-lg shadow-lg">
+                  <div className="absolute z-10 w-full bg-white rounded-xl shadow-lg border border-gray-200 max-h-48 overflow-y-auto">
                     {suggestions.map((emp) => (
                       <button
                         key={emp.id}
-                        className="w-full text-left px-4 py-2 hover:bg-muted focus:bg-muted focus:outline-none"
+                        className="w-full text-left px-4 py-3 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors"
                         onClick={() => {
                           setName(emp.full_name);
                           setSuggestions([]);
@@ -407,209 +405,206 @@ export default function HomePage(){
                   </div>
                 </div>
               )}
-              <Button 
-                className="w-full"
+              
+              <button 
+                className="preline-button-primary w-full"
                 onClick={handleNameSubmit}
                 disabled={!name.trim()}
               >
                 Continue
-              </Button>
-            </CardContent>
-          </Card>
+              </button>
+            </div>
+          </div>
         ) : (
           // Main Check-in/out Screen
-          <Card>
-            <CardContent className="space-y-6 pt-6">
-              {/* User Profile Header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                    {name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">{name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {hasOpen ? 'Currently checked in' : 'Ready to check in'}
+          <div className="preline-card p-8 slide-up">
+            {/* User Profile Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                  {name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-lg">{name}</p>
+                  <p className="text-sm text-gray-600">
+                    {hasOpen ? 'Currently checked in' : 'Ready to check in'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Location Tag */}
+            <div className="text-center mb-6">
+              {isLocationLoading ? (
+                <span className="preline-badge preline-badge-outline">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                  Detecting location...
+                </span>
+              ) : (
+                <span className="preline-badge preline-badge-outline">
+                  <i className={`fas ${mode === 'office' ? 'fa-building' : 'fa-home'} mr-2`}></i>
+                  {location}
+                </span>
+              )}
+            </div>
+
+            {/* Large Action Button */}
+            <div className="text-center mb-6">
+              <div className="space-y-4">
+                <div 
+                  className="w-36 h-36 mx-auto rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 shadow-2xl hover:shadow-3xl"
+                  style={{
+                    background: holdProgress > 0 
+                      ? `conic-gradient(from 0deg, ${hasOpen ? '#ef4444' : '#22c55e'} ${holdProgress * 3.6}deg, #f3f4f6 ${holdProgress * 3.6}deg)`
+                      : `linear-gradient(135deg, ${hasOpen ? '#ef4444' : '#22c55e'}, ${hasOpen ? '#dc2626' : '#16a34a'})`,
+                    boxShadow: holdProgress > 0 ? `0 0 30px rgba(${hasOpen ? '239, 68, 68' : '34, 197, 94'}, 0.6)` : '0 20px 40px rgba(0,0,0,0.2)'
+                  }}
+                  onMouseDown={handleHoldStart}
+                  onMouseUp={handleHoldEnd}
+                  onMouseLeave={handleHoldEnd}
+                  onTouchStart={handleHoldStart}
+                  onTouchEnd={handleHoldEnd}
+                >
+                  <div className="text-white text-center">
+                    <i className={`fas ${hasOpen ? 'fa-sign-out-alt' : 'fa-sign-in-alt'} text-3xl mb-3`}></i>
+                    <p className="font-bold text-lg">
+                      {hasOpen ? 'Clock Out' : 'Clock In'}
                     </p>
                   </div>
                 </div>
-              </div>
-
-              {/* Location Tag */}
-              <div className="text-center">
-                {isLocationLoading ? (
-                  <Badge variant="secondary">
-                    <i className="fas fa-spinner fa-spin mr-2"></i>
-                    Detecting location...
-                  </Badge>
-                ) : (
-                  <Badge variant="outline">
-                    <i className={`fas ${mode === 'office' ? 'fa-building' : 'fa-home'} mr-2`}></i>
-                    {location}
-                  </Badge>
+                {holdProgress > 0 && (
+                  <p className="text-sm text-gray-600">Hold to confirm ({Math.round(holdProgress)}%)</p>
                 )}
               </div>
+            </div>
 
-              {/* Large Action Button */}
-              <div className="text-center">
-                <div className="space-y-4">
-                  <div 
-                    className="w-32 h-32 mx-auto rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 shadow-lg hover:shadow-xl"
-                    style={{
-                      background: holdProgress > 0 
-                        ? `conic-gradient(from 0deg, ${hasOpen ? '#ef4444' : '#22c55e'} ${holdProgress * 3.6}deg, #f3f4f6 ${holdProgress * 3.6}deg)`
-                        : `linear-gradient(135deg, ${hasOpen ? '#ef4444' : '#22c55e'}, ${hasOpen ? '#dc2626' : '#16a34a'})`,
-                      boxShadow: holdProgress > 0 ? `0 0 20px rgba(${hasOpen ? '239, 68, 68' : '34, 197, 94'}, 0.5)` : '0 10px 25px rgba(0,0,0,0.15)'
-                    }}
-                    onMouseDown={handleHoldStart}
-                    onMouseUp={handleHoldEnd}
-                    onMouseLeave={handleHoldEnd}
-                    onTouchStart={handleHoldStart}
-                    onTouchEnd={handleHoldEnd}
-                  >
-                    <div className="text-white text-center">
-                      <i className={`fas ${hasOpen ? 'fa-sign-out-alt' : 'fa-sign-in-alt'} text-2xl mb-2`}></i>
-                      <p className="font-semibold text-sm">
-                        {hasOpen ? 'Clock Out' : 'Clock In'}
-                      </p>
-                    </div>
-                  </div>
-                  {holdProgress > 0 && (
-                    <p className="text-sm text-muted-foreground">Hold to confirm ({Math.round(holdProgress)}%)</p>
-                  )}
+            {/* Session Timer */}
+            {hasOpen && currentSession && (
+              <div className="text-center mb-6">
+                <div className="space-y-2">
+                  <p className="text-gray-600 text-sm">
+                    Session started at {new Date(currentSession.session.checkin_ts).toLocaleTimeString()}
+                  </p>
+                  <p className="text-4xl font-bold text-green-600">{formatTime(elapsedTime)}</p>
+                  <p className="text-sm text-gray-600">Elapsed time</p>
                 </div>
               </div>
+            )}
 
-              {/* Session Timer */}
-              {hasOpen && currentSession && (
-                <div className="text-center">
-                  <div className="space-y-2">
-                    <p className="text-muted-foreground text-sm">
-                      Session started at {new Date(currentSession.session.checkin_ts).toLocaleTimeString()}
-                    </p>
-                    <p className="text-3xl font-bold text-green-600">{formatTime(elapsedTime)}</p>
-                    <p className="text-sm text-muted-foreground">Elapsed time</p>
-                  </div>
-                </div>
-              )}
-
-              {msg && (
-                <p className="text-center text-sm text-muted-foreground">
+            {msg && (
+              <div className="text-center mb-6">
+                <p className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
                   {msg}
                 </p>
-              )}
+              </div>
+            )}
 
-              {me && (
-                <div className="flex flex-wrap gap-2 justify-center">
-                  <Badge variant="secondary">
-                    Last In: {me.lastIn ? new Date(me.lastIn).toLocaleTimeString() : 'N/A'}
-                  </Badge>
-                  <Badge variant="outline">
-                    Last Out: {me.lastOut ? new Date(me.lastOut).toLocaleTimeString() : 'N/A'}
-                  </Badge>
-                  <Badge variant="default">
-                    Worked: {me.workedMinutes}m
-                  </Badge>
-                  <Badge variant="secondary">
-                    Mode: {me.mode}
-                  </Badge>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            {me && (
+              <div className="flex flex-wrap gap-2 justify-center mb-6">
+                <span className="preline-badge preline-badge-info">
+                  Last In: {me.lastIn ? new Date(me.lastIn).toLocaleTimeString() : 'N/A'}
+                </span>
+                <span className="preline-badge preline-badge-outline">
+                  Last Out: {me.lastOut ? new Date(me.lastOut).toLocaleTimeString() : 'N/A'}
+                </span>
+                <span className="preline-badge preline-badge-success">
+                  Worked: {me.workedMinutes}m
+                </span>
+                <span className="preline-badge preline-badge-primary">
+                  Mode: {me.mode}
+                </span>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Today's Snapshot */}
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold text-foreground mb-4">Today's Snapshot</h2>
-          <Card>
-            <CardContent className="p-0">
-              {todaySummary.length === 0 ? (
-                <div className="p-6 text-center">
-                  <p className="text-muted-foreground">No check-ins yet.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>In</TableHead>
-                        <TableHead>Out</TableHead>
-                        <TableHead>Hours</TableHead>
-                        <TableHead>Mode</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {todaySummary.map((emp: any) => (
-                        <TableRow key={emp.id}>
-                          <TableCell className="font-medium">{emp.full_name}</TableCell>
-                          <TableCell>
-                            {emp.lastIn ? (
-                              <Badge variant="default" className="text-xs">
-                                {emp.lastIn}
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {emp.lastOut ? (
-                              <Badge variant="outline" className="text-xs">
-                                {emp.lastOut}
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary" className="text-xs">
-                              {emp.workedHours}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="text-xs">
-                              {emp.mode}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {emp.open ? (
-                              <Badge variant="destructive" className="text-xs">
-                                Active
-                              </Badge>
-                            ) : emp.lastIn ? (
-                              <Badge variant="default" className="text-xs">
-                                Complete
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary" className="text-xs">
-                                Not Started
-                              </Badge>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        <div className="mt-8 slide-up">
+          <h2 className="text-xl font-bold text-white mb-4 drop-shadow-lg">Today's Snapshot</h2>
+          <div className="preline-card p-0 overflow-hidden">
+            {todaySummary.length === 0 ? (
+              <div className="p-8 text-center">
+                <p className="text-gray-500">No check-ins yet.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-gray-50 to-gray-100">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Name</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">In</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Out</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Hours</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Mode</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {todaySummary.map((emp: any) => (
+                      <tr key={emp.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 font-medium text-gray-900">{emp.full_name}</td>
+                        <td className="px-6 py-4">
+                          {emp.lastIn ? (
+                            <span className="preline-badge preline-badge-success text-xs">
+                              {emp.lastIn}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          {emp.lastOut ? (
+                            <span className="preline-badge preline-badge-outline text-xs">
+                              {emp.lastOut}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="preline-badge preline-badge-info text-xs">
+                            {emp.workedHours}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="preline-badge preline-badge-outline text-xs">
+                            {emp.mode}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {emp.open ? (
+                            <span className="preline-badge preline-badge-danger text-xs">
+                              Active
+                            </span>
+                          ) : emp.lastIn ? (
+                            <span className="preline-badge preline-badge-success text-xs">
+                              Complete
+                            </span>
+                          ) : (
+                            <span className="preline-badge preline-badge-outline text-xs">
+                              Not Started
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Logout Button */}
         {isLoggedIn && (
-          <div className="mt-8 text-center">
-            <Button 
-              variant="outline" 
-              size="sm" 
+          <div className="mt-8 text-center slide-up">
+            <button 
+              className="preline-button-secondary"
               onClick={handleLogout}
-              className="flex items-center gap-2"
             >
               <LogOut className="w-4 h-4" />
               Logout
-            </Button>
+            </button>
           </div>
         )}
       </div>
