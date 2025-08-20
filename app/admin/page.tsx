@@ -50,6 +50,17 @@ interface TodaySnapshot {
   open: boolean;
 }
 
+interface UserStats {
+  id: string;
+  full_name: string;
+  officeHours: number;
+  remoteHours: number;
+  totalHours: number;
+  daysWorked: number;
+  officeMinutes: number;
+  remoteMinutes: number;
+}
+
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
@@ -58,6 +69,7 @@ export default function AdminPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [todaySnapshot, setTodaySnapshot] = useState<TodaySnapshot[]>([]);
+  const [userStats, setUserStats] = useState<UserStats[]>([]);
   const [timeRange, setTimeRange] = useState<'week' | 'fortnight' | 'month' | '6m' | 'year'>('week');
   const router = useRouter();
 
@@ -108,6 +120,9 @@ export default function AdminPage() {
         setTodaySnapshot(snapshotData);
       }
 
+      // Fetch user stats
+      await fetchUserStats();
+
       // Fetch daily stats for charts
       await fetchDailyStats();
     } catch (error) {
@@ -127,13 +142,61 @@ export default function AdminPage() {
     }
   };
 
+  const fetchUserStats = async () => {
+    try {
+      const res = await fetch(`/api/admin/user-stats?range=${timeRange}`);
+      if (res.ok) {
+        const data = await res.json();
+        setUserStats(data);
+      }
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated) {
       fetchDailyStats();
+      fetchUserStats();
     }
   }, [timeRange, isAuthenticated]);
 
-  // Chart data
+  // Users vs Days Chart Data
+  const usersVsDaysData = {
+    labels: userStats.map(user => user.full_name),
+    datasets: [
+      {
+        label: 'Days Worked',
+        data: userStats.map(user => user.daysWorked),
+        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+        borderColor: 'rgb(59, 130, 246)',
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // Time Spent Chart Data
+  const timeSpentData = {
+    labels: userStats.map(user => user.full_name),
+    datasets: [
+      {
+        label: 'Office Hours',
+        data: userStats.map(user => user.officeHours),
+        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+        borderColor: 'rgb(59, 130, 246)',
+        borderWidth: 1,
+      },
+      {
+        label: 'Remote Hours',
+        data: userStats.map(user => user.remoteHours),
+        backgroundColor: 'rgba(147, 51, 234, 0.8)',
+        borderColor: 'rgb(147, 51, 234)',
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // Attendance Trend Chart Data
   const chartData = {
     labels: dailyStats.map(stat => {
       const date = new Date(stat.date);
@@ -185,6 +248,21 @@ export default function AdminPage() {
         ticks: {
           stepSize: 1,
         },
+      },
+    },
+  };
+
+  const barChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
       },
     },
   };
@@ -327,8 +405,29 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Charts */}
-        <div className="columns">
+        {/* Charts Section */}
+        <div className="columns is-multiline">
+          {/* Users vs Days Chart */}
+          <div className="column is-6">
+            <div className="box">
+              <h3 className="title is-5 mb-4">Users vs Days Worked</h3>
+              <div style={{ height: '300px', position: 'relative' }}>
+                <Bar data={usersVsDaysData} options={barChartOptions} />
+              </div>
+            </div>
+          </div>
+
+          {/* Time Spent Chart */}
+          <div className="column is-6">
+            <div className="box">
+              <h3 className="title is-5 mb-4">Time Spent: Office vs Remote</h3>
+              <div style={{ height: '300px', position: 'relative' }}>
+                <Bar data={timeSpentData} options={barChartOptions} />
+              </div>
+            </div>
+          </div>
+
+          {/* Attendance Trend Chart */}
           <div className="column is-8">
             <div className="box">
               <h3 className="title is-5 mb-4">Attendance Trend</h3>
@@ -337,6 +436,8 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
+
+          {/* Today's Snapshot */}
           <div className="column is-4">
             <div className="box">
               <h3 className="title is-5 mb-4">Today's Snapshot</h3>
@@ -374,6 +475,59 @@ export default function AdminPage() {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* User Statistics Table */}
+        <div className="box mt-5">
+          <h3 className="title is-5 mb-4">Individual User Statistics</h3>
+          <div className="table-container">
+            <table className="table is-striped is-hoverable is-fullwidth">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Days Worked</th>
+                  <th>Office Hours</th>
+                  <th>Remote Hours</th>
+                  <th>Total Hours</th>
+                  <th>Office %</th>
+                  <th>Remote %</th>
+                </tr>
+              </thead>
+              <tbody>
+                {userStats.map((user) => {
+                  const totalMinutes = user.officeMinutes + user.remoteMinutes;
+                  const officePercentage = totalMinutes > 0 ? Math.round((user.officeMinutes / totalMinutes) * 100) : 0;
+                  const remotePercentage = totalMinutes > 0 ? Math.round((user.remoteMinutes / totalMinutes) * 100) : 0;
+                  
+                  return (
+                    <tr key={user.id}>
+                      <td>
+                        <strong>{user.full_name}</strong>
+                      </td>
+                      <td>
+                        <span className="tag is-info is-light">{user.daysWorked}</span>
+                      </td>
+                      <td>
+                        <span className="tag is-primary is-light">{user.officeHours}h</span>
+                      </td>
+                      <td>
+                        <span className="tag is-link is-light">{user.remoteHours}h</span>
+                      </td>
+                      <td>
+                        <span className="tag is-success is-light">{user.totalHours}h</span>
+                      </td>
+                      <td>
+                        <span className="tag is-primary is-light">{officePercentage}%</span>
+                      </td>
+                      <td>
+                        <span className="tag is-link is-light">{remotePercentage}%</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
