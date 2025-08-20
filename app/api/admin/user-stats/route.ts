@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
       case 'month':
         startDate.setMonth(now.getMonth() - 1);
         break;
-      case '6m':
+      case '6months':
         startDate.setMonth(now.getMonth() - 6);
         break;
       case 'year':
@@ -74,12 +74,10 @@ export async function GET(req: NextRequest) {
       return {
         id: emp.id,
         full_name: emp.full_name,
+        totalHours: Math.round((officeMinutes + remoteMinutes) / 60 * 10) / 10,
         officeHours: Math.round(officeMinutes / 60 * 10) / 10,
         remoteHours: Math.round(remoteMinutes / 60 * 10) / 10,
-        totalHours: Math.round((officeMinutes + remoteMinutes) / 60 * 10) / 10,
-        daysWorked: totalDays,
-        officeMinutes,
-        remoteMinutes
+        daysPresent: totalDays
       };
     }) || [];
 

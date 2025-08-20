@@ -2,8 +2,11 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { nowIST } from '@/lib/time';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const range = searchParams.get('range') || 'week';
+    
     const now = nowIST();
     const start = new Date(now);
     start.setHours(0, 0, 0, 0);
@@ -24,8 +27,8 @@ export async function GET() {
 
     // Calculate stats
     const activeToday = todaySessions?.length || 0;
-    const officeToday = todaySessions?.filter(s => s.mode === 'office').length || 0;
-    const remoteToday = todaySessions?.filter(s => s.mode === 'remote').length || 0;
+    const officeCount = todaySessions?.filter(s => s.mode === 'office').length || 0;
+    const remoteCount = todaySessions?.filter(s => s.mode === 'remote').length || 0;
 
     // Calculate average work hours for today
     let totalWorkMinutes = 0;
@@ -43,14 +46,14 @@ export async function GET() {
       }
     }
 
-    const avgWorkHours = completedSessions > 0 ? Math.round(totalWorkMinutes / completedSessions / 60 * 10) / 10 : 0;
+    const averageHours = completedSessions > 0 ? Math.round(totalWorkMinutes / completedSessions / 60 * 10) / 10 : 0;
 
     return NextResponse.json({
       totalEmployees: totalEmployees || 0,
       activeToday,
-      officeToday,
-      remoteToday,
-      avgWorkHours
+      officeCount,
+      remoteCount,
+      averageHours
     });
   } catch (error) {
     console.error('Error fetching admin stats:', error);

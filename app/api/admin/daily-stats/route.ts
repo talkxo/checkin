@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
       case 'month':
         startDate.setMonth(now.getMonth() - 1);
         break;
-      case '6m':
+      case '6months':
         startDate.setMonth(now.getMonth() - 6);
         break;
       case 'year':
@@ -31,6 +31,12 @@ export async function GET(req: NextRequest) {
         startDate.setDate(now.getDate() - 7);
     }
 
+    // Get all employees
+    const { data: employees } = await supabaseAdmin
+      .from('employees')
+      .select('id, full_name')
+      .order('full_name');
+
     // Get all sessions in the date range
     const { data: sessions } = await supabaseAdmin
       .from('sessions')
@@ -39,45 +45,75 @@ export async function GET(req: NextRequest) {
       .lte('checkin_ts', now.toISOString())
       .order('checkin_ts', { ascending: true });
 
-    // Group sessions by date
-    const dailyStats: { [key: string]: { office: number; remote: number; total: number } } = {};
+    // Calculate user stats for charts
+    const userStats = employees?.map(emp => {
+      const userSessions = sessions?.filter(s => s.employee_id === emp.id) || [];
+      const daysWorked = new Set();
+      let officeHours = 0;
+      let remoteHours = 0;
 
-    if (sessions) {
-      for (const session of sessions) {
-        const date = new Date(session.checkin_ts).toISOString().split('T')[0];
+      for (const session of userSessions) {
+        const sessionDate = new Date(session.checkin_ts).toISOString().split('T')[0];
+        daysWorked.add(sessionDate);
         
-        if (!dailyStats[date]) {
-          dailyStats[date] = { office: 0, remote: 0, total: 0 };
-        }
-        
-        dailyStats[date].total++;
+        const checkin = new Date(session.checkin_ts);
+        const checkout = session.checkout_ts ? new Date(session.checkout_ts) : now;
+        const diffMs = checkout.getTime() - checkin.getTime();
+        const diffHours = diffMs / (1000 * 60 * 60);
+
         if (session.mode === 'office') {
-          dailyStats[date].office++;
+          officeHours += diffHours;
         } else {
-          dailyStats[date].remote++;
+          remoteHours += diffHours;
         }
       }
-    }
 
-    // Convert to array format and fill missing dates
-    const result = [];
-    const currentDate = new Date(startDate);
-    
-    while (currentDate <= now) {
-      const dateStr = currentDate.toISOString().split('T')[0];
-      const stats = dailyStats[dateStr] || { office: 0, remote: 0, total: 0 };
-      
-      result.push({
-        date: dateStr,
-        office: stats.office,
-        remote: stats.remote,
-        total: stats.total
-      });
-      
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
+      return {
+        name: emp.full_name,
+        daysWorked: daysWorked.size,
+        officeHours: Math.round(officeHours * 10) / 10,
+        remoteHours: Math.round(remoteHours * 10) / 10
+      };
+    }) || [];
 
-    return NextResponse.json(result);
+    // Create chart data
+    const officeVsRemoteData = {
+      labels: userStats.map(u => u.name),
+      datasets: [
+        {
+          label: 'Office Days',
+          data: userStats.map(u => u.daysWorked),
+          backgroundColor: 'rgba(59, 130, 246, 0.8)',
+          borderColor: 'rgb(59, 130, 246)',
+          borderWidth: 1,
+        }
+      ],
+    };
+
+    const timeSpentData = {
+      labels: userStats.map(u => u.name),
+      datasets: [
+        {
+          label: 'Office Hours',
+          data: userStats.map(u => u.officeHours),
+          backgroundColor: 'rgba(59, 130, 246, 0.8)',
+          borderColor: 'rgb(59, 130, 246)',
+          borderWidth: 1,
+        },
+        {
+          label: 'Remote Hours',
+          data: userStats.map(u => u.remoteHours),
+          backgroundColor: 'rgba(147, 51, 234, 0.8)',
+          borderColor: 'rgb(147, 51, 234)',
+          borderWidth: 1,
+        }
+      ],
+    };
+
+    return NextResponse.json({
+      officeVsRemote: officeVsRemoteData,
+      timeSpent: timeSpentData
+    });
   } catch (error) {
     console.error('Error fetching daily stats:', error);
     return NextResponse.json({ error: 'Failed to fetch daily stats' }, { status: 500 });
