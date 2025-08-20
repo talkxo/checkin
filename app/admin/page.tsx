@@ -1,30 +1,30 @@
 "use client";
-import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Bar, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  PointElement,
-  LineElement,
   BarElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
+  PointElement,
 } from 'chart.js';
-import { Line, Bar } from 'react-chartjs-2';
+import { AlertTriangle, Clock, Users, TrendingUp, LogOut } from 'lucide-react';
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  PointElement,
-  LineElement,
   BarElement,
+  LineElement,
+  PointElement,
   Title,
   Tooltip,
   Legend
@@ -33,37 +33,18 @@ ChartJS.register(
 interface AdminStats {
   totalEmployees: number;
   activeToday: number;
-  officeToday: number;
-  remoteToday: number;
-  avgWorkHours: number;
-}
-
-interface DailyStats {
-  date: string;
-  office: number;
-  remote: number;
-  total: number;
-}
-
-interface TodaySnapshot {
-  id: string;
-  full_name: string;
-  lastIn: string | null;
-  lastOut: string | null;
-  workedHours: string;
-  mode: string;
-  open: boolean;
+  officeCount: number;
+  remoteCount: number;
+  averageHours: number;
 }
 
 interface UserStats {
   id: string;
   full_name: string;
+  totalHours: number;
   officeHours: number;
   remoteHours: number;
-  totalHours: number;
-  daysWorked: number;
-  officeMinutes: number;
-  remoteMinutes: number;
+  daysPresent: number;
 }
 
 export default function AdminPage() {
@@ -71,462 +52,438 @@ export default function AdminPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [timeRange, setTimeRange] = useState<'week' | 'fortnight' | 'month' | '6months' | 'year'>('week');
   const [stats, setStats] = useState<AdminStats | null>(null);
-  const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
-  const [todaySnapshot, setTodaySnapshot] = useState<TodaySnapshot[]>([]);
   const [userStats, setUserStats] = useState<UserStats[]>([]);
-  const [timeRange, setTimeRange] = useState<'week' | 'fortnight' | 'month' | '6m' | 'year'>('week');
-  const router = useRouter();
-
-  useEffect(() => {
-    // Check if already authenticated
-    const auth = localStorage.getItem('adminAuth');
-    if (auth === 'true') {
-      setIsAuthenticated(true);
-      fetchDashboardData();
-    }
-  }, []);
+  const [chartData, setChartData] = useState<any>(null);
+  
+  // Session reset states
+  const [showResetDialog, setShowResetDialog] = useState(false);
+  const [resetCountdown, setResetCountdown] = useState(5);
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetResult, setResetResult] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    
-    // Simple authentication - in production, this should be server-side
+    // Simple admin authentication (in production, use proper auth)
     if (username === 'admin' && password === 'talkxo2024') {
-      localStorage.setItem('adminAuth', 'true');
       setIsAuthenticated(true);
-      fetchDashboardData();
-      alert('Login successful!');
+      localStorage.setItem('admin_authenticated', 'true');
     } else {
       alert('Invalid credentials');
-    }
-    setIsLoading(false);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('adminAuth');
-    setIsAuthenticated(false);
-    setUsername('');
-    setPassword('');
-  };
-
-  const fetchDashboardData = async () => {
-    try {
-      // Fetch current stats
-      const statsRes = await fetch('/api/admin/stats');
-      if (statsRes.ok) {
-        const statsData = await statsRes.json();
-        setStats(statsData);
-      }
-
-      // Fetch today's snapshot
-      const snapshotRes = await fetch('/api/today/summary');
-      if (snapshotRes.ok) {
-        const snapshotData = await snapshotRes.json();
-        setTodaySnapshot(snapshotData);
-      }
-
-      // Fetch user stats
-      await fetchUserStats();
-
-      // Fetch daily stats for charts
-      await fetchDailyStats();
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    }
-  };
-
-  const fetchDailyStats = async () => {
-    try {
-      const res = await fetch(`/api/admin/daily-stats?range=${timeRange}`);
-      if (res.ok) {
-        const data = await res.json();
-        setDailyStats(data);
-      }
-    } catch (error) {
-      console.error('Error fetching daily stats:', error);
-    }
-  };
-
-  const fetchUserStats = async () => {
-    try {
-      const res = await fetch(`/api/admin/user-stats?range=${timeRange}`);
-      if (res.ok) {
-        const data = await res.json();
-        setUserStats(data);
-      }
-    } catch (error) {
-      console.error('Error fetching user stats:', error);
     }
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchDailyStats();
-      fetchUserStats();
+    const auth = localStorage.getItem('admin_authenticated');
+    if (auth === 'true') {
+      setIsAuthenticated(true);
     }
-  }, [timeRange, isAuthenticated]);
+  }, []);
 
-  // Users vs Days Chart Data
-  const usersVsDaysData = {
-    labels: userStats.map(user => user.full_name),
-    datasets: [
-      {
-        label: 'Days Worked',
-        data: userStats.map(user => user.daysWorked),
-        backgroundColor: 'rgba(59, 130, 246, 0.8)',
-        borderColor: 'rgb(59, 130, 246)',
-        borderWidth: 1,
-      },
-    ],
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadStats();
+      loadUserStats();
+      loadChartData();
+    }
+  }, [isAuthenticated, timeRange]);
+
+  const loadStats = async () => {
+    try {
+      const response = await fetch(`/api/admin/stats?range=${timeRange}`);
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
   };
 
-  // Time Spent Chart Data
-  const timeSpentData = {
-    labels: userStats.map(user => user.full_name),
-    datasets: [
-      {
-        label: 'Office Hours',
-        data: userStats.map(user => user.officeHours),
-        backgroundColor: 'rgba(59, 130, 246, 0.8)',
-        borderColor: 'rgb(59, 130, 246)',
-        borderWidth: 1,
-      },
-      {
-        label: 'Remote Hours',
-        data: userStats.map(user => user.remoteHours),
-        backgroundColor: 'rgba(147, 51, 234, 0.8)',
-        borderColor: 'rgb(147, 51, 234)',
-        borderWidth: 1,
-      },
-    ],
+  const loadUserStats = async () => {
+    try {
+      const response = await fetch(`/api/admin/user-stats?range=${timeRange}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUserStats(data);
+      }
+    } catch (error) {
+      console.error('Error loading user stats:', error);
+    }
   };
 
-  // Attendance Trend Chart Data
-  const chartData = {
-    labels: dailyStats.map(stat => {
-      const date = new Date(stat.date);
-      return date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric' 
+  const loadChartData = async () => {
+    try {
+      const response = await fetch(`/api/admin/daily-stats?range=${timeRange}`);
+      if (response.ok) {
+        const data = await response.json();
+        setChartData(data);
+      }
+    } catch (error) {
+      console.error('Error loading chart data:', error);
+    }
+  };
+
+  // Session reset functions
+  const handleResetSessions = () => {
+    setShowResetDialog(true);
+    setResetCountdown(5);
+    setResetResult(null);
+  };
+
+  const confirmReset = () => {
+    if (resetCountdown > 0) return;
+    
+    setIsResetting(true);
+    fetch('/api/admin/reset-sessions', { method: 'POST' })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          setResetResult(`Error: ${data.error}`);
+        } else {
+          setResetResult(`Success: ${data.message}`);
+          // Reload stats after reset
+          loadStats();
+          loadUserStats();
+        }
+      })
+      .catch(error => {
+        setResetResult(`Error: ${error.message}`);
+      })
+      .finally(() => {
+        setIsResetting(false);
+        setTimeout(() => {
+          setShowResetDialog(false);
+          setResetResult(null);
+        }, 3000);
       });
-    }),
-    datasets: [
-      {
-        label: 'Office',
-        data: dailyStats.map(stat => stat.office),
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.5)',
-        tension: 0.1,
-      },
-      {
-        label: 'Remote',
-        data: dailyStats.map(stat => stat.remote),
-        borderColor: 'rgb(147, 51, 234)',
-        backgroundColor: 'rgba(147, 51, 234, 0.5)',
-        tension: 0.1,
-      },
-      {
-        label: 'Total',
-        data: dailyStats.map(stat => stat.total),
-        borderColor: 'rgb(34, 197, 94)',
-        backgroundColor: 'rgba(34, 197, 94, 0.5)',
-        tension: 0.1,
-      },
-    ],
   };
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-      },
-      title: {
-        display: true,
-        text: `Attendance Trend - ${timeRange.charAt(0).toUpperCase() + timeRange.slice(1)} View`,
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          stepSize: 1,
-        },
-      },
-    },
+  const cancelReset = () => {
+    setShowResetDialog(false);
+    setResetCountdown(5);
+    setResetResult(null);
   };
 
-  const barChartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-      },
-    },
-  };
+  // Countdown effect
+  useEffect(() => {
+    if (showResetDialog && resetCountdown > 0) {
+      const timer = setTimeout(() => {
+        setResetCountdown(prev => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [showResetDialog, resetCountdown]);
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="max-w-md w-full">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-center">Admin Login</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Username
-                  </label>
-                  <Input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Password
-                  </label>
-                  <Input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Logging in...' : 'Login'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mb-4">
+              <AlertTriangle className="w-6 h-6 text-white" />
+            </div>
+            <CardTitle>Admin Access</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <Input
+                  type="text"
+                  placeholder="Username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading}
+              >
+                Login
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
-          <Button variant="outline" onClick={handleLogout}>
-            <i className="fas fa-sign-out-alt mr-2"></i>
-            Logout
-          </Button>
-        </div>
-
-        {/* Time Range Selector */}
-        <div className="mb-8">
-          <label className="block text-sm font-medium text-foreground mb-3">Time Range</label>
-          <div className="flex flex-wrap gap-2">
-            {['week', 'fortnight', 'month', '6m', 'year'].map((range) => (
-              <Button
-                key={range}
-                variant={timeRange === range ? "default" : "outline"}
-                onClick={() => setTimeRange(range as any)}
-              >
-                {range === '6m' ? '6 Months' : range.charAt(0).toUpperCase() + range.slice(1)}
-              </Button>
-            ))}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            <p className="text-gray-600">Attendance analytics and insights</p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="destructive"
+              onClick={handleResetSessions}
+              disabled={isResetting}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Reset All Sessions
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsAuthenticated(false);
+                localStorage.removeItem('admin_authenticated');
+              }}
+            >
+              Logout
+            </Button>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card>
-              <CardContent className="text-center pt-6">
-                <p className="text-sm font-medium text-muted-foreground mb-2">Total Employees</p>
-                <p className="text-3xl font-bold text-foreground">{stats.totalEmployees}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="text-center pt-6">
-                <p className="text-sm font-medium text-muted-foreground mb-2">Active Today</p>
-                <p className="text-3xl font-bold text-green-600">{stats.activeToday}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="text-center pt-6">
-                <p className="text-sm font-medium text-muted-foreground mb-2">In Office</p>
-                <p className="text-3xl font-bold text-blue-600">{stats.officeToday}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="text-center pt-6">
-                <p className="text-sm font-medium text-muted-foreground mb-2">Remote</p>
-                <p className="text-3xl font-bold text-purple-600">{stats.remoteToday}</p>
+        {/* Reset Dialog */}
+        {showResetDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <Card className="w-full max-w-md mx-4">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-red-600">
+                  <AlertTriangle className="w-5 h-5" />
+                  Reset All Sessions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {resetResult ? (
+                  <div className="text-center">
+                    <p className={resetResult.startsWith('Success') ? 'text-green-600' : 'text-red-600'}>
+                      {resetResult}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-center space-y-2">
+                      <p className="text-gray-700">
+                        This will check out all currently active sessions. This action cannot be undone.
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Are you sure you want to continue?
+                      </p>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        variant="destructive"
+                        onClick={confirmReset}
+                        disabled={resetCountdown > 0 || isResetting}
+                        className="flex-1"
+                      >
+                        {isResetting ? (
+                          <>
+                            <Clock className="w-4 h-4 mr-2 animate-spin" />
+                            Resetting...
+                          </>
+                        ) : resetCountdown > 0 ? (
+                          `Confirm (${resetCountdown}s)`
+                        ) : (
+                          'Confirm Reset'
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={cancelReset}
+                        disabled={isResetting}
+                        className="flex-1"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
         )}
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Users vs Days Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Users vs Days Worked</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-80">
-                <Bar data={usersVsDaysData} options={barChartOptions} />
-              </div>
-            </CardContent>
-          </Card>
+        {/* Time Range Selector */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              Time Range
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2 flex-wrap">
+              {[
+                { key: 'week', label: 'Week' },
+                { key: 'fortnight', label: 'Fortnight' },
+                { key: 'month', label: 'Month' },
+                { key: '6months', label: '6 Months' },
+                { key: 'year', label: 'Year' }
+              ].map((range) => (
+                <Button
+                  key={range.key}
+                  variant={timeRange === range.key ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setTimeRange(range.key as any)}
+                >
+                  {range.label}
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Time Spent Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Time Spent: Office vs Remote</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-80">
-                <Bar data={timeSpentData} options={barChartOptions} />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Attendance Trend Chart */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2">
+        {/* Stats Cards */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Attendance Trend</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-80">
-                  <Line data={chartData} options={chartOptions} />
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Employees</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.totalEmployees}</p>
+                  </div>
+                  <Users className="w-8 h-8 text-blue-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Active Today</p>
+                    <p className="text-2xl font-bold text-green-600">{stats.activeToday}</p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Office</p>
+                    <p className="text-2xl font-bold text-blue-600">{stats.officeCount}</p>
+                  </div>
+                  <Badge variant="default">Office</Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Remote</p>
+                    <p className="text-2xl font-bold text-purple-600">{stats.remoteCount}</p>
+                  </div>
+                  <Badge variant="secondary">Remote</Badge>
                 </div>
               </CardContent>
             </Card>
           </div>
+        )}
 
-          {/* Today's Snapshot */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Today's Snapshot</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="max-h-80 overflow-y-auto space-y-3">
-                {todaySnapshot.length === 0 ? (
-                  <p className="text-muted-foreground text-center">No check-ins today</p>
-                ) : (
-                  todaySnapshot.map((emp) => (
-                    <Card key={emp.id} className="p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <p className="font-medium text-sm text-foreground">{emp.full_name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {emp.lastIn ? `In: ${emp.lastIn}` : 'Not checked in'}
-                          </p>
-                        </div>
-                        <div className="flex gap-1">
-                          <Badge variant="outline" className="text-xs">
-                            {emp.mode}
-                          </Badge>
-                          {emp.open && (
-                            <Badge variant="destructive" className="text-xs">
-                              Active
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      {emp.workedHours !== '0h 0m' && (
-                        <p className="text-xs text-blue-600">Worked: {emp.workedHours}</p>
-                      )}
-                    </Card>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Charts */}
+        {chartData && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>User In Office vs Days</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Bar
+                  data={chartData.officeVsRemote}
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      legend: {
+                        position: 'top' as const,
+                      },
+                    },
+                  }}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Time Spent by Users</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Line
+                  data={chartData.timeSpent}
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      legend: {
+                        position: 'top' as const,
+                      },
+                    },
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* User Statistics Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Individual User Statistics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
+        {userStats.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Individual User Statistics</CardTitle>
+            </CardHeader>
+            <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Employee</TableHead>
-                    <TableHead>Days Worked</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Total Hours</TableHead>
                     <TableHead>Office Hours</TableHead>
                     <TableHead>Remote Hours</TableHead>
-                    <TableHead>Total Hours</TableHead>
-                    <TableHead>Office %</TableHead>
-                    <TableHead>Remote %</TableHead>
+                    <TableHead>Days Present</TableHead>
+                    <TableHead>Avg Hours/Day</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {userStats.map((user) => {
-                    const totalMinutes = user.officeMinutes + user.remoteMinutes;
-                    const officePercentage = totalMinutes > 0 ? Math.round((user.officeMinutes / totalMinutes) * 100) : 0;
-                    const remotePercentage = totalMinutes > 0 ? Math.round((user.remoteMinutes / totalMinutes) * 100) : 0;
-                    
-                    return (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.full_name}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">
-                            {user.daysWorked}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {user.officeHours}h
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {user.remoteHours}h
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="default">
-                            {user.totalHours}h
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {officePercentage}%
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {remotePercentage}%
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {userStats.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">{user.full_name}</TableCell>
+                      <TableCell>
+                        <Badge variant="default">{user.totalHours}h</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="default">{user.officeHours}h</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{user.remoteHours}h</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{user.daysPresent} days</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {user.daysPresent > 0 ? (user.totalHours / user.daysPresent).toFixed(1) : 0}h
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
