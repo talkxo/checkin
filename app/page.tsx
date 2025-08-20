@@ -70,8 +70,14 @@ export default function Home(){
             </div>
           </div>
           <div className="buttons is-centered">
-            <button disabled={pending || !name} className={`button is-primary ${pending?'is-loading':''}`} onClick={()=>act('office')}>Check In (Office)</button>
-            <button disabled={pending || !name} className={`button is-link is-light ${pending?'is-loading':''}`} onClick={()=>act('remote')}>Check In (Remote)</button>
+            {!hasOpen ? (
+              <>
+                <button disabled={pending || !name} className={`button is-primary ${pending?'is-loading':''}`} onClick={()=>act('office')}>Check In</button>
+                <button disabled={pending || !name} className={`button is-link is-light ${pending?'is-loading':''}`} onClick={()=>act('remote')}>Remote</button>
+              </>
+            ) : (
+              <button disabled={pending} className={`button is-danger is-light ${pending?'is-loading':''}`} onClick={checkout}>Check Out</button>
+            )}
           </div>
           {hasOpen && (
             <div className="has-text-success mb-2">Open session exists</div>

@@ -18,7 +18,7 @@ export default function UserPage(){
         <button disabled={pending} className={`button ${mode==='remote'?'is-link is-light':''}`} onClick={()=>setMode('remote')}>Remote</button>
       </div>
       <div className="buttons">
-        <button disabled={pending} className={`button is-success ${pending?'is-loading':''}`} onClick={check}>Check In</button>
+        <button disabled={pending} className={`button ${pending?'is-loading':''} ${mode==='office'?'is-success':'is-link'}`} onClick={check}>Check In</button>
         <button disabled={pending} className={`button is-danger is-light ${pending?'is-loading':''}`} onClick={out}>Check Out</button>
       </div>
       {msg && <p className="mt-3">{msg}</p>}

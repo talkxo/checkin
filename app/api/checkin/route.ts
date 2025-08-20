@@ -7,10 +7,7 @@ export async function POST(req: NextRequest){
   // Prefer slug lookup; fallback to ilike match; if none, create safely
   if(slug){ const { data } = await supabaseAdmin.from('employees').select('*').eq('slug', slug).maybeSingle(); emp = data as any; }
   if(!emp && fullName){ const { data } = await supabaseAdmin.from('employees').select('*').ilike('full_name', fullName).maybeSingle(); emp = data as any; }
-  if(!emp && fullName){
-    const ins = await supabaseAdmin.from('employees').insert({ full_name: fullName }).select('*').maybeSingle();
-    emp = ins.data as any;
-  }
+  // Do NOT auto-create employees here. Admin must add separately.
   if(!emp) return NextResponse.json({ error: 'employee not found' }, { status: 404 });
   const ip = req.headers.get('x-forwarded-for') || '0.0.0.0';
   const ua = req.headers.get('user-agent') || '';
