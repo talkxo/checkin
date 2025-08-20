@@ -261,14 +261,14 @@ export default function HomePage(){
         
         if (j.message && j.message.includes('already exists')) {
           // Existing session
-          const message = `You already have an open session from ${new Date(j.session.checkin_ts).toLocaleTimeString()}`;
+          const message = `You already have an open session from ${new Date(j.session.checkin_ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
           setMsg(message);
           showNotification('error', message);
         } else {
           // New session
-          const message = `Checked in at ${new Date(j.session.checkin_ts).toLocaleTimeString()}`;
+          const message = `Checked in at ${new Date(j.session.checkin_ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
           setMsg(message);
-          showNotification('success', `Checked in successfully at ${new Date(j.session.checkin_ts).toLocaleTimeString()}`);
+          showNotification('success', `Checked in successfully at ${new Date(j.session.checkin_ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`);
         }
         
         fetchMySummary(j.employee.slug);
@@ -303,9 +303,9 @@ export default function HomePage(){
         setCurrentSession(null);
         setHasOpen(false);
         setElapsedTime(0);
-        const message = `Checked out at ${new Date(j.checkout_ts).toLocaleTimeString()}`;
+        const message = `Checked out at ${new Date(j.checkout_ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
         setMsg(message);
-        showNotification('success', `Checked out successfully at ${new Date(j.checkout_ts).toLocaleTimeString()}`);
+        showNotification('success', `Checked out successfully at ${new Date(j.checkout_ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`);
         fetchTodaySummary();
       } else {
         setMsg(j.error || 'Error');
@@ -549,10 +549,10 @@ export default function HomePage(){
                   {me && (
                     <div className="flex flex-wrap gap-2 justify-center">
                       <span className="notion-badge notion-badge-info">
-                        Last In: {me.lastIn ? new Date(me.lastIn).toLocaleTimeString() : 'N/A'}
+                        Last In: {me.lastIn ? new Date(me.lastIn).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
                       </span>
                       <span className="notion-badge notion-badge-outline">
-                        Last Out: {me.lastOut ? new Date(me.lastOut).toLocaleTimeString() : 'N/A'}
+                        Last Out: {me.lastOut ? new Date(me.lastOut).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
                       </span>
                       <span className="notion-badge notion-badge-success">
                         Worked: {me.workedMinutes}m
