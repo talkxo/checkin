@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { LogOut } from 'lucide-react';
 
 export default function HomePage(){
   const [name,setName]=useState('');
@@ -25,6 +26,7 @@ export default function HomePage(){
   const [location, setLocation] = useState<string>('');
   const [isLocationLoading, setIsLocationLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(()=>{
     const saved = (typeof window!== 'undefined' ? (localStorage.getItem('mode') as any) : null) || 'office';
@@ -32,18 +34,29 @@ export default function HomePage(){
     
     // Check for existing session
     const session = localStorage.getItem('currentSession');
-    if (session) {
+    const savedName = localStorage.getItem('userName');
+    
+    if (session && savedName) {
       try {
         const sessionData = JSON.parse(session);
         setCurrentSession(sessionData);
-        setName(sessionData.employee.full_name);
+        setName(savedName);
+        setIsLoggedIn(true);
         setShowNameInput(false);
         // Check if session is still open
         checkSessionStatus(sessionData.employee.slug);
       } catch (e) {
         localStorage.removeItem('currentSession');
+        localStorage.removeItem('userName');
         setIsLoading(false);
       }
+    } else if (savedName) {
+      // User is logged in but no active session
+      setName(savedName);
+      setIsLoggedIn(true);
+      setShowNameInput(false);
+      fetchMySummary(savedName);
+      setIsLoading(false);
     } else {
       setIsLoading(false);
     }
@@ -149,11 +162,11 @@ export default function HomePage(){
       const data = await r.json();
       setHasOpen(data.ok);
       if (!data.ok) {
-        // Session closed, clear from localStorage
+        // Session closed, but keep user logged in
         localStorage.removeItem('currentSession');
         setCurrentSession(null);
         setElapsedTime(0);
-        setShowNameInput(true);
+        // Don't show name input - user stays logged in
       } else {
         // Session is still open, fetch summary
         fetchMySummary(slug);
@@ -238,7 +251,6 @@ export default function HomePage(){
         localStorage.setItem('currentSession', JSON.stringify(j));
         setCurrentSession(j);
         setHasOpen(true);
-        setShowNameInput(false);
         
         if (j.message && j.message.includes('already exists')) {
           // Existing session
@@ -297,14 +309,30 @@ export default function HomePage(){
 
   const handleNameSubmit = () => {
     if (name.trim()) {
+      // Store user name for persistence
+      localStorage.setItem('userName', name);
+      setIsLoggedIn(true);
       setShowNameInput(false);
       fetchMySummary(name);
     }
   };
 
+  const handleLogout = () => {
+    // Clear all session data
+    localStorage.removeItem('currentSession');
+    localStorage.removeItem('userName');
+    setCurrentSession(null);
+    setHasOpen(false);
+    setElapsedTime(0);
+    setName('');
+    setIsLoggedIn(false);
+    setShowNameInput(true);
+    setMe(null);
+    setMsg('');
+  };
+
   useEffect(()=>{ if(typeof window!== 'undefined') localStorage.setItem('mode', mode); },[mode]);
   useEffect(()=>{ fetchTodaySummary(); },[]);
-  useEffect(()=>{ if(me) fetchMySummary(me.slug); },[me]);
 
   // Format current time and date
   const timeString = currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -393,19 +421,19 @@ export default function HomePage(){
           <Card>
             <CardContent className="space-y-6 pt-6">
               {/* User Profile Header */}
-              {currentSession && (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                      {currentSession.employee.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground">{currentSession.employee.full_name}</p>
-                      <p className="text-sm text-muted-foreground">Ready to check in/out</p>
-                    </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    {name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">{name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {hasOpen ? 'Currently checked in' : 'Ready to check in'}
+                    </p>
                   </div>
                 </div>
-              )}
+              </div>
 
               {/* Location Tag */}
               <div className="text-center">
@@ -569,6 +597,21 @@ export default function HomePage(){
             </CardContent>
           </Card>
         </div>
+
+        {/* Logout Button */}
+        {isLoggedIn && (
+          <div className="mt-8 text-center">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleLogout}
+              className="flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
