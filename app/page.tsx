@@ -17,6 +17,8 @@ export default function HomePage(){
   const [isHolding, setIsHolding] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showNameInput, setShowNameInput] = useState(true);
+  const [location, setLocation] = useState<string>('');
+  const [isLocationLoading, setIsLocationLoading] = useState(false);
 
   useEffect(()=>{
     const saved = (typeof window!== 'undefined' ? (localStorage.getItem('mode') as any) : null) || 'office';
@@ -35,7 +37,53 @@ export default function HomePage(){
         localStorage.removeItem('currentSession');
       }
     }
+    // Get location on app load
+    getCurrentLocation();
   },[]);
+
+  // Get current location and determine mode
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocation('Location not available');
+      return;
+    }
+
+    setIsLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        // Check if user is in Sector 39, Gurugram (approximate coordinates)
+        // Sector 39, Gurugram is roughly at: 28.4595° N, 77.0266° E
+        const officeLat = 28.4595;
+        const officeLng = 77.0266;
+        const radius = 0.01; // ~1km radius
+
+        const distance = Math.sqrt(
+          Math.pow(latitude - officeLat, 2) + Math.pow(longitude - officeLng, 2)
+        );
+
+        if (distance <= radius) {
+          setMode('office');
+          setLocation('Sector 39, Gurugram');
+        } else {
+          setMode('remote');
+          setLocation('Remote Location');
+        }
+        setIsLocationLoading(false);
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+        setLocation('Location unavailable');
+        setMode('remote'); // Default to remote if location fails
+        setIsLocationLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000 // 5 minutes
+      }
+    );
+  };
 
   // Update current time every second
   useEffect(() => {
@@ -73,7 +121,7 @@ export default function HomePage(){
           if (hasOpen) {
             checkout();
           } else {
-            act('office');
+            act(mode);
           }
           return 100;
         }
@@ -82,7 +130,7 @@ export default function HomePage(){
     }, 50);
 
     return () => clearInterval(interval);
-  }, [isHolding, hasOpen]);
+  }, [isHolding, hasOpen, mode]);
 
   const checkSessionStatus = async (slug: string) => {
     try {
@@ -204,16 +252,6 @@ export default function HomePage(){
     }
   };
 
-  const resetSession = () => {
-    localStorage.removeItem('currentSession');
-    setCurrentSession(null);
-    setName('');
-    setHasOpen(false);
-    setElapsedTime(0);
-    setShowNameInput(true);
-    setMsg('');
-  };
-
   useEffect(()=>{ if(typeof window!== 'undefined') localStorage.setItem('mode', mode); },[mode]);
   useEffect(()=>{ fetchTodaySummary(); },[]);
   useEffect(()=>{ if(me) fetchMySummary(me.slug); },[me]);
@@ -316,47 +354,27 @@ export default function HomePage(){
                   </div>
                 </div>
               </div>
-              <div className="level-right">
-                <div className="level-item">
-                  <button className="button is-small is-light" onClick={resetSession}>
-                    <span className="icon">
-                      <i className="fas fa-sign-out-alt"></i>
-                    </span>
-                    <span>Switch User</span>
-                  </button>
-                </div>
-              </div>
             </div>
           )}
 
-          {/* Mode Toggle - Only show if not in session */}
-          {!hasOpen && (
-            <div className="field mb-4">
-              <label className="label">Work Mode</label>
-              <div className="buttons has-addons">
-                <button 
-                  className={`button ${mode==='office'?'is-primary':'is-light'}`} 
-                  onClick={()=>setMode('office')}
-                  style={{transition: 'all 0.2s ease'}}
-                >
-                  <span className="icon">
-                    <i className="fas fa-building"></i>
-                  </span>
-                  <span>Office</span>
-                </button>
-                <button 
-                  className={`button ${mode==='remote'?'is-link':'is-light'}`} 
-                  onClick={()=>setMode('remote')}
-                  style={{transition: 'all 0.2s ease'}}
-                >
-                  <span className="icon">
-                    <i className="fas fa-home"></i>
-                  </span>
-                  <span>Remote</span>
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Location Tag */}
+          <div className="has-text-centered mb-4">
+            {isLocationLoading ? (
+              <span className="tag is-light">
+                <span className="icon is-small">
+                  <i className="fas fa-spinner fa-spin"></i>
+                </span>
+                <span>Detecting location...</span>
+              </span>
+            ) : (
+              <span className={`tag is-${mode === 'office' ? 'primary' : 'link'} is-light`}>
+                <span className="icon is-small">
+                  <i className={`fas ${mode === 'office' ? 'fa-building' : 'fa-home'}`}></i>
+                </span>
+                <span>{location}</span>
+              </span>
+            )}
+          </div>
 
           {/* Large Action Button */}
           <div className="has-text-centered">
