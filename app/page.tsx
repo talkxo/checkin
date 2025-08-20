@@ -24,10 +24,12 @@ export default function HomePage(){
   const [showNameInput, setShowNameInput] = useState(true);
   const [location, setLocation] = useState<string>('');
   const [isLocationLoading, setIsLocationLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(()=>{
     const saved = (typeof window!== 'undefined' ? (localStorage.getItem('mode') as any) : null) || 'office';
     setMode(saved);
+    
     // Check for existing session
     const session = localStorage.getItem('currentSession');
     if (session) {
@@ -40,8 +42,12 @@ export default function HomePage(){
         checkSessionStatus(sessionData.employee.slug);
       } catch (e) {
         localStorage.removeItem('currentSession');
+        setIsLoading(false);
       }
+    } else {
+      setIsLoading(false);
     }
+    
     // Get location on app load
     getCurrentLocation();
   },[]);
@@ -147,9 +153,15 @@ export default function HomePage(){
         localStorage.removeItem('currentSession');
         setCurrentSession(null);
         setElapsedTime(0);
+        setShowNameInput(true);
+      } else {
+        // Session is still open, fetch summary
+        fetchMySummary(slug);
       }
+      setIsLoading(false);
     } catch (e) {
       console.error('Error checking session status:', e);
+      setIsLoading(false);
     }
   };
 
@@ -212,21 +224,41 @@ export default function HomePage(){
     if (!name.trim()) return;
     setIsSubmitting(true);
     setMsg('');
-    const r = await fetch('/api/checkin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fullName: name, mode: checkMode }) });
-    const j = await r.json();
-    if (r.ok) {
-      // Store session in localStorage
-      localStorage.setItem('currentSession', JSON.stringify(j));
-      setCurrentSession(j);
-      setHasOpen(true);
-      setShowNameInput(false);
-      const message = `Checked in at ${new Date(j.session.checkin_ts).toLocaleTimeString()}`;
-      setMsg(message);
-      fetchMySummary(j.employee.slug);
-      fetchTodaySummary();
-    } else {
-      setMsg(j.error || 'Error');
+    
+    try {
+      const r = await fetch('/api/checkin', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ fullName: name, mode: checkMode }) 
+      });
+      const j = await r.json();
+      
+      if (r.ok) {
+        // Store session in localStorage
+        localStorage.setItem('currentSession', JSON.stringify(j));
+        setCurrentSession(j);
+        setHasOpen(true);
+        setShowNameInput(false);
+        
+        if (j.message && j.message.includes('already exists')) {
+          // Existing session
+          const message = `You already have an open session from ${new Date(j.session.checkin_ts).toLocaleTimeString()}`;
+          setMsg(message);
+        } else {
+          // New session
+          const message = `Checked in at ${new Date(j.session.checkin_ts).toLocaleTimeString()}`;
+          setMsg(message);
+        }
+        
+        fetchMySummary(j.employee.slug);
+        fetchTodaySummary();
+      } else {
+        setMsg(j.error || 'Error');
+      }
+    } catch (error) {
+      setMsg('Network error. Please try again.');
     }
+    
     setIsSubmitting(false);
   };
 
@@ -234,21 +266,32 @@ export default function HomePage(){
     if (!currentSession) return;
     setIsSubmitting(true);
     setMsg('');
-    const r = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: currentSession.employee.slug }) });
-    const j = await r.json();
-    if (r.ok) {
-      localStorage.removeItem('currentSession');
-      setCurrentSession(null);
-      setHasOpen(false);
-      setElapsedTime(0);
-      const message = `Checked out at ${new Date(j.checkout_ts).toLocaleTimeString()}`;
-      setMsg(message);
-      fetchTodaySummary();
-    } else {
-      setMsg(j.error || 'Error');
-      // If checkout failed, recheck session status
-      checkSessionStatus(currentSession.employee.slug);
+    
+    try {
+      const r = await fetch('/api/checkout', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ slug: currentSession.employee.slug }) 
+      });
+      const j = await r.json();
+      
+      if (r.ok) {
+        localStorage.removeItem('currentSession');
+        setCurrentSession(null);
+        setHasOpen(false);
+        setElapsedTime(0);
+        const message = `Checked out at ${new Date(j.checkout_ts).toLocaleTimeString()}`;
+        setMsg(message);
+        fetchTodaySummary();
+      } else {
+        setMsg(j.error || 'Error');
+        // If checkout failed, recheck session status
+        checkSessionStatus(currentSession.employee.slug);
+      }
+    } catch (error) {
+      setMsg('Network error. Please try again.');
     }
+    
     setIsSubmitting(false);
   };
 
@@ -262,7 +305,6 @@ export default function HomePage(){
   useEffect(()=>{ if(typeof window!== 'undefined') localStorage.setItem('mode', mode); },[mode]);
   useEffect(()=>{ fetchTodaySummary(); },[]);
   useEffect(()=>{ if(me) fetchMySummary(me.slug); },[me]);
-  useEffect(()=>{ if(currentSession) checkSessionStatus(currentSession.employee.slug); },[currentSession]);
 
   // Format current time and date
   const timeString = currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -271,6 +313,18 @@ export default function HomePage(){
     month: 'long', 
     day: 'numeric' 
   });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background p-4">
+        <div className="max-w-md mx-auto">
+          <div className="text-center">
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-4">
