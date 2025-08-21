@@ -57,16 +57,11 @@ export default function HomePage(){
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState<'control' | 'snapshot'>('control');
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
-  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string, time: string} | null>(null);
+  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
   // Show notification and auto-hide after 3 seconds
   const showNotification = (type: 'success' | 'error', message: string) => {
-    const time = new Date().toLocaleTimeString('en-GB', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      timeZone: 'Asia/Kolkata'
-    });
-    setNotification({ type, message, time });
+    setNotification({ type, message });
     setTimeout(() => setNotification(null), 3000);
   };
 
@@ -704,7 +699,6 @@ export default function HomePage(){
                 <i className={`fas ${notification.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2`}></i>
                 <div>
                   <p className="font-medium">{notification.message}</p>
-                  <p className="text-xs opacity-90">{notification.time}</p>
                 </div>
               </div>
               <button 
