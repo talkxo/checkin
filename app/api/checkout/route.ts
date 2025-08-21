@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { nowIST } from '@/lib/time';
 
 export async function POST(req: NextRequest){
-  const { slug } = await req.json();
+  const { slug, mood, moodComment } = await req.json();
   if(!slug) return NextResponse.json({ error: 'slug required' }, { status: 400 });
   const { data: emp } = await supabaseAdmin.from('employees').select('id').eq('slug', slug).maybeSingle();
   if(!emp) return NextResponse.json({ error: 'employee not found' }, { status: 404 });
@@ -12,7 +12,13 @@ export async function POST(req: NextRequest){
   
   // Use IST timestamp for checkout
   const istTimestamp = nowIST().toISOString();
-  const { data, error } = await supabaseAdmin.from('sessions').update({ checkout_ts: istTimestamp }).eq('id', ses.id).select('*').single();
+  
+  // Prepare update data
+  const updateData: any = { checkout_ts: istTimestamp };
+  if (mood) updateData.mood = mood;
+  if (moodComment) updateData.mood_comment = moodComment;
+  
+  const { data, error } = await supabaseAdmin.from('sessions').update(updateData).eq('id', ses.id).select('*').single();
   if(error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }

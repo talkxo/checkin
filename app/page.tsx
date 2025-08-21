@@ -57,14 +57,12 @@ export default function HomePage(){
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState<'control' | 'snapshot'>('control');
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
-  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
   const [aiNotification, setAiNotification] = useState<string>('');
+  const [showMoodCheck, setShowMoodCheck] = useState(false);
+  const [selectedMood, setSelectedMood] = useState<string>('');
+  const [moodComment, setMoodComment] = useState<string>('');
 
-  // Show notification and auto-hide after 3 seconds
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message });
-    setTimeout(() => setNotification(null), 3000);
-  };
+
 
   // Generate AI-powered smart notification
   const generateSmartNotification = async (context: string) => {
@@ -320,12 +318,10 @@ export default function HomePage(){
           // Existing session
           const message = `You already have an open session from ${formatISTTime(j.session.checkin_ts)}`;
           setMsg(message);
-          showNotification('error', message);
         } else {
           // New session
           const message = `Checked in at ${formatISTTime(j.session.checkin_ts)}`;
           setMsg(message);
-          showNotification('success', `Checked in successfully at ${formatISTTime(j.session.checkin_ts)}`);
           
           // Generate AI notification for check-in
           generateSmartNotification(`User just checked in at ${formatISTTime(j.session.checkin_ts)} in ${checkMode} mode`);
@@ -335,11 +331,9 @@ export default function HomePage(){
         fetchTodaySummary();
       } else {
         setMsg(j.error || 'Error');
-        showNotification('error', j.error || 'Check-in failed');
       }
     } catch (error) {
       setMsg('Network error. Please try again.');
-      showNotification('error', 'Network error. Please try again.');
     }
     
     setIsSubmitting(false);
@@ -347,6 +341,12 @@ export default function HomePage(){
 
   const checkout = async () => {
     if (!currentSession) return;
+    
+    // Show mood check before checkout
+    setShowMoodCheck(true);
+  };
+
+  const handleMoodSubmit = async () => {
     setIsSubmitting(true);
     setMsg('');
     
@@ -354,7 +354,11 @@ export default function HomePage(){
       const r = await fetch('/api/checkout', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ slug: currentSession.employee.slug }) 
+        body: JSON.stringify({ 
+          slug: currentSession.employee.slug,
+          mood: selectedMood,
+          moodComment: moodComment
+        }) 
       });
       const j = await r.json();
       
@@ -363,23 +367,21 @@ export default function HomePage(){
         setCurrentSession(null);
         setHasOpen(false);
         setElapsedTime(0);
-        const message = `Checked out at ${formatISTTime(j.checkout_ts)}`;
-        setMsg(message);
-        showNotification('success', `Checked out successfully at ${formatISTTime(j.checkout_ts)}`);
+        setShowMoodCheck(false);
+        setSelectedMood('');
+        setMoodComment('');
         
-        // Generate AI notification for check-out
-        generateSmartNotification(`User just checked out at ${formatISTTime(j.checkout_ts)} after completing their work session`);
+        // Generate AI notification for check-out and display in text area
+        generateSmartNotification(`User just checked out at ${formatISTTime(j.checkout_ts)} after completing their work session. Mood: ${selectedMood}`);
         
         fetchTodaySummary();
       } else {
         setMsg(j.error || 'Error');
-        showNotification('error', j.error || 'Check-out failed');
         // If checkout failed, recheck session status
         checkSessionStatus(currentSession.employee.slug);
       }
     } catch (error) {
       setMsg('Network error. Please try again.');
-      showNotification('error', 'Network error. Please try again.');
     }
     
     setIsSubmitting(false);
@@ -463,7 +465,7 @@ export default function HomePage(){
           // Name Input Screen
           <div className="notion-card p-8 slide-up">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">Welcome to TalkXO</h2>
+              <h2 className="text-2xl font-mono text-gray-900 mb-4">Days</h2>
             </div>
             
             <div className="space-y-6">
@@ -607,11 +609,83 @@ export default function HomePage(){
                     </div>
                   </div>
 
-                  {msg && (
+                  {/* Mood Check-in Modal */}
+                  {showMoodCheck && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                      <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">How was your day?</h3>
+                        
+                        <div className="flex justify-center gap-3 mb-4">
+                          {[
+                            { emoji: '😊', label: 'Great', value: 'great' },
+                            { emoji: '😐', label: 'Good', value: 'good' },
+                            { emoji: '😞', label: 'Challenging', value: 'challenging' },
+                            { emoji: '😴', label: 'Exhausted', value: 'exhausted' },
+                            { emoji: '🚀', label: 'Productive', value: 'productive' }
+                          ].map((mood) => (
+                            <button
+                              key={mood.value}
+                              onClick={() => setSelectedMood(mood.value)}
+                              className={`p-3 rounded-lg border-2 transition-all ${
+                                selectedMood === mood.value
+                                  ? 'border-blue-500 bg-blue-50'
+                                  : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <div className="text-2xl mb-1">{mood.emoji}</div>
+                              <div className="text-xs text-gray-600">{mood.label}</div>
+                            </button>
+                          ))}
+                        </div>
+                        
+                        {selectedMood && (
+                          <div className="mb-4">
+                            <textarea
+                              placeholder="Any highlights or challenges today? (optional)"
+                              value={moodComment}
+                              onChange={(e) => setMoodComment(e.target.value)}
+                              className="w-full p-3 border border-gray-300 rounded-md text-sm resize-none"
+                              rows={3}
+                            />
+                          </div>
+                        )}
+                        
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => {
+                              setShowMoodCheck(false);
+                              setSelectedMood('');
+                              setMoodComment('');
+                            }}
+                            className="flex-1 py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleMoodSubmit}
+                            disabled={!selectedMood || isSubmitting}
+                            className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                          >
+                            {isSubmitting ? 'Checking out...' : 'Check Out'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* AI Output Display */}
+                  {(aiNotification || msg) && (
                     <div className="text-center">
-                      <p className="text-sm text-gray-600 bg-gray-50 rounded-md p-3">
-                        {msg}
-                      </p>
+                      <div className="text-sm text-gray-600 bg-gray-50 rounded-md p-3 min-h-[60px] flex items-center justify-center">
+                        {aiNotification ? (
+                          <div className="text-blue-700">
+                            <div className="font-medium mb-1">🤖 AI Assistant</div>
+                            <div>{aiNotification}</div>
+                          </div>
+                        ) : (
+                          <div>{msg}</div>
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -719,48 +793,9 @@ export default function HomePage(){
           </div>
         )}
 
-        {/* Notification */}
-        {notification && (
-          <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm transition-all duration-300 ${
-            notification.type === 'success' 
-              ? 'bg-green-500 text-white' 
-              : 'bg-red-500 text-white'
-          }`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <i className={`fas ${notification.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2`}></i>
-                <div>
-                  <p className="font-medium">{notification.message}</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setNotification(null)}
-                className="ml-4 text-white hover:text-gray-200"
-              >
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
-          </div>
-        )}
 
-        {/* AI Smart Notification */}
-        {aiNotification && (
-          <div className="fixed top-4 left-4 z-50 p-4 rounded-lg shadow-lg max-w-sm transition-all duration-300 bg-blue-50 border border-blue-300">
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-              <div className="flex-1">
-                <div className="font-medium text-blue-900 mb-1">AI Assistant</div>
-                <div className="text-sm text-blue-800">{aiNotification}</div>
-              </div>
-              <button 
-                onClick={() => setAiNotification('')}
-                className="text-blue-400 hover:text-blue-600"
-              >
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
-          </div>
-        )}
+
+
       </div>
     </div>
   );

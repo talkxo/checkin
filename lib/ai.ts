@@ -50,24 +50,50 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
   }
 }
 
-// AI Feature 1: Attendance Insights & Recommendations
-export async function getAttendanceInsights(attendanceData: any[]): Promise<AIResponse> {
-  const prompt = `Analyze this attendance data and provide insights:
+// AI Feature 1: HR-Focused Attendance Insights & Employee Engagement Analysis
+export async function getAttendanceInsights(attendanceData: any[], timeRange: string): Promise<AIResponse> {
+  const prompt = `Analyze this attendance data from an HR and employee engagement perspective for ${timeRange}:
 
 ${JSON.stringify(attendanceData, null, 2)}
 
-Please provide:
-1. Key patterns or trends
-2. Potential issues (late arrivals, early departures, etc.)
-3. Recommendations for improvement
-4. Positive observations
+Please provide insights focusing on:
 
-Keep it concise and actionable.`;
+1. **Employee Engagement Patterns**
+   - Work-life balance indicators
+   - Consistency and reliability patterns
+   - Potential burnout or stress signals
+   - Positive engagement behaviors
+
+2. **Team Dynamics & Collaboration**
+   - Office vs remote collaboration patterns
+   - Team availability for meetings
+   - Cross-functional interaction opportunities
+   - Communication effectiveness indicators
+
+3. **Employee Well-being & Satisfaction**
+   - Work schedule preferences
+   - Flexibility utilization
+   - Potential stress indicators
+   - Positive work habits
+
+4. **HR Recommendations for Engagement**
+   - Recognition opportunities
+   - Support initiatives needed
+   - Policy adjustments for better work-life balance
+   - Team building suggestions
+
+5. **Empathy-Driven Insights**
+   - Individual employee stories and patterns
+   - Personal circumstances considerations
+   - Supportive intervention opportunities
+   - Positive reinforcement areas
+
+Focus on employee-centric analysis with empathy and understanding.`;
 
   return callOpenRouter([
-    { role: 'system', content: 'You are an HR analytics expert. Provide clear, actionable insights from attendance data.' },
+    { role: 'system', content: 'You are a compassionate HR professional with expertise in employee engagement, well-being, and organizational psychology. Provide empathetic, employee-focused insights that prioritize human connection and understanding.' },
     { role: 'user', content: prompt }
-  ], 0.5);
+  ], 0.6);
 }
 
 // AI Feature 2: Smart Work Schedule Suggestions
@@ -91,25 +117,55 @@ Be specific and practical.`;
   ], 0.6);
 }
 
-// AI Feature 3: Attendance Report Summary
+// AI Feature 3: HR-Focused Attendance Report Summary
 export async function generateAttendanceReport(attendanceData: any[], timeRange: string): Promise<AIResponse> {
-  const prompt = `Generate a professional attendance report summary for ${timeRange}:
+  const prompt = `Generate a comprehensive HR-focused attendance report for ${timeRange}:
 
 Data: ${JSON.stringify(attendanceData, null, 2)}
 
-Include:
-1. Executive summary
-2. Key metrics and trends
-3. Notable achievements
-4. Areas for attention
-5. Recommendations
+Please structure the report with:
 
-Format it professionally for management review.`;
+1. **Executive Summary**
+   - Overall employee engagement health
+   - Key well-being indicators
+   - Team collaboration effectiveness
+
+2. **Employee Engagement Metrics**
+   - Work-life balance scores
+   - Flexibility utilization rates
+   - Consistency and reliability patterns
+   - Burnout risk indicators
+
+3. **Team Dynamics Analysis**
+   - Office vs remote collaboration patterns
+   - Cross-functional interaction opportunities
+   - Communication effectiveness
+   - Team building needs
+
+4. **Individual Employee Stories**
+   - Notable positive patterns
+   - Support opportunities
+   - Recognition moments
+   - Personal circumstances considerations
+
+5. **HR Action Items**
+   - Recognition and appreciation opportunities
+   - Support initiatives needed
+   - Policy recommendations for better engagement
+   - Team building and culture initiatives
+
+6. **Empathy & Well-being Focus**
+   - Stress management opportunities
+   - Work-life balance improvements
+   - Mental health support considerations
+   - Positive reinforcement strategies
+
+Format this as a professional HR report that prioritizes employee well-being and engagement.`;
 
   return callOpenRouter([
-    { role: 'system', content: 'You are a professional HR analyst. Create clear, executive-level reports.' },
+    { role: 'system', content: 'You are a senior HR professional with expertise in employee engagement, organizational psychology, and workplace well-being. Create comprehensive reports that prioritize human connection, empathy, and employee-centric insights.' },
     { role: 'user', content: prompt }
-  ], 0.4);
+  ], 0.5);
 }
 
 // AI Feature 4: Smart Notifications & Alerts

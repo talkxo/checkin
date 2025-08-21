@@ -6,7 +6,13 @@ const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supa
 const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
 const SB_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-role';
 
+// Debug environment variables
+console.log('=== SUPABASE ENV DEBUG ===');
+console.log('SB_URL:', SB_URL);
+console.log('SB_ANON (first 20 chars):', SB_ANON.substring(0, 20) + '...');
+console.log('SB_SERVICE (first 20 chars):', SB_SERVICE.substring(0, 20) + '...');
+
 export const supabase = createClient(SB_URL, SB_ANON);
-export const supabaseAdmin = createClient(SB_URL, SB_SERVICE, { auth: { persistSession: false } });
+export const supabaseAdmin = createClient(SB_URL, SB_ANON, { auth: { persistSession: false } });
 
 

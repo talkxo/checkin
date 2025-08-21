@@ -268,6 +268,10 @@ export default function AdminPage() {
   const [aiReport, setAiReport] = useState<string>('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [selectedAiFeature, setSelectedAiFeature] = useState<string>('');
+  const [aiTimeRange, setAiTimeRange] = useState<'today' | 'week' | 'month'>('today');
+  const [historicalData, setHistoricalData] = useState<any[]>([]);
+  const [moodData, setMoodData] = useState<any[]>([]);
+  const [sentimentAnalysis, setSentimentAnalysis] = useState<string>('');
 
   // User management functions
   const handleAddUser = async () => {
@@ -351,14 +355,48 @@ export default function AdminPage() {
   };
 
   // AI functions
+  const loadHistoricalData = async (range: 'today' | 'week' | 'month') => {
+    try {
+      const response = await fetch(`/api/admin/historical-data?range=${range}`);
+      if (response.ok) {
+        const data = await response.json();
+        setHistoricalData(data.attendanceData);
+        return data.attendanceData;
+      }
+    } catch (error) {
+      console.error('Error loading historical data:', error);
+    }
+    return [];
+  };
+
+  const loadMoodData = async (range: 'today' | 'week' | 'month') => {
+    try {
+      const response = await fetch(`/api/admin/mood-data?range=${range}`);
+      if (response.ok) {
+        const data = await response.json();
+        setMoodData(data.moodData);
+        return data.moodData;
+      }
+    } catch (error) {
+      console.error('Error loading mood data:', error);
+    }
+    return [];
+  };
+
   const generateAiInsights = async () => {
     setIsAiLoading(true);
     setSelectedAiFeature('insights');
     try {
+      // Load data based on selected time range
+      const dataToAnalyze = aiTimeRange === 'today' ? todayData : await loadHistoricalData(aiTimeRange);
+      
       const response = await fetch('/api/ai/insights', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ attendanceData: todayData })
+        body: JSON.stringify({ 
+          attendanceData: dataToAnalyze,
+          timeRange: aiTimeRange === 'today' ? 'Today' : aiTimeRange === 'week' ? 'This Week' : 'This Month'
+        })
       });
 
       if (response.ok) {
@@ -378,12 +416,15 @@ export default function AdminPage() {
     setIsAiLoading(true);
     setSelectedAiFeature('report');
     try {
+      // Load data based on selected time range
+      const dataToAnalyze = aiTimeRange === 'today' ? todayData : await loadHistoricalData(aiTimeRange);
+      
       const response = await fetch('/api/ai/report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          attendanceData: todayData,
-          timeRange: timeRange 
+          attendanceData: dataToAnalyze,
+          timeRange: aiTimeRange === 'today' ? 'Today' : aiTimeRange === 'week' ? 'This Week' : 'This Month'
         })
       });
 
@@ -395,6 +436,40 @@ export default function AdminPage() {
       }
     } catch (error) {
       setAiReport('Error generating report. Please try again.');
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  const generateSentimentAnalysis = async () => {
+    setIsAiLoading(true);
+    setSelectedAiFeature('sentiment');
+    try {
+      // Load mood data based on selected time range
+      const moodDataToAnalyze = await loadMoodData(aiTimeRange);
+      
+      if (moodDataToAnalyze.length === 0) {
+        setSentimentAnalysis('No mood data available for the selected time range.');
+        return;
+      }
+      
+      const response = await fetch('/api/ai/sentiment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          moodData: moodDataToAnalyze,
+          timeRange: aiTimeRange === 'today' ? 'Today' : aiTimeRange === 'week' ? 'This Week' : 'This Month'
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSentimentAnalysis(data.sentiment);
+      } else {
+        setSentimentAnalysis('Failed to generate sentiment analysis. Please try again.');
+      }
+    } catch (error) {
+      setSentimentAnalysis('Error generating sentiment analysis. Please try again.');
     } finally {
       setIsAiLoading(false);
     }
@@ -892,62 +967,124 @@ export default function AdminPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Brain className="w-5 h-5" />
-                  AI-Powered Insights
+                  AI-Powered HR Insights & Employee Engagement Analysis
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 border rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Lightbulb className="w-4 h-4 text-yellow-600" />
-                      <h3 className="font-semibold">Attendance Insights</h3>
+                {/* Time Range Selection */}
+                <div className="mb-6">
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Analysis Time Range
+                  </label>
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      { key: 'today', label: 'Today' },
+                      { key: 'week', label: 'This Week' },
+                      { key: 'month', label: 'This Month' }
+                    ].map((range) => (
+                      <Button
+                        key={range.key}
+                        variant={aiTimeRange === range.key ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setAiTimeRange(range.key as any)}
+                      >
+                        {range.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Combined AI Analysis */}
+                <div className="p-6 border rounded-lg bg-gradient-to-r from-blue-50 to-purple-50">
+                  <div className="text-center mb-6">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Brain className="w-6 h-6 text-blue-600" />
+                      <h3 className="text-xl font-semibold text-gray-900">HR-Focused AI Analysis</h3>
                     </div>
-                    <p className="text-sm text-gray-600 mb-3">
-                      Get AI-powered analysis of attendance patterns, trends, and recommendations.
+                    <p className="text-sm text-gray-600 max-w-2xl mx-auto">
+                      Get comprehensive employee engagement insights, well-being analysis, and actionable HR recommendations. 
+                      Our AI analyzes patterns from an empathetic, employee-centric perspective.
                     </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <Lightbulb className="w-5 h-5 text-yellow-600" />
+                        <h4 className="font-semibold">Employee Engagement Insights</h4>
+                      </div>
+                      <p className="text-xs text-gray-600">
+                        Work-life balance, team dynamics, well-being indicators, and engagement patterns
+                      </p>
+                    </div>
+
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <BarChart3 className="w-5 h-5 text-blue-600" />
+                        <h4 className="font-semibold">Professional HR Reports</h4>
+                      </div>
+                      <p className="text-xs text-gray-600">
+                        Executive summaries, actionable recommendations, and empathy-driven insights
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 justify-center flex-wrap">
                     <Button
                       onClick={generateAiInsights}
-                      disabled={isAiLoading || todayData.length === 0}
-                      size="sm"
-                      className="w-full"
+                      disabled={isAiLoading}
+                      size="lg"
+                      className="flex items-center gap-2"
                     >
                       {isAiLoading && selectedAiFeature === 'insights' ? (
                         <>
-                          <Clock className="w-4 h-4 mr-2 animate-spin" />
+                          <Clock className="w-4 h-4 animate-spin" />
                           Analyzing...
                         </>
                       ) : (
                         <>
-                          <Lightbulb className="w-4 h-4 mr-2" />
+                          <Lightbulb className="w-4 h-4" />
                           Generate Insights
                         </>
                       )}
                     </Button>
-                  </div>
 
-                  <div className="p-4 border rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <BarChart3 className="w-4 h-4 text-blue-600" />
-                      <h3 className="font-semibold">AI Report</h3>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-3">
-                      Generate professional attendance reports for management review.
-                    </p>
                     <Button
                       onClick={generateAiReport}
-                      disabled={isAiLoading || todayData.length === 0}
-                      size="sm"
-                      className="w-full"
+                      disabled={isAiLoading}
+                      size="lg"
+                      variant="outline"
+                      className="flex items-center gap-2"
                     >
                       {isAiLoading && selectedAiFeature === 'report' ? (
                         <>
-                          <Clock className="w-4 h-4 mr-2 animate-spin" />
+                          <Clock className="w-4 h-4 animate-spin" />
                           Generating...
                         </>
                       ) : (
                         <>
-                          <BarChart3 className="w-4 h-4 mr-2" />
+                          <BarChart3 className="w-4 h-4" />
                           Generate Report
+                        </>
+                      )}
+                    </Button>
+
+                    <Button
+                      onClick={generateSentimentAnalysis}
+                      disabled={isAiLoading}
+                      size="lg"
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      {isAiLoading && selectedAiFeature === 'sentiment' ? (
+                        <>
+                          <Clock className="w-4 h-4 animate-spin" />
+                          Analyzing...
+                        </>
+                      ) : (
+                        <>
+                          <MessageSquare className="w-4 h-4" />
+                          Sentiment Analysis
                         </>
                       )}
                     </Button>
@@ -990,24 +1127,47 @@ export default function AdminPage() {
               </Card>
             )}
 
+            {/* Sentiment Analysis Display */}
+            {sentimentAnalysis && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-green-600" />
+                    Sentiment Analysis & Mood Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="prose prose-sm max-w-none">
+                    <div className="whitespace-pre-wrap text-gray-700">{sentimentAnalysis}</div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* AI Features Info */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5" />
-                  AI Features Powered by GPT-OSS-20B
-                </CardTitle>
+                                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5" />
+                    HR-Focused AI Features Powered by Kimi K2
+                  </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 text-sm text-gray-600">
                   <p>
-                    <strong>Attendance Insights:</strong> Analyzes patterns, identifies trends, and provides actionable recommendations for improving attendance.
+                    <strong>Employee Engagement Analysis:</strong> Analyzes work-life balance, team dynamics, well-being indicators, and engagement patterns from an empathetic perspective.
                   </p>
                   <p>
-                    <strong>AI Reports:</strong> Generates professional, executive-level reports summarizing attendance data with key metrics and insights.
+                    <strong>Professional HR Reports:</strong> Generates comprehensive reports with executive summaries, actionable recommendations, and empathy-driven insights.
                   </p>
                   <p>
-                    <strong>Smart Analysis:</strong> Uses advanced AI to understand attendance patterns and provide personalized insights.
+                    <strong>Historical Analysis:</strong> Provides insights across different time ranges (Today, This Week, This Month) for better trend analysis.
+                  </p>
+                  <p>
+                    <strong>Empathy-Driven Insights:</strong> Focuses on individual employee stories, personal circumstances, and supportive intervention opportunities.
+                  </p>
+                  <p>
+                    <strong>Sentiment Analysis:</strong> Analyzes employee mood patterns, stress indicators, and well-being trends for proactive support and engagement.
                   </p>
                   <p className="text-xs text-gray-500">
                     Powered by Moonshot AI's Kimi K2 model via OpenRouter API
