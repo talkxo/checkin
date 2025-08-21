@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { nowIST } from '@/lib/time';
+import { nowIST, hhmmIST } from '@/lib/time';
 
 export async function GET(req: NextRequest){
   const url = new URL(req.url);
@@ -39,7 +39,14 @@ export async function GET(req: NextRequest){
   }
   
   const workedMinutes = Math.max(0, Math.round(workedMs/60000));
-  return NextResponse.json({ employee: emp, open, lastIn, lastOut, workedMinutes, mode });
+  return NextResponse.json({ 
+    employee: emp, 
+    open, 
+    lastIn: lastIn ? hhmmIST(lastIn) : null, 
+    lastOut: lastOut ? hhmmIST(lastOut) : null, 
+    workedMinutes, 
+    mode 
+  });
 }
 
 export const dynamic = 'force-dynamic';

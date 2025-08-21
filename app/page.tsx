@@ -2,6 +2,39 @@
 import { useEffect, useState } from 'react';
 import { LogOut } from 'lucide-react';
 
+// Helper function to format IST times consistently
+const formatISTTime = (timestamp: string) => {
+  try {
+    return new Date(timestamp).toLocaleTimeString('en-GB', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit',
+      timeZone: 'Asia/Kolkata'
+    });
+  } catch {
+    return new Date(timestamp).toLocaleTimeString('en-GB', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit'
+    });
+  }
+};
+
+const formatISTTimeShort = (timestamp: string) => {
+  try {
+    return new Date(timestamp).toLocaleTimeString('en-GB', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      timeZone: 'Asia/Kolkata'
+    });
+  } catch {
+    return new Date(timestamp).toLocaleTimeString('en-GB', { 
+      hour: '2-digit', 
+      minute: '2-digit'
+    });
+  }
+};
+
 export default function HomePage(){
   const [name,setName]=useState('');
   const [pending,setPending]=useState(false);
@@ -28,7 +61,11 @@ export default function HomePage(){
 
   // Show notification and auto-hide after 3 seconds
   const showNotification = (type: 'success' | 'error', message: string) => {
-    const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const time = new Date().toLocaleTimeString('en-GB', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      timeZone: 'Asia/Kolkata'
+    });
     setNotification({ type, message, time });
     setTimeout(() => setNotification(null), 3000);
   };
@@ -261,14 +298,14 @@ export default function HomePage(){
         
         if (j.message && j.message.includes('already exists')) {
           // Existing session
-          const message = `You already have an open session from ${new Date(j.session.checkin_ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+          const message = `You already have an open session from ${formatISTTime(j.session.checkin_ts)}`;
           setMsg(message);
           showNotification('error', message);
         } else {
           // New session
-          const message = `Checked in at ${new Date(j.session.checkin_ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+          const message = `Checked in at ${formatISTTime(j.session.checkin_ts)}`;
           setMsg(message);
-          showNotification('success', `Checked in successfully at ${new Date(j.session.checkin_ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`);
+          showNotification('success', `Checked in successfully at ${formatISTTime(j.session.checkin_ts)}`);
         }
         
         fetchMySummary(j.employee.slug);
@@ -303,9 +340,9 @@ export default function HomePage(){
         setCurrentSession(null);
         setHasOpen(false);
         setElapsedTime(0);
-        const message = `Checked out at ${new Date(j.checkout_ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+        const message = `Checked out at ${formatISTTime(j.checkout_ts)}`;
         setMsg(message);
-        showNotification('success', `Checked out successfully at ${new Date(j.checkout_ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`);
+        showNotification('success', `Checked out successfully at ${formatISTTime(j.checkout_ts)}`);
         fetchTodaySummary();
       } else {
         setMsg(j.error || 'Error');
@@ -362,12 +399,17 @@ export default function HomePage(){
   useEffect(()=>{ if(typeof window!== 'undefined') localStorage.setItem('mode', mode); },[mode]);
   useEffect(()=>{ fetchTodaySummary(); },[]);
 
-  // Format current time and date
-  const timeString = currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  // Format current time and date in IST
+  const timeString = currentTime.toLocaleTimeString('en-GB', { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    timeZone: 'Asia/Kolkata'
+  });
   const dateString = currentTime.toLocaleDateString('en-US', { 
     weekday: 'long', 
     month: 'long', 
-    day: 'numeric' 
+    day: 'numeric',
+    timeZone: 'Asia/Kolkata'
   });
 
   if (isLoading) {
@@ -549,10 +591,10 @@ export default function HomePage(){
                   {me && (
                     <div className="flex flex-wrap gap-2 justify-center">
                       <span className="notion-badge notion-badge-info">
-                        Last In: {me.lastIn ? new Date(me.lastIn).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                        Last In: {me.lastIn ? (me.lastIn.includes(':') ? me.lastIn : formatISTTimeShort(me.lastIn)) : 'N/A'}
                       </span>
                       <span className="notion-badge notion-badge-outline">
-                        Last Out: {me.lastOut ? new Date(me.lastOut).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                        Last Out: {me.lastOut ? (me.lastOut.includes(':') ? me.lastOut : formatISTTimeShort(me.lastOut)) : 'N/A'}
                       </span>
                       <span className="notion-badge notion-badge-success">
                         Worked: {me.workedMinutes}m
