@@ -113,10 +113,10 @@ export default function HomePage(){
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        // Check if user is in Sector 39, Gurugram (approximate coordinates)
-        // Sector 39, Gurugram is roughly at: 28.4595° N, 77.0266° E
-        const officeLat = 28.4595;
-        const officeLng = 77.0266;
+        // Check if user is in the office (exact coordinates)
+        // Office coordinates: 28.44388735° N, 77.05672206834356° E
+        const officeLat = 28.44388735;
+        const officeLng = 77.05672206834356;
         const radius = 0.01; // ~1km radius
 
         const distance = Math.sqrt(
@@ -125,7 +125,7 @@ export default function HomePage(){
 
         if (distance <= radius) {
           setMode('office');
-          setLocation('Sector 39, Gurugram');
+          setLocation('Office Location');
         } else {
           setMode('remote');
           setLocation('Remote Location');
