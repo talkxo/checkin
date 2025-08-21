@@ -15,6 +15,9 @@
 | Admin Dashboard (Analytics) | High-level charts and numbers | Go to `/admin` (protected) | Visit `/admin` → login with `admin`/`talkxo2024` | Username/password: `admin`/`talkxo2024` |
 | Admin – Today's Attendance | Table of today's data per user | In Admin page | Khushi row: "Khushi" → "09:30" → "18:45" → "8h 15m" → "Complete" | Includes mode, status, hours |
 | Admin – User Management | Add, edit, deactivate employees | Admin → User Management tab | Add "John Doe" → Edit "Khushi" email → Deactivate "Old User" | Full CRUD operations; soft delete |
+| **AI Insights (NEW)** | AI-powered attendance analysis | Admin → AI Insights tab | Click "Generate Insights" → AI analyzes patterns and trends | Powered by GPT-OSS-20B via OpenRouter |
+| **AI Reports (NEW)** | Professional attendance reports | Admin → AI Insights tab | Click "Generate Report" → AI creates executive summary | Professional formatting for management |
+| **Smart Notifications (NEW)** | Personalized AI messages | Automatic on check-in/out | "Great start to your day! You're consistently early" | Context-aware, encouraging messages |
 | Export CSV (Today) | Downloads today's attendance as CSV | Click "Export CSV" in Admin | Download: `attendance_2024-01-15.csv` | `app/api/admin/today-export` |
 | Export to Google Sheets (Guidance) | Explains what's needed to push data to Sheets | Click "Export Google Sheets" in Admin | Shows: "Need Google Cloud project + Sheets API + service account" | Needs Google Cloud project, Sheets API, service account + share |
 | Reset all sessions (Admin) | Checks out everyone safely | Click "Reset Sessions" in Admin | Double confirm → 5-second delay → all users checked out | Double confirmation and delay; uses IST timestamp |
@@ -26,7 +29,37 @@
 | Supabase storage + RLS | Secure Postgres storage for employees/sessions | Transparent to users | Khushi's data: `employees` table + `sessions` table | Uses anon client for reads, service role for writes |
 | Notion-like UI | Clean, light, mobile-first interface | Responsive on mobile/desktop | Mobile: stacked layout, Desktop: side-by-side | Tailwind + custom components |
 
-## User Management Features (New)
+## AI Features Powered by GPT-OSS-20B (NEW)
+
+### 🤖 AI-Powered Insights
+- **Attendance Analysis**: AI analyzes patterns, trends, and provides actionable recommendations
+- **Professional Reports**: Generates executive-level reports for management review
+- **Smart Notifications**: Personalized, encouraging messages based on user behavior
+- **Schedule Suggestions**: AI recommends optimal work schedules based on patterns
+- **Team Collaboration Insights**: Analyzes team availability for better coordination
+- **Productivity Analysis**: Provides personalized productivity tips and insights
+
+### 🧠 AI Implementation
+- **Model**: OpenAI's GPT-OSS-20B (21B parameters, Mixture-of-Experts architecture)
+- **API**: OpenRouter API for seamless integration
+- **Features**: Function calling, tool use, structured outputs
+- **Context**: 131,072 token context window
+- **Cost**: Free tier available via OpenRouter
+
+### 📊 AI API Endpoints
+- `POST /api/ai/insights` - Generate attendance insights and recommendations
+- `POST /api/ai/schedule-suggestions` - Get personalized schedule recommendations
+- `POST /api/ai/report` - Generate professional attendance reports
+- `POST /api/ai/notification` - Create smart, personalized notifications
+
+### 🎯 AI Use Cases
+1. **Admin Dashboard**: AI tab with insights and report generation
+2. **User Experience**: Smart notifications on check-in/out
+3. **Management**: Professional reports for executive review
+4. **Productivity**: Personalized recommendations for better work patterns
+5. **Team Coordination**: AI-powered collaboration insights
+
+## User Management Features
 
 ### Admin User Management
 - **Add New Users**: Click "Add User" button in User Management tab
@@ -73,9 +106,23 @@ CREATE TABLE sessions (
 );
 ```
 
+### AI Integration
+```typescript
+// AI utility functions
+import { getAttendanceInsights, generateSmartNotification } from '@/lib/ai';
+
+// Generate insights
+const insights = await getAttendanceInsights(attendanceData);
+
+// Smart notifications
+const notification = await generateSmartNotification(userData, context);
+```
+
 ### Key Features
 - **Soft Delete**: Users are deactivated, not permanently deleted
 - **Auto Slug Generation**: Names are converted to URL-friendly slugs
 - **Email Optional**: Users can be created without email addresses
 - **Active Status**: Only active users can check in/out
 - **Audit Trail**: Creation dates and modification tracking
+- **AI-Powered**: GPT-OSS-20B integration for intelligent insights
+- **Real-time Analysis**: AI processes attendance data for actionable insights

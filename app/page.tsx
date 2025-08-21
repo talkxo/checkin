@@ -58,11 +58,36 @@ export default function HomePage(){
   const [activeTab, setActiveTab] = useState<'control' | 'snapshot'>('control');
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
+  const [aiNotification, setAiNotification] = useState<string>('');
 
   // Show notification and auto-hide after 3 seconds
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 3000);
+  };
+
+  // Generate AI-powered smart notification
+  const generateSmartNotification = async (context: string) => {
+    if (!me) return;
+    
+    try {
+      const response = await fetch('/api/ai/notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userData: me,
+          context 
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAiNotification(data.notification);
+        setTimeout(() => setAiNotification(''), 5000);
+      }
+    } catch (error) {
+      // Silently fail - AI notifications are optional
+    }
   };
 
   useEffect(()=>{
@@ -301,6 +326,9 @@ export default function HomePage(){
           const message = `Checked in at ${formatISTTime(j.session.checkin_ts)}`;
           setMsg(message);
           showNotification('success', `Checked in successfully at ${formatISTTime(j.session.checkin_ts)}`);
+          
+          // Generate AI notification for check-in
+          generateSmartNotification(`User just checked in at ${formatISTTime(j.session.checkin_ts)} in ${checkMode} mode`);
         }
         
         fetchMySummary(j.employee.slug);
@@ -338,6 +366,10 @@ export default function HomePage(){
         const message = `Checked out at ${formatISTTime(j.checkout_ts)}`;
         setMsg(message);
         showNotification('success', `Checked out successfully at ${formatISTTime(j.checkout_ts)}`);
+        
+        // Generate AI notification for check-out
+        generateSmartNotification(`User just checked out at ${formatISTTime(j.checkout_ts)} after completing their work session`);
+        
         fetchTodaySummary();
       } else {
         setMsg(j.error || 'Error');
@@ -704,6 +736,25 @@ export default function HomePage(){
               <button 
                 onClick={() => setNotification(null)}
                 className="ml-4 text-white hover:text-gray-200"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* AI Smart Notification */}
+        {aiNotification && (
+          <div className="fixed top-4 left-4 z-50 p-4 rounded-lg shadow-lg max-w-sm transition-all duration-300 bg-blue-50 border border-blue-300">
+            <div className="flex items-start gap-3">
+              <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+              <div className="flex-1">
+                <div className="font-medium text-blue-900 mb-1">AI Assistant</div>
+                <div className="text-sm text-blue-800">{aiNotification}</div>
+              </div>
+              <button 
+                onClick={() => setAiNotification('')}
+                className="text-blue-400 hover:text-blue-600"
               >
                 <i className="fas fa-times"></i>
               </button>

@@ -17,7 +17,7 @@ import {
   Legend,
   PointElement,
 } from 'chart.js';
-import { AlertTriangle, Clock, Users, TrendingUp, LogOut, Download, FileSpreadsheet, UserPlus, Edit, Trash2, Eye } from 'lucide-react';
+import { AlertTriangle, Clock, Users, TrendingUp, LogOut, Download, FileSpreadsheet, UserPlus, Edit, Trash2, Eye, Brain, Lightbulb, MessageSquare, BarChart3 } from 'lucide-react';
 
 ChartJS.register(
   CategoryScale,
@@ -77,7 +77,7 @@ export default function AdminPage() {
   const [chartData, setChartData] = useState<any>(null);
   const [todayData, setTodayData] = useState<TodayData[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'ai'>('dashboard');
   
   // Session reset states
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -263,6 +263,12 @@ export default function AdminPage() {
   const [newUserData, setNewUserData] = useState({ fullName: '', email: '' });
   const [editUserData, setEditUserData] = useState({ fullName: '', email: '', active: true });
 
+  // AI states
+  const [aiInsights, setAiInsights] = useState<string>('');
+  const [aiReport, setAiReport] = useState<string>('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [selectedAiFeature, setSelectedAiFeature] = useState<string>('');
+
   // User management functions
   const handleAddUser = async () => {
     try {
@@ -342,6 +348,56 @@ export default function AdminPage() {
       active: user.active
     });
     setShowEditUserDialog(true);
+  };
+
+  // AI functions
+  const generateAiInsights = async () => {
+    setIsAiLoading(true);
+    setSelectedAiFeature('insights');
+    try {
+      const response = await fetch('/api/ai/insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attendanceData: todayData })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAiInsights(data.insights);
+      } else {
+        setAiInsights('Failed to generate insights. Please try again.');
+      }
+    } catch (error) {
+      setAiInsights('Error generating insights. Please try again.');
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  const generateAiReport = async () => {
+    setIsAiLoading(true);
+    setSelectedAiFeature('report');
+    try {
+      const response = await fetch('/api/ai/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          attendanceData: todayData,
+          timeRange: timeRange 
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAiReport(data.report);
+      } else {
+        setAiReport('Failed to generate report. Please try again.');
+      }
+    } catch (error) {
+      setAiReport('Error generating report. Please try again.');
+    } finally {
+      setIsAiLoading(false);
+    }
   };
 
   // Countdown effect
@@ -447,6 +503,15 @@ export default function AdminPage() {
           >
             <Users className="w-4 h-4 mr-2" />
             User Management
+          </Button>
+          <Button
+            variant={activeTab === 'ai' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveTab('ai')}
+            className="flex-1"
+          >
+            <Brain className="w-4 h-4 mr-2" />
+            AI Insights
           </Button>
         </div>
 
@@ -817,6 +882,140 @@ export default function AdminPage() {
               </Table>
             </CardContent>
           </Card>
+        )}
+
+        {/* AI Insights Tab Content */}
+        {activeTab === 'ai' && (
+          <div className="space-y-6">
+            {/* AI Features Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="w-5 h-5" />
+                  AI-Powered Insights
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 border rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Lightbulb className="w-4 h-4 text-yellow-600" />
+                      <h3 className="font-semibold">Attendance Insights</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Get AI-powered analysis of attendance patterns, trends, and recommendations.
+                    </p>
+                    <Button
+                      onClick={generateAiInsights}
+                      disabled={isAiLoading || todayData.length === 0}
+                      size="sm"
+                      className="w-full"
+                    >
+                      {isAiLoading && selectedAiFeature === 'insights' ? (
+                        <>
+                          <Clock className="w-4 h-4 mr-2 animate-spin" />
+                          Analyzing...
+                        </>
+                      ) : (
+                        <>
+                          <Lightbulb className="w-4 h-4 mr-2" />
+                          Generate Insights
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  <div className="p-4 border rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <BarChart3 className="w-4 h-4 text-blue-600" />
+                      <h3 className="font-semibold">AI Report</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Generate professional attendance reports for management review.
+                    </p>
+                    <Button
+                      onClick={generateAiReport}
+                      disabled={isAiLoading || todayData.length === 0}
+                      size="sm"
+                      className="w-full"
+                    >
+                      {isAiLoading && selectedAiFeature === 'report' ? (
+                        <>
+                          <Clock className="w-4 h-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <BarChart3 className="w-4 h-4 mr-2" />
+                          Generate Report
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* AI Insights Display */}
+            {aiInsights && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Lightbulb className="w-5 h-5 text-yellow-600" />
+                    AI Attendance Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="prose prose-sm max-w-none">
+                    <div className="whitespace-pre-wrap text-gray-700">{aiInsights}</div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* AI Report Display */}
+            {aiReport && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-blue-600" />
+                    AI-Generated Report
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="prose prose-sm max-w-none">
+                    <div className="whitespace-pre-wrap text-gray-700">{aiReport}</div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* AI Features Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" />
+                  AI Features Powered by GPT-OSS-20B
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 text-sm text-gray-600">
+                  <p>
+                    <strong>Attendance Insights:</strong> Analyzes patterns, identifies trends, and provides actionable recommendations for improving attendance.
+                  </p>
+                  <p>
+                    <strong>AI Reports:</strong> Generates professional, executive-level reports summarizing attendance data with key metrics and insights.
+                  </p>
+                  <p>
+                    <strong>Smart Analysis:</strong> Uses advanced AI to understand attendance patterns and provide personalized insights.
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Powered by OpenAI's GPT-OSS-20B model via OpenRouter API
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
 
         {/* Add User Dialog */}
