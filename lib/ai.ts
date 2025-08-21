@@ -175,19 +175,19 @@ export async function generateSmartNotification(userData: any, context: string):
 User: ${JSON.stringify(userData, null, 2)}
 Context: ${context}
 
-IMPORTANT: All times mentioned in the context are in IST (India Standard Time). Do not convert or reinterpret these times.
+IMPORTANT: Do NOT mention specific check-in or check-out times in your response. Focus on work patterns, duration, mood, and general encouragement instead.
 
 Create a friendly, motivating message that:
-1. Acknowledges their work pattern
-2. Provides encouragement or tips
+1. Acknowledges their work pattern and dedication
+2. Provides encouragement or productivity tips
 3. Maintains a positive tone
 4. Is specific to their situation
-5. Uses the exact times provided in the context (IST timezone)
+5. Focuses on work duration, consistency, or mood rather than exact times
 
-Keep it under 100 words and make it feel personal. Use the times exactly as provided in the context.`;
+Keep it under 100 words and make it feel personal. Avoid mentioning specific times - focus on the work itself.`;
 
   return callOpenRouter([
-    { role: 'system', content: 'You are a supportive workplace assistant. Create encouraging, personalized messages. Always use the exact times provided in the context without converting them.' },
+    { role: 'system', content: 'You are a supportive workplace assistant. Create encouraging, personalized messages. Focus on work patterns and encouragement rather than specific times.' },
     { role: 'user', content: prompt }
   ], 0.8);
 }

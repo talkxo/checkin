@@ -329,7 +329,7 @@ export default function HomePage(){
           setMsg(message);
           
           // Generate AI notification for check-in
-          generateSmartNotification(`User just checked in at ${formatISTTimeShort(j.session.checkin_ts)} in ${checkMode} mode`);
+          generateSmartNotification(`User just checked in and is working in ${checkMode} mode`);
         }
         
         fetchMySummary(j.employee.slug);
@@ -377,7 +377,7 @@ export default function HomePage(){
         setMoodComment('');
         
         // Generate AI notification for check-out and display in text area
-        generateSmartNotification(`User just checked out at ${formatISTTimeShort(j.checkout_ts)} after completing their work session. Mood: ${selectedMood}`);
+        generateSmartNotification(`User just completed their work session. Mood: ${selectedMood}. Work duration: ${me?.workedMinutes || 0} minutes`);
         
         fetchTodaySummary();
       } else {
