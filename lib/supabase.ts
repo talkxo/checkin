@@ -12,7 +12,15 @@ console.log('SB_URL:', SB_URL);
 console.log('SB_ANON (first 20 chars):', SB_ANON.substring(0, 20) + '...');
 console.log('SB_SERVICE (first 20 chars):', SB_SERVICE.substring(0, 20) + '...');
 
+// Client-side client (uses anon key)
 export const supabase = createClient(SB_URL, SB_ANON);
-export const supabaseAdmin = createClient(SB_URL, SB_ANON, { auth: { persistSession: false } });
+
+// Server-side admin client (uses service role key)
+export const supabaseAdmin = createClient(SB_URL, SB_SERVICE, { 
+  auth: { 
+    persistSession: false,
+    autoRefreshToken: false
+  } 
+});
 
 
