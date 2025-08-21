@@ -48,36 +48,39 @@ export async function GET(req: NextRequest) {
     const userStats = employees?.map(emp => {
       const userSessions = sessions?.filter(s => s.employee_id === emp.id) || [];
       
-      let officeMinutes = 0;
-      let remoteMinutes = 0;
-      let totalDays = 0;
-      const daysWorked = new Set();
+      let officeHours = 0;
+      let remoteHours = 0;
+      const officeDays = new Set();
+      const remoteDays = new Set();
 
       for (const session of userSessions) {
         const sessionDate = new Date(session.checkin_ts).toISOString().split('T')[0];
-        daysWorked.add(sessionDate);
         
         const checkin = new Date(session.checkin_ts);
         const checkout = session.checkout_ts ? new Date(session.checkout_ts) : now;
         const diffMs = checkout.getTime() - checkin.getTime();
-        const diffMinutes = Math.round(diffMs / 60000);
+        const diffHours = diffMs / (1000 * 60 * 60);
 
         if (session.mode === 'office') {
-          officeMinutes += diffMinutes;
-        } else {
-          remoteMinutes += diffMinutes;
+          officeDays.add(sessionDate);
+          officeHours += diffHours;
+        } else if (session.mode === 'remote') {
+          remoteDays.add(sessionDate);
+          remoteHours += diffHours;
         }
       }
 
-      totalDays = daysWorked.size;
+      const totalDays = officeDays.size + remoteDays.size;
 
       return {
         id: emp.id,
         full_name: emp.full_name,
-        totalHours: Math.round((officeMinutes + remoteMinutes) / 60 * 10) / 10,
-        officeHours: Math.round(officeMinutes / 60 * 10) / 10,
-        remoteHours: Math.round(remoteMinutes / 60 * 10) / 10,
-        daysPresent: totalDays
+        totalHours: Math.round((officeHours + remoteHours) * 10) / 10,
+        officeHours: Math.round(officeHours * 10) / 10,
+        remoteHours: Math.round(remoteHours * 10) / 10,
+        daysPresent: totalDays,
+        officeDays: officeDays.size,
+        remoteDays: remoteDays.size
       };
     }) || [];
 

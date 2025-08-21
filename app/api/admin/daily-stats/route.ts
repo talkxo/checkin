@@ -48,13 +48,13 @@ export async function GET(req: NextRequest) {
     // Calculate user stats for charts
     const userStats = employees?.map(emp => {
       const userSessions = sessions?.filter(s => s.employee_id === emp.id) || [];
-      const daysWorked = new Set();
+      const officeDays = new Set();
+      const remoteDays = new Set();
       let officeHours = 0;
       let remoteHours = 0;
 
       for (const session of userSessions) {
         const sessionDate = new Date(session.checkin_ts).toISOString().split('T')[0];
-        daysWorked.add(sessionDate);
         
         const checkin = new Date(session.checkin_ts);
         const checkout = session.checkout_ts ? new Date(session.checkout_ts) : now;
@@ -62,15 +62,19 @@ export async function GET(req: NextRequest) {
         const diffHours = diffMs / (1000 * 60 * 60);
 
         if (session.mode === 'office') {
+          officeDays.add(sessionDate);
           officeHours += diffHours;
-        } else {
+        } else if (session.mode === 'remote') {
+          remoteDays.add(sessionDate);
           remoteHours += diffHours;
         }
       }
 
       return {
         name: emp.full_name,
-        daysWorked: daysWorked.size,
+        officeDays: officeDays.size,
+        remoteDays: remoteDays.size,
+        totalDays: officeDays.size + remoteDays.size,
         officeHours: Math.round(officeHours * 10) / 10,
         remoteHours: Math.round(remoteHours * 10) / 10
       };
@@ -82,9 +86,16 @@ export async function GET(req: NextRequest) {
       datasets: [
         {
           label: 'Office Days',
-          data: userStats.map(u => u.daysWorked),
+          data: userStats.map(u => u.officeDays),
           backgroundColor: 'rgba(59, 130, 246, 0.8)',
           borderColor: 'rgb(59, 130, 246)',
+          borderWidth: 1,
+        },
+        {
+          label: 'Remote Days',
+          data: userStats.map(u => u.remoteDays),
+          backgroundColor: 'rgba(147, 51, 234, 0.8)',
+          borderColor: 'rgb(147, 51, 234)',
           borderWidth: 1,
         }
       ],

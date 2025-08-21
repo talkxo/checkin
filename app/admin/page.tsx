@@ -45,6 +45,8 @@ interface UserStats {
   officeHours: number;
   remoteHours: number;
   daysPresent: number;
+  officeDays: number;
+  remoteDays: number;
 }
 
 interface TodayData {
@@ -803,7 +805,7 @@ export default function AdminPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>User In Office vs Days</CardTitle>
+                    <CardTitle>Office vs Remote Days</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <Bar
@@ -822,7 +824,7 @@ export default function AdminPage() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Time Spent by Users</CardTitle>
+                    <CardTitle>Hours Spent by Users</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <Line
@@ -855,7 +857,9 @@ export default function AdminPage() {
                         <TableHead>Total Hours</TableHead>
                         <TableHead>Office Hours</TableHead>
                         <TableHead>Remote Hours</TableHead>
-                        <TableHead>Days Present</TableHead>
+                        <TableHead>Office Days</TableHead>
+                        <TableHead>Remote Days</TableHead>
+                        <TableHead>Total Days</TableHead>
                         <TableHead>Avg Hours/Day</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -871,6 +875,12 @@ export default function AdminPage() {
                           </TableCell>
                           <TableCell>
                             <Badge variant="secondary">{user.remoteHours}h</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{user.officeDays || 0} days</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{user.remoteDays || 0} days</Badge>
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline">{user.daysPresent} days</Badge>
