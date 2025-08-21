@@ -685,7 +685,7 @@ export default function HomePage(){
                         {aiNotification ? (
                           <div>
                             <div className="font-medium mb-1 text-gray-800 flex justify-between items-center">
-                              <span>🤖 AI Assistant</span>
+                              <span>✨</span>
                               <button 
                                 onClick={() => setAiNotification('')}
                                 className="text-gray-500 hover:text-gray-700 text-xs"
