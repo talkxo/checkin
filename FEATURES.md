@@ -15,7 +15,7 @@
 | Admin Dashboard (Analytics) | High-level charts and numbers | Go to `/admin` (protected) | Visit `/admin` → login with `admin`/`talkxo2024` | Username/password: `admin`/`talkxo2024` |
 | Admin – Today's Attendance | Table of today's data per user | In Admin page | Khushi row: "Khushi" → "09:30" → "18:45" → "8h 15m" → "Complete" | Includes mode, status, hours |
 | Admin – User Management | Add, edit, deactivate employees | Admin → User Management tab | Add "John Doe" → Edit "Khushi" email → Deactivate "Old User" | Full CRUD operations; soft delete |
-| **AI Insights (NEW)** | AI-powered attendance analysis | Admin → AI Insights tab | Click "Generate Insights" → AI analyzes patterns and trends | Powered by GPT-OSS-20B via OpenRouter |
+| **AI Insights (NEW)** | AI-powered attendance analysis | Admin → AI Insights tab | Click "Generate Insights" → AI analyzes patterns and trends | Powered by Kimi K2 via OpenRouter |
 | **AI Reports (NEW)** | Professional attendance reports | Admin → AI Insights tab | Click "Generate Report" → AI creates executive summary | Professional formatting for management |
 | **Smart Notifications (NEW)** | Personalized AI messages | Automatic on check-in/out | "Great start to your day! You're consistently early" | Context-aware, encouraging messages |
 | Export CSV (Today) | Downloads today's attendance as CSV | Click "Export CSV" in Admin | Download: `attendance_2024-01-15.csv` | `app/api/admin/today-export` |
@@ -29,7 +29,7 @@
 | Supabase storage + RLS | Secure Postgres storage for employees/sessions | Transparent to users | Khushi's data: `employees` table + `sessions` table | Uses anon client for reads, service role for writes |
 | Notion-like UI | Clean, light, mobile-first interface | Responsive on mobile/desktop | Mobile: stacked layout, Desktop: side-by-side | Tailwind + custom components |
 
-## AI Features Powered by GPT-OSS-20B (NEW)
+## AI Features Powered by Kimi K2 (NEW)
 
 ### 🤖 AI-Powered Insights
 - **Attendance Analysis**: AI analyzes patterns, trends, and provides actionable recommendations
@@ -40,10 +40,10 @@
 - **Productivity Analysis**: Provides personalized productivity tips and insights
 
 ### 🧠 AI Implementation
-- **Model**: OpenAI's GPT-OSS-20B (21B parameters, Mixture-of-Experts architecture)
+- **Model**: Moonshot AI's Kimi K2 (1T total parameters, 32B active parameters, Mixture-of-Experts architecture)
 - **API**: OpenRouter API for seamless integration
-- **Features**: Function calling, tool use, structured outputs
-- **Context**: 131,072 token context window
+- **Features**: Advanced tool use, reasoning, code synthesis, long-context inference
+- **Context**: 128K token context window
 - **Cost**: Free tier available via OpenRouter
 
 ### 📊 AI API Endpoints
@@ -124,5 +124,5 @@ const notification = await generateSmartNotification(userData, context);
 - **Email Optional**: Users can be created without email addresses
 - **Active Status**: Only active users can check in/out
 - **Audit Trail**: Creation dates and modification tracking
-- **AI-Powered**: GPT-OSS-20B integration for intelligent insights
+- **AI-Powered**: Kimi K2 integration for intelligent insights
 - **Real-time Analysis**: AI processes attendance data for actionable insights

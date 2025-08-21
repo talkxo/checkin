@@ -1010,7 +1010,7 @@ export default function AdminPage() {
                     <strong>Smart Analysis:</strong> Uses advanced AI to understand attendance patterns and provide personalized insights.
                   </p>
                   <p className="text-xs text-gray-500">
-                    Powered by OpenAI's GPT-OSS-20B model via OpenRouter API
+                    Powered by Moonshot AI's Kimi K2 model via OpenRouter API
                   </p>
                 </div>
               </CardContent>
