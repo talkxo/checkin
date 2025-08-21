@@ -35,6 +35,13 @@ const formatISTTimeShort = (timestamp: string) => {
   }
 };
 
+// Helper to format time consistently for display
+const formatDisplayTime = (timeString: string) => {
+  if (!timeString) return 'N/A';
+  if (timeString.includes(':')) return timeString; // Already formatted
+  return formatISTTimeShort(timeString);
+};
+
 export default function HomePage(){
   const [name,setName]=useState('');
   const [pending,setPending]=useState(false);
@@ -62,8 +69,6 @@ export default function HomePage(){
   const [selectedMood, setSelectedMood] = useState<string>('');
   const [moodComment, setMoodComment] = useState<string>('');
 
-
-
   // Generate AI-powered smart notification
   const generateSmartNotification = async (context: string) => {
     if (!me) return;
@@ -81,7 +86,7 @@ export default function HomePage(){
       if (response.ok) {
         const data = await response.json();
         setAiNotification(data.notification);
-        setTimeout(() => setAiNotification(''), 5000);
+        // Don't auto-clear AI notifications - let user see them
       }
     } catch (error) {
       // Silently fail - AI notifications are optional
@@ -316,15 +321,15 @@ export default function HomePage(){
         
         if (j.message && j.message.includes('already exists')) {
           // Existing session
-          const message = `You already have an open session from ${formatISTTime(j.session.checkin_ts)}`;
+          const message = `You already have an open session from ${formatISTTimeShort(j.session.checkin_ts)}`;
           setMsg(message);
         } else {
           // New session
-          const message = `Checked in at ${formatISTTime(j.session.checkin_ts)}`;
+          const message = `Checked in at ${formatISTTimeShort(j.session.checkin_ts)}`;
           setMsg(message);
           
           // Generate AI notification for check-in
-          generateSmartNotification(`User just checked in at ${formatISTTime(j.session.checkin_ts)} in ${checkMode} mode`);
+          generateSmartNotification(`User just checked in at ${formatISTTimeShort(j.session.checkin_ts)} in ${checkMode} mode`);
         }
         
         fetchMySummary(j.employee.slug);
@@ -372,7 +377,7 @@ export default function HomePage(){
         setMoodComment('');
         
         // Generate AI notification for check-out and display in text area
-        generateSmartNotification(`User just checked out at ${formatISTTime(j.checkout_ts)} after completing their work session. Mood: ${selectedMood}`);
+        generateSmartNotification(`User just checked out at ${formatISTTimeShort(j.checkout_ts)} after completing their work session. Mood: ${selectedMood}`);
         
         fetchTodaySummary();
       } else {
@@ -615,7 +620,7 @@ export default function HomePage(){
                       <div className="bg-white rounded-lg p-6 max-w-sm w-full">
                         <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">How was your day?</h3>
                         
-                        <div className="flex justify-center gap-3 mb-4">
+                        <div className="grid grid-cols-5 gap-2 mb-4">
                           {[
                             { emoji: '😊', label: 'Great', value: 'great' },
                             { emoji: '😐', label: 'Good', value: 'good' },
@@ -626,14 +631,14 @@ export default function HomePage(){
                             <button
                               key={mood.value}
                               onClick={() => setSelectedMood(mood.value)}
-                              className={`p-3 rounded-lg border-2 transition-all ${
+                              className={`p-2 rounded-lg border-2 transition-all flex flex-col items-center ${
                                 selectedMood === mood.value
                                   ? 'border-blue-500 bg-blue-50'
                                   : 'border-gray-200 hover:border-gray-300'
                               }`}
                             >
-                              <div className="text-2xl mb-1">{mood.emoji}</div>
-                              <div className="text-xs text-gray-600">{mood.label}</div>
+                              <div className="text-xl mb-1">{mood.emoji}</div>
+                              <div className="text-xs text-gray-600 text-center leading-tight">{mood.label}</div>
                             </button>
                           ))}
                         </div>
@@ -675,15 +680,23 @@ export default function HomePage(){
 
                   {/* AI Output Display */}
                   {(aiNotification || msg) && (
-                    <div className="text-center">
-                      <div className="text-sm text-gray-600 bg-gray-50 rounded-md p-3 min-h-[60px] flex items-center justify-center">
+                    <div className="text-left">
+                      <div className="text-sm text-black bg-gray-100 rounded-md p-3 min-h-[60px] relative">
                         {aiNotification ? (
-                          <div className="text-blue-700">
-                            <div className="font-medium mb-1">🤖 AI Assistant</div>
-                            <div>{aiNotification}</div>
+                          <div>
+                            <div className="font-medium mb-1 text-gray-800 flex justify-between items-center">
+                              <span>🤖 AI Assistant</span>
+                              <button 
+                                onClick={() => setAiNotification('')}
+                                className="text-gray-500 hover:text-gray-700 text-xs"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                            <div className="text-gray-900">{aiNotification}</div>
                           </div>
                         ) : (
-                          <div>{msg}</div>
+                          <div className="text-gray-900">{msg}</div>
                         )}
                       </div>
                     </div>
@@ -692,10 +705,10 @@ export default function HomePage(){
                   {me && (
                     <div className="flex flex-wrap gap-2 justify-center">
                       <span className="notion-badge notion-badge-info">
-                        Last In: {me.lastIn ? (me.lastIn.includes(':') ? me.lastIn : formatISTTimeShort(me.lastIn)) : 'N/A'}
+                        Last In: {formatDisplayTime(me.lastIn)}
                       </span>
                       <span className="notion-badge notion-badge-outline">
-                        Last Out: {me.lastOut ? (me.lastOut.includes(':') ? me.lastOut : formatISTTimeShort(me.lastOut)) : 'N/A'}
+                        Last Out: {formatDisplayTime(me.lastOut)}
                       </span>
                       <span className="notion-badge notion-badge-success">
                         Worked: {me.workedMinutes}m
