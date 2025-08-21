@@ -66,10 +66,15 @@ export async function GET(req: NextRequest) {
         workedHours = `${hours}h ${minutes}m`;
       }
 
+      // Handle employees data safely
+      const employee = Array.isArray(session.employees) ? session.employees[0] : session.employees;
+      const employeeName = employee?.full_name || 'Unknown';
+      const employeeSlug = employee?.slug || '';
+
       return {
         id: session.id,
-        name: session.employees.full_name,
-        slug: session.employees.slug,
+        name: employeeName,
+        slug: employeeSlug,
         date: checkinTime.toISOString().split('T')[0],
         checkinTime: checkinTime.toLocaleTimeString('en-GB', { 
           hour: '2-digit', 
