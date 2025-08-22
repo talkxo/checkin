@@ -111,7 +111,8 @@ Keep it brief and conversational for Basecamp chat.`;
 
       // Send fallback response to Basecamp
       const accessToken = await getAccessToken();
-      const response = await fetch(`https://3.basecampapi.com/${process.env.BC_ACCOUNT_ID}/buckets/${process.env.BC_PROJECT_ID}/chats/${conversation.id}/lines.json`, {
+      const chatId = conversation.id.split('@')[0]; // Extract just the chat ID part
+      const response = await fetch(`https://3.basecampapi.com/${process.env.BC_ACCOUNT_ID}/buckets/${process.env.BC_PROJECT_ID}/chats/${chatId}/lines.json`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -150,7 +151,8 @@ Keep it brief and conversational for Basecamp chat.`;
 
     // Send response back to Basecamp
     const accessToken = await getAccessToken();
-    const response = await fetch(`https://3.basecampapi.com/${process.env.BC_ACCOUNT_ID}/buckets/${process.env.BC_PROJECT_ID}/chats/${conversation.id}/lines.json`, {
+    const chatId = conversation.id.split('@')[0]; // Extract just the chat ID part
+    const response = await fetch(`https://3.basecampapi.com/${process.env.BC_ACCOUNT_ID}/buckets/${process.env.BC_PROJECT_ID}/chats/${chatId}/lines.json`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
