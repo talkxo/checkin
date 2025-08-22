@@ -17,11 +17,11 @@ export default function AdminChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const hotClues = [
-    { icon: <BarChart3 className="w-4 h-4" />, label: "This Week's Stats", query: "Show me this week's attendance statistics" },
-    { icon: <Users className="w-4 h-4" />, label: "Most Attentive", query: "Who was the most attentive employee this week?" },
-    { icon: <MapPin className="w-4 h-4" />, label: "Office vs Remote", query: "Show me the breakdown of office vs remote work this week" },
-    { icon: <Calendar className="w-4 h-4" />, label: "Weekly Summary", query: "Give me a summary of this week's attendance patterns" },
-    { icon: <TrendingUp className="w-4 h-4" />, label: "Team Insights", query: "What are the key insights about team collaboration this week?" }
+    { icon: <BarChart3 className="w-4 h-4" />, label: "Team Status", query: "What's the current team status? Who's in office vs remote today?" },
+    { icon: <Users className="w-4 h-4" />, label: "Attendance Patterns", query: "Show me unusual attendance patterns or trends that need attention" },
+    { icon: <MapPin className="w-4 h-4" />, label: "Space Utilization", query: "How is our office space being utilized? Any optimization opportunities?" },
+    { icon: <Calendar className="w-4 h-4" />, label: "Team Coordination", query: "What are the best days for team meetings and collaboration?" },
+    { icon: <TrendingUp className="w-4 h-4" />, label: "Cost Insights", query: "What are the cost implications of our current hybrid work patterns?" }
   ];
 
   const scrollToBottom = () => {
@@ -82,10 +82,11 @@ export default function AdminChat() {
     setInput(query);
   };
 
-      return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-                        {/* Header */}
-                  <div className="bg-white border-b border-gray-200 p-6">
+          return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="w-full max-w-6xl bg-white rounded-xl shadow-lg overflow-hidden">
+          {/* Header */}
+          <div className="bg-white border-b border-gray-200 p-6 rounded-t-xl">
                     <div className="max-w-4xl mx-auto flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <img 
@@ -103,13 +104,14 @@ export default function AdminChat() {
                   </div>
 
                         {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                  <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
                     <div className="max-w-4xl mx-auto">
                     {messages.length === 0 && (
                       <div className="text-center text-gray-500 mt-20">
                         <Bot className="w-12 h-12 mx-auto mb-4 text-purple-600" />
                         <h2 className="text-xl font-semibold mb-2 text-gray-900">Hello, I'm your InsydeChat Assistant</h2>
-                        <p className="text-sm">Ask me anything about attendance data, employee insights, or use the quick actions below.</p>
+                        <p className="text-sm mb-4">I help People Ops teams manage hybrid work with intelligent insights.</p>
+                        <p className="text-sm text-gray-400">Ask me about team status, attendance patterns, space utilization, or use the quick actions below.</p>
                       </div>
                     )}
 
@@ -201,7 +203,7 @@ export default function AdminChat() {
                   </div>
 
                         {/* Input */}
-                  <div className="bg-white border-t border-gray-200 p-6">
+                  <div className="bg-white border-t border-gray-200 p-6 rounded-b-xl">
                     <div className="max-w-4xl mx-auto flex space-x-3">
                       <input
                         type="text"
@@ -221,6 +223,7 @@ export default function AdminChat() {
                       </button>
                     </div>
                   </div>
-    </div>
-  );
-}
+        </div>
+      </div>
+    );
+  }

@@ -42,19 +42,33 @@ export async function POST(req: NextRequest) {
     }
 
     // Create AI prompt
-    const prompt = `You are an INSYDE admin assistant. Analyze this attendance data and answer the user's question.
+                    const prompt = `You are an INSYDE admin assistant for People Ops/HR teams. Analyze this attendance data and provide intelligent insights.
 
 User Question: ${message}
 
 Available Data: ${contextData}
 
 Provide a concise, professional response in Markdown format. Focus on:
-- Key insights and patterns
-- Actionable recommendations
-- Clear data presentation
-- Professional tone
 
-Keep the response focused and well-formatted.`;
+**Team Intelligence:**
+- Real-time team status and patterns
+- Unusual attendance patterns that need attention
+- Team coordination opportunities
+- Space utilization insights
+
+**Actionable Insights:**
+- Specific recommendations for People Ops
+- Team management suggestions
+- Cost optimization opportunities
+- Employee engagement insights
+
+**Professional Tone:**
+- Positive and supportive language
+- Data-driven recommendations
+- Clear, actionable next steps
+- Focus on team success and well-being
+
+Format your response with clear sections, bullet points, and actionable recommendations.`;
 
     const aiResponse = await callOpenRouter([
       { role: 'system', content: 'You are an INSYDE admin assistant. Provide concise, professional insights about attendance data in Markdown format.' },
