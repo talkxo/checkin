@@ -195,11 +195,20 @@ export default function HomePage(){
     return () => clearInterval(interval);
   }, [currentSession, hasOpen]);
 
-  // Hold progress effect
+  // Hold progress effect with AI initiation
   useEffect(() => {
     if (!isHolding) {
       setHoldProgress(0);
       return;
+    }
+
+    // Start AI response generation when hold begins
+    if (holdProgress === 0) {
+      const context = hasOpen 
+        ? `User is about to check out. Current session: ${me?.workedMinutes || 0} minutes worked.`
+        : `User is about to check in. Mode: ${mode}.`;
+      
+      generateSmartNotification(context);
     }
 
     const interval = setInterval(() => {
@@ -219,7 +228,7 @@ export default function HomePage(){
     }, 50);
 
     return () => clearInterval(interval);
-  }, [isHolding, hasOpen, mode]);
+  }, [isHolding, hasOpen, mode, holdProgress, me?.workedMinutes]);
 
   const checkSessionStatus = async (slug: string) => {
     try {
@@ -328,8 +337,7 @@ export default function HomePage(){
           const message = `Checked in at ${formatISTTimeShort(j.session.checkin_ts)}`;
           setMsg(message);
           
-          // Generate AI notification for check-in
-          generateSmartNotification(`User just checked in and is working in ${checkMode} mode`);
+          // AI notification already initiated during hold
         }
         
         fetchMySummary(j.employee.slug);
@@ -376,8 +384,7 @@ export default function HomePage(){
         setSelectedMood('');
         setMoodComment('');
         
-        // Generate AI notification for check-out and display in text area
-        generateSmartNotification(`User just completed their work session. Mood: ${selectedMood}. Work duration: ${me?.workedMinutes || 0} minutes`);
+        // AI notification already initiated during hold
         
         fetchTodaySummary();
       } else {
@@ -406,7 +413,8 @@ export default function HomePage(){
     setName(employee.full_name);
     setSelectedEmployee(employee);
     setSuggestions([]);
-    // Don't auto-submit, let user click Continue
+    // Auto-submit when employee is selected
+    handleNameSubmit();
   };
 
   const handleNameChange = (value: string) => {
@@ -511,13 +519,7 @@ export default function HomePage(){
                 </div>
               )}
               
-              <button 
-                className="w-full py-4 text-lg bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={handleNameSubmit}
-                disabled={!name.trim() || !selectedEmployee}
-              >
-                {selectedEmployee ? 'Continue with ' + selectedEmployee.full_name : 'Select a valid employee'}
-              </button>
+
             </div>
           </div>
         ) : (
