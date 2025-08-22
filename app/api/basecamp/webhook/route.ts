@@ -80,13 +80,62 @@ Keep it brief and conversational for Basecamp chat.`;
 
     if (!aiResponse.success) {
       console.error('AI response failed:', aiResponse.error);
-      return NextResponse.json({ 
-        status: 'error', 
-        error: 'Unable to process request' 
-      }, { status: 500 });
+      
+      // Provide a fallback response when AI fails
+      const fallbackResponse = `I'm having trouble accessing the attendance data right now. Please try asking again in a few minutes, or check the admin dashboard for current information.`;
+      
+      // Check if this is a test request
+      const isTestRequest = !req.headers.get('user-agent')?.includes('Basecamp');
+      
+      if (isTestRequest) {
+        return NextResponse.json({ 
+          status: 'success', 
+          message: 'Test webhook successful (fallback response)',
+          aiResponse: fallbackResponse,
+          note: 'AI models failed, using fallback response'
+        });
+      }
+
+      // Send fallback response to Basecamp
+      const accessToken = await getAccessToken();
+      const response = await fetch(`https://3.basecampapi.com/${process.env.BC_ACCOUNT_ID}/buckets/${process.env.BC_PROJECT_ID}/chats/${process.env.BC_CHAT_ID}/lines.json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'PROJECT INSYDE (ops@talkxo.com)'
+        },
+        body: JSON.stringify({
+          content: fallbackResponse
+        })
+      });
+
+      if (!response.ok) {
+        console.error('Failed to send fallback response to Basecamp:', response.status, await response.text());
+        return NextResponse.json({ 
+          status: 'error', 
+          error: 'Failed to send response' 
+        }, { status: 500 });
+      }
+
+      console.log('Fallback response sent to Basecamp successfully');
+      return NextResponse.json({ status: 'success', note: 'Used fallback response' });
     }
 
-    // Get access token and send response back to Basecamp
+    // Check if this is a test request (no Basecamp headers)
+    const isTestRequest = !req.headers.get('user-agent')?.includes('Basecamp');
+    
+    if (isTestRequest) {
+      console.log('Test request detected, returning AI response without posting to Basecamp');
+      return NextResponse.json({ 
+        status: 'success', 
+        message: 'Test webhook successful',
+        aiResponse: aiResponse.data,
+        note: 'This was a test request. In real Basecamp integration, the response would be posted to the chat.'
+      });
+    }
+
+    // Send response back to Basecamp
     const accessToken = await getAccessToken();
     const response = await fetch(`https://3.basecampapi.com/${process.env.BC_ACCOUNT_ID}/buckets/${process.env.BC_PROJECT_ID}/chats/${process.env.BC_CHAT_ID}/lines.json`, {
       method: 'POST',
