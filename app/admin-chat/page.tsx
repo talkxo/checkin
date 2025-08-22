@@ -14,6 +14,7 @@ export default function AdminChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [responseStyle, setResponseStyle] = useState<'short' | 'detailed' | 'report' | 'executive' | 'analytical'>('short');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const hotClues = [
@@ -50,7 +51,7 @@ export default function AdminChat() {
       const response = await fetch('/api/admin-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message })
+        body: JSON.stringify({ message, responseStyle })
       });
 
       if (response.ok) {
@@ -224,6 +225,18 @@ export default function AdminChat() {
                       >
                         <Send className="w-5 h-5" />
                       </button>
+                      <select
+                        value={responseStyle}
+                        onChange={(e) => setResponseStyle(e.target.value as any)}
+                        className="bg-gray-50 border border-gray-200 text-gray-700 rounded-lg px-3 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
+                        disabled={isLoading}
+                      >
+                        <option value="short">Short</option>
+                        <option value="executive">Executive</option>
+                        <option value="detailed">Detailed</option>
+                        <option value="report">Report</option>
+                        <option value="analytical">Analytical</option>
+                      </select>
                     </div>
                   </div>
         </div>

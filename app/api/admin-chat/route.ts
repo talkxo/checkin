@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const { message } = await req.json();
+    const { message, responseStyle = 'short' } = await req.json();
 
     if (!message) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
@@ -41,37 +41,35 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Create AI prompt
-                    const prompt = `You are an INSYDE admin assistant for People Ops/HR teams. Analyze this attendance data and provide intelligent insights.
+    // Create AI prompt based on response style
+    const styleInstructions = {
+      short: 'Provide a brief executive summary (2-3 sentences) with key metrics and one actionable insight. Use tables for data presentation.',
+      executive: 'Provide a concise executive summary (3-4 bullet points) with key insights and recommendations. Focus on business impact.',
+      detailed: 'Provide a detailed analysis with multiple sections, but keep it focused and actionable. Use tables and structured formatting.',
+      report: 'Provide a comprehensive report format with executive summary, detailed analysis, and action plan. Include tables and charts.',
+      analytical: 'Provide deep analytical insights with data patterns, trends, and strategic recommendations. Use tables and visual formatting.'
+    };
+
+    const prompt = `You are an INSYDE admin assistant for People Ops/HR teams. Analyze this attendance data and provide intelligent insights.
 
 User Question: ${message}
+Response Style: ${responseStyle}
+Style Instructions: ${styleInstructions[responseStyle as keyof typeof styleInstructions]}
 
 Available Data: ${contextData}
 
-Provide a concise, professional response in Markdown format. Focus on:
+IMPORTANT: Keep responses concise and focused. Use tables for data presentation. Focus on actionable insights for People Ops.
 
-**Team Intelligence:**
-- Real-time team status and patterns
-- Unusual attendance patterns that need attention
-- Team coordination opportunities
+**Key Focus Areas:**
+- Team status and patterns
 - Space utilization insights
-
-**Actionable Insights:**
-- Specific recommendations for People Ops
-- Team management suggestions
 - Cost optimization opportunities
 - Employee engagement insights
 
-**Professional Tone:**
-- Positive and supportive language
-- Data-driven recommendations
-- Clear, actionable next steps
-- Focus on team success and well-being
-
-Format your response with clear sections, bullet points, and actionable recommendations.`;
+Format your response appropriately for the selected style. Use Markdown tables and clear structure.`;
 
     const aiResponse = await callOpenRouter([
-      { role: 'system', content: 'You are an INSYDE admin assistant. Provide concise, professional insights about attendance data in Markdown format.' },
+      { role: 'system', content: 'You are an INSYDE admin assistant. Provide concise, actionable insights in Markdown format. Keep responses brief and focused on business value.' },
       { role: 'user', content: prompt }
     ], 0.7);
 
