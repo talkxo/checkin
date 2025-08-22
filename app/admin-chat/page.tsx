@@ -223,19 +223,19 @@ export default function AdminChat() {
                         {/* Input */}
                   <div className="bg-white border-t border-gray-200 p-6 rounded-b-xl">
                     <div className="max-w-4xl mx-auto flex space-x-3">
-                      <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSend(input)}
-                        placeholder="Ask about attendance data, employee insights..."
-                        className="flex-1 bg-gray-50 border border-gray-200 text-gray-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                        disabled={isLoading}
-                      />
+                                              <input
+                          type="text"
+                          value={input}
+                          onChange={(e) => setInput(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && handleSend(input)}
+                          placeholder="Ask about attendance data, employee insights..."
+                          className="flex-1 bg-gray-50 border border-gray-200 text-gray-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 h-[48px]"
+                          disabled={isLoading}
+                        />
                       <button
                         onClick={() => handleSend(input)}
                         disabled={isLoading || !input.trim()}
-                        className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white p-3 rounded-lg transition-colors"
+                        className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white rounded-lg transition-colors h-[48px] w-[48px] flex items-center justify-center"
                       >
                         <Send className="w-5 h-5" />
                       </button>
@@ -243,7 +243,7 @@ export default function AdminChat() {
                         <button
                           onClick={() => setShowStyleDropdown(!showStyleDropdown)}
                           disabled={isLoading}
-                          className="bg-gray-50 border border-gray-200 text-gray-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 hover:bg-gray-100 transition-colors"
+                          className="bg-gray-50 border border-gray-200 text-gray-700 rounded-lg px-3 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 hover:bg-gray-100 transition-colors h-[48px] w-[48px] flex items-center justify-center"
                           title="Response Style"
                         >
                           <Settings className="w-5 h-5" />
