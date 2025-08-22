@@ -7,7 +7,7 @@ interface AIResponse {
   error?: string;
 }
 
-// Helper function to make API calls to OpenRouter
+// Helper function to make API calls to OpenRouter with retry logic
 export async function callOpenRouter(messages: any[], temperature: number = 0.7): Promise<AIResponse> {
   if (!OPENROUTER_API_KEY) {
     return {
@@ -16,38 +16,63 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
     };
   }
 
-  try {
-    const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://talkxo-checkin.vercel.app',
-        'X-Title': 'TalkXO Check-in AI'
-      },
-      body: JSON.stringify({
-        model: 'moonshotai/kimi-k2:free',
-        messages,
-        temperature,
-        max_tokens: 1000
-      })
-    });
+  const maxRetries = 3;
+  const baseDelay = 1000; // 1 second
 
-    if (!response.ok) {
-      throw new Error(`OpenRouter API error: ${response.status}`);
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://talkxo-checkin.vercel.app',
+          'X-Title': 'INSYDE AI'
+        },
+        body: JSON.stringify({
+          model: 'moonshotai/kimi-k2:free',
+          messages,
+          temperature,
+          max_tokens: 800 // Reduced to avoid rate limits
+        })
+      });
+
+      if (response.status === 429) {
+        // Rate limited - wait and retry
+        const delay = baseDelay * Math.pow(2, attempt - 1); // Exponential backoff
+        console.log(`Rate limited, retrying in ${delay}ms (attempt ${attempt}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+
+      if (!response.ok) {
+        throw new Error(`OpenRouter API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        data: data.choices[0]?.message?.content || ''
+      };
+    } catch (error) {
+      if (attempt === maxRetries) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+      
+      // For other errors, wait a bit before retrying
+      const delay = baseDelay * Math.pow(2, attempt - 1);
+      console.log(`API error, retrying in ${delay}ms (attempt ${attempt}/${maxRetries})`);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
-
-    const data = await response.json();
-    return {
-      success: true,
-      data: data.choices[0]?.message?.content || ''
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
   }
+
+  return {
+    success: false,
+    error: 'Max retries exceeded'
+  };
 }
 
 // AI Feature 1: HR-Focused Attendance Insights & Employee Engagement Analysis

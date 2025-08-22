@@ -3,12 +3,33 @@ import { callOpenRouter } from '@/lib/ai';
 
 export const dynamic = 'force-dynamic';
 
+// Simple in-memory rate limiting (for demo purposes)
+const requestCounts = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT = 5; // 5 requests per minute
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+
 export async function POST(req: NextRequest) {
   try {
     // Check if API key is configured
     if (!process.env.OPENROUTER_API_KEY) {
       console.error('OpenRouter API key not configured');
       return NextResponse.json({ error: 'AI service not configured' }, { status: 500 });
+    }
+
+    // Simple rate limiting
+    const clientIP = req.ip || 'unknown';
+    const now = Date.now();
+    const clientData = requestCounts.get(clientIP);
+    
+    if (clientData && now < clientData.resetTime) {
+      if (clientData.count >= RATE_LIMIT) {
+        return NextResponse.json({ 
+          error: 'Rate limit exceeded. Please wait a moment before trying again.' 
+        }, { status: 429 });
+      }
+      clientData.count++;
+    } else {
+      requestCounts.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
     }
 
     const { message, responseStyle = 'short' } = await req.json();
