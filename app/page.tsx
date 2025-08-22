@@ -417,7 +417,12 @@ export default function HomePage(){
     setSelectedEmployee(employee);
     setSuggestions([]);
     // Auto-submit when employee is selected
-    setTimeout(() => handleNameSubmit(), 100); // Small delay to ensure state is updated
+    setTimeout(() => {
+      localStorage.setItem('userName', employee.full_name);
+      setIsLoggedIn(true);
+      setShowNameInput(false);
+      fetchMySummary(employee.full_name);
+    }, 100);
   };
 
   const handleNameChange = (value: string) => {
@@ -469,20 +474,21 @@ export default function HomePage(){
   }
 
   return (
-    <div className="h-screen bg-gray-50 p-4 flex flex-col">
-      <div className="w-full max-w-sm md:max-w-lg mx-auto flex-1 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md lg:max-w-lg xl:max-w-xl mx-auto">
         {/* INSYDE Logo */}
         <div className="text-center mb-8 slide-up">
           <img 
-            src="/insyde-logo.svg" 
+            src="/insyde-logo.png" 
             alt="INSYDE" 
             className="h-12 md:h-16 mx-auto"
+            style={{ maxWidth: '200px', width: 'auto', height: 'auto' }}
           />
         </div>
         
         {showNameInput ? (
           // Name Input Screen
-          <div className="notion-card p-8 slide-up flex-1 flex flex-col justify-center">
+          <div className="notion-card p-8 slide-up">
             
             <div className="space-y-6">
               <div>
@@ -530,7 +536,7 @@ export default function HomePage(){
           </div>
         ) : (
           // Main App with Tabs
-          <div className="notion-card slide-up flex-1 flex flex-col">
+          <div className="notion-card slide-up">
             {/* Welcome Header */}
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">Hi, {name.split(' ')[0]}! 👋</h2>

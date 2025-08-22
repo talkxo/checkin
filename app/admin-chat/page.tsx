@@ -88,7 +88,12 @@ export default function AdminChat() {
                   <div className="bg-white border-b border-gray-200 p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <Bot className="w-6 h-6 text-purple-600" />
+                        <img 
+                          src="/insyde-logo.png" 
+                          alt="INSYDE" 
+                          className="h-6 w-auto"
+                          style={{ maxWidth: '120px' }}
+                        />
                         <h1 className="text-xl font-semibold text-gray-900">InsydeChat</h1>
                       </div>
                       <div className="text-sm text-gray-500">
