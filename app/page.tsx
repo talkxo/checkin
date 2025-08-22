@@ -169,7 +169,7 @@ export default function HomePage(){
       setName(savedName);
       setIsLoggedIn(true);
       setShowNameInput(false);
-      fetchMySummary(savedName);
+      fetchMySummary(savedName, false);
       setIsLoading(false);
     } else {
       setIsLoading(false);
@@ -292,7 +292,7 @@ export default function HomePage(){
         // Don't show name input - user stays logged in
       } else {
         // Session is still open, fetch summary
-        fetchMySummary(slug);
+        fetchMySummary(slug, true);
       }
       setIsLoading(false);
     } catch (e) {
@@ -316,9 +316,10 @@ export default function HomePage(){
     }
   };
 
-  const fetchMySummary = async (slug: string) => {
+  const fetchMySummary = async (identifier: string, useSlug: boolean = false) => {
     try {
-      const r = await fetch(`/api/summary/me?slug=${slug}`);
+      const param = useSlug ? `slug=${identifier}` : `fullName=${encodeURIComponent(identifier)}`;
+      const r = await fetch(`/api/summary/me?${param}`);
       if (!r.ok) return;
       const data = await r.json();
       setMe(data);
@@ -353,6 +354,13 @@ export default function HomePage(){
     setIsSubmitting(true);
     setMsg('');
     
+    // First check if there's already an open session
+    if (hasOpen && currentSession) {
+      setMsg('You already have an open session. Please check out first.');
+      setIsSubmitting(false);
+      return;
+    }
+    
     try {
       const r = await fetch('/api/checkin', { 
         method: 'POST', 
@@ -385,7 +393,15 @@ export default function HomePage(){
         fetchMySummary(j.employee.slug);
         fetchTodaySummary();
       } else {
-        setMsg(j.error || 'Error');
+        if (j.error && j.error.includes('unique constraint')) {
+          setMsg('You already have an open session. Please check out first.');
+          // Refresh session status
+          if (selectedEmployee) {
+            checkSessionStatus(selectedEmployee.slug);
+          }
+        } else {
+          setMsg(j.error || 'Error');
+        }
       }
     } catch (error) {
       setMsg('Network error. Please try again.');
@@ -447,7 +463,7 @@ export default function HomePage(){
       localStorage.setItem('userName', selectedEmployee.full_name);
       setIsLoggedIn(true);
       setShowNameInput(false);
-      fetchMySummary(selectedEmployee.full_name);
+      fetchMySummary(selectedEmployee.slug, true);
     }
   };
 
@@ -460,7 +476,7 @@ export default function HomePage(){
       localStorage.setItem('userName', employee.full_name);
       setIsLoggedIn(true);
       setShowNameInput(false);
-      fetchMySummary(employee.full_name);
+      fetchMySummary(employee.slug, true);
     }, 100);
   };
 
