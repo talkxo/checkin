@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, BarChart3, Users, Calendar, TrendingUp, MapPin } from 'lucide-react';
+import { Send, Bot, User, BarChart3, Users, Calendar, TrendingUp, MapPin, Settings } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 interface Message {
@@ -14,7 +14,8 @@ export default function AdminChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [responseStyle, setResponseStyle] = useState<'short' | 'detailed' | 'report' | 'executive' | 'analytical'>('short');
+  const [responseStyle, setResponseStyle] = useState<'short' | 'detailed' | 'report'>('short');
+  const [showStyleDropdown, setShowStyleDropdown] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const hotClues = [
@@ -32,6 +33,19 @@ export default function AdminChat() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.style-dropdown')) {
+        setShowStyleDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSend = async (message: string) => {
     if (!message.trim()) return;
@@ -225,18 +239,41 @@ export default function AdminChat() {
                       >
                         <Send className="w-5 h-5" />
                       </button>
-                      <select
-                        value={responseStyle}
-                        onChange={(e) => setResponseStyle(e.target.value as any)}
-                        className="bg-gray-50 border border-gray-200 text-gray-700 rounded-lg px-3 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
-                        disabled={isLoading}
-                      >
-                        <option value="short">Short</option>
-                        <option value="executive">Executive</option>
-                        <option value="detailed">Detailed</option>
-                        <option value="report">Report</option>
-                        <option value="analytical">Analytical</option>
-                      </select>
+                      <div className="relative style-dropdown">
+                        <button
+                          onClick={() => setShowStyleDropdown(!showStyleDropdown)}
+                          disabled={isLoading}
+                          className="bg-gray-50 border border-gray-200 text-gray-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 hover:bg-gray-100 transition-colors"
+                          title="Response Style"
+                        >
+                          <Settings className="w-5 h-5" />
+                        </button>
+                        
+                        {showStyleDropdown && (
+                          <div className="absolute bottom-full right-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px]">
+                            <div className="py-1">
+                              <button
+                                onClick={() => { setResponseStyle('short'); setShowStyleDropdown(false); }}
+                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${responseStyle === 'short' ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
+                              >
+                                Short
+                              </button>
+                              <button
+                                onClick={() => { setResponseStyle('detailed'); setShowStyleDropdown(false); }}
+                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${responseStyle === 'detailed' ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
+                              >
+                                Detailed
+                              </button>
+                              <button
+                                onClick={() => { setResponseStyle('report'); setShowStyleDropdown(false); }}
+                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${responseStyle === 'report' ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
+                              >
+                                Report
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
         </div>

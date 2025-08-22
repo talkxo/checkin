@@ -43,11 +43,9 @@ export async function POST(req: NextRequest) {
 
     // Create AI prompt based on response style
     const styleInstructions = {
-      short: 'Provide a brief executive summary (2-3 sentences) with key metrics and one actionable insight. Use tables for data presentation.',
-      executive: 'Provide a concise executive summary (3-4 bullet points) with key insights and recommendations. Focus on business impact.',
-      detailed: 'Provide a detailed analysis with multiple sections, but keep it focused and actionable. Use tables and structured formatting.',
-      report: 'Provide a comprehensive report format with executive summary, detailed analysis, and action plan. Include tables and charts.',
-      analytical: 'Provide deep analytical insights with data patterns, trends, and strategic recommendations. Use tables and visual formatting.'
+      short: 'Provide a very brief summary (1-2 sentences) with only the most critical metric and one key insight. Use simple bullet points or a small table if needed.',
+      detailed: 'Provide a focused analysis (3-4 bullet points) with key insights and 1-2 actionable recommendations. Use tables for data presentation.',
+      report: 'Provide a comprehensive report with executive summary, detailed analysis, and action plan. Include multiple tables and structured sections.'
     };
 
     const prompt = `You are an INSYDE admin assistant for People Ops/HR teams. Analyze this attendance data and provide intelligent insights.
@@ -58,7 +56,12 @@ Style Instructions: ${styleInstructions[responseStyle as keyof typeof styleInstr
 
 Available Data: ${contextData}
 
-IMPORTANT: Keep responses concise and focused. Use proper Markdown tables and formatting.
+CRITICAL: You MUST follow the exact response style requested. Do NOT default to executive summary format.
+
+**Response Style Requirements:**
+- SHORT: Maximum 2 sentences + 1 bullet point or small table
+- DETAILED: 3-4 bullet points with 1-2 recommendations
+- REPORT: Full structured report with multiple sections
 
 **Key Focus Areas:**
 - Team status and patterns
@@ -73,7 +76,7 @@ IMPORTANT: Keep responses concise and focused. Use proper Markdown tables and fo
 - Keep paragraphs short and focused
 - Use bold text for emphasis
 
-Format your response appropriately for the selected style. Ensure all tables and lists render correctly.`;
+STRICTLY follow the response style: ${responseStyle}. Do not exceed the specified length.`;
 
     const aiResponse = await callOpenRouter([
       { role: 'system', content: 'You are an INSYDE admin assistant. Provide concise, actionable insights in Markdown format. Keep responses brief and focused on business value.' },
