@@ -24,14 +24,21 @@ export async function GET(req: NextRequest) {
       setup: {
         step1: 'Ensure all environment variables are set in Vercel',
         step2: 'Connect OAuth by visiting: /api/basecamp/auth',
-        step3: 'Create the chatbot by calling: POST /api/basecamp/create-chatbot',
-        step4: 'Test the webhook: POST /api/basecamp/webhook',
-        webhookUrl: 'https://talkxo-checkin.vercel.app/api/basecamp/webhook'
+        step3: 'MANUALLY create chatbot in Basecamp: Go to your chat and click "Add a chatbot"',
+        step4: 'Set the Command URL to: https://talkxo-checkin.vercel.app/api/basecamp/webhook',
+        step5: 'Test the webhook: POST /api/basecamp/webhook',
+        webhookUrl: 'https://talkxo-checkin.vercel.app/api/basecamp/webhook',
+        note: 'Chatbots must be created manually in Basecamp interface, not via API'
       },
       commands: {
-        createChatbot: 'POST /api/basecamp/create-chatbot',
         testWebhook: 'POST /api/basecamp/webhook',
-        testConnection: 'GET /api/test/basecamp'
+        testConnection: 'GET /api/test/basecamp',
+        oauthAuth: 'GET /api/basecamp/auth'
+      },
+      troubleshooting: {
+        issue1: 'If getting "ignored" status: Check that conversation.id matches BC_CHAT_ID',
+        issue2: 'If 404 on chatbot creation: Chatbots must be created manually in Basecamp',
+        issue3: 'If OAuth fails: Visit /api/basecamp/auth to reconnect'
       }
     });
   } catch (error) {
