@@ -28,16 +28,16 @@ export async function POST(req: NextRequest) {
     }
     
     const conversationId = body.conversation?.id;
-    const expectedChatId = process.env.BC_CHAT_ID;
+    const expectedChatIds = process.env.BC_CHAT_ID?.split('\n').map(id => id.trim()).filter(id => id) || [];
     
-    console.log(`Comparing: "${conversationId}" with "${expectedChatId}"`);
+    console.log(`Comparing: "${conversationId}" with [${expectedChatIds.join(', ')}]`);
     
-    if (conversationId !== expectedChatId) {
+    if (!expectedChatIds.includes(conversationId)) {
       return NextResponse.json({ 
         status: 'ignored',
         reason: 'Wrong conversation ID',
         received: conversationId,
-        expected: expectedChatId
+        expected: expectedChatIds
       });
     }
     
