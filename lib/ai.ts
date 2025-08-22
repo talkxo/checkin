@@ -10,11 +10,14 @@ interface AIResponse {
 // Helper function to make API calls to OpenRouter with fallback models
 export async function callOpenRouter(messages: any[], temperature: number = 0.7): Promise<AIResponse> {
   if (!OPENROUTER_API_KEY) {
+    console.error('OpenRouter API key not configured');
     return {
       success: false,
       error: 'OpenRouter API key not configured'
     };
   }
+
+  console.log('OpenRouter API Key available:', OPENROUTER_API_KEY.substring(0, 10) + '...');
 
   // Define models in order of preference with fallbacks
   const models = [
@@ -56,6 +59,16 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
         if (!response.ok) {
           const errorText = await response.text();
           console.log(`Model ${model} failed: ${response.status} - ${errorText}`);
+          
+          // If it's an authentication error, don't try other models
+          if (response.status === 401) {
+            console.error('Authentication error - API key might be invalid');
+            return {
+              success: false,
+              error: 'Authentication failed - check API key'
+            };
+          }
+          
           // Try next model
           break;
         }

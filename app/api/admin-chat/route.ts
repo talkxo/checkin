@@ -116,7 +116,17 @@ STRICTLY follow the response style: ${responseStyle}. Do not exceed the specifie
 
     if (!aiResponse.success) {
       console.error('AI Error:', aiResponse.error);
-      return NextResponse.json({ error: aiResponse.error }, { status: 500 });
+      
+      // Provide a fallback response when all AI models fail
+      const fallbackResponse = `I'm having trouble accessing the attendance data right now. Here are some things you can check:
+
+• **Team Status**: Visit the admin dashboard for current attendance
+• **Quick Stats**: Check today's headcount and remote/office distribution  
+• **Manual Review**: Use the snapshot view for detailed employee status
+
+Please try asking again in a few minutes, or use the dashboard for immediate insights.`;
+      
+      return NextResponse.json({ response: fallbackResponse });
     }
 
     return NextResponse.json({ response: aiResponse.data });
