@@ -58,7 +58,7 @@ Style Instructions: ${styleInstructions[responseStyle as keyof typeof styleInstr
 
 Available Data: ${contextData}
 
-IMPORTANT: Keep responses concise and focused. Use tables for data presentation. Focus on actionable insights for People Ops.
+IMPORTANT: Keep responses concise and focused. Use proper Markdown tables and formatting.
 
 **Key Focus Areas:**
 - Team status and patterns
@@ -66,7 +66,14 @@ IMPORTANT: Keep responses concise and focused. Use tables for data presentation.
 - Cost optimization opportunities
 - Employee engagement insights
 
-Format your response appropriately for the selected style. Use Markdown tables and clear structure.`;
+**Formatting Rules:**
+- Use proper Markdown tables with | separators and header rows
+- Keep table rows on single lines
+- Use bullet points for lists
+- Keep paragraphs short and focused
+- Use bold text for emphasis
+
+Format your response appropriately for the selected style. Ensure all tables and lists render correctly.`;
 
     const aiResponse = await callOpenRouter([
       { role: 'system', content: 'You are an INSYDE admin assistant. Provide concise, actionable insights in Markdown format. Keep responses brief and focused on business value.' },
