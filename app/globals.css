@@ -54,12 +54,16 @@
     font-family: 'Inter', system-ui, sans-serif;
     background-color: #ffffff;
     color: #374151;
+    height: 100%;
   }
   
   body {
     background-color: #ffffff;
     color: #374151;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    height: 100%;
+    margin: 0;
+    padding: 0;
   }
 
   * {

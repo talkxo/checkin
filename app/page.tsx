@@ -458,8 +458,8 @@ export default function HomePage(){
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-md mx-auto">
+    <div className="h-screen bg-gray-50 p-4 flex items-center justify-center">
+      <div className="w-full max-w-sm md:max-w-lg mx-auto">
         {/* INSYDE Logo */}
         <div className="text-center mb-8 slide-up">
           <h1 className="text-3xl md:text-4xl font-bold text-purple-600 font-mono">INSYDE</h1>
