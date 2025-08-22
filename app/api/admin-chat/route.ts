@@ -5,6 +5,12 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
+    // Check if API key is configured
+    if (!process.env.OPENROUTER_API_KEY) {
+      console.error('OpenRouter API key not configured');
+      return NextResponse.json({ error: 'AI service not configured' }, { status: 500 });
+    }
+
     const { message, responseStyle = 'short' } = await req.json();
 
     if (!message) {
@@ -78,12 +84,17 @@ CRITICAL: You MUST follow the exact response style requested. Do NOT default to 
 
 STRICTLY follow the response style: ${responseStyle}. Do not exceed the specified length.`;
 
+    console.log('Calling OpenRouter with prompt:', prompt.substring(0, 200) + '...');
+    
     const aiResponse = await callOpenRouter([
       { role: 'system', content: 'You are an INSYDE admin assistant. Provide concise, actionable insights in Markdown format. Keep responses brief and focused on business value.' },
       { role: 'user', content: prompt }
     ], 0.7);
 
+    console.log('AI Response:', aiResponse);
+
     if (!aiResponse.success) {
+      console.error('AI Error:', aiResponse.error);
       return NextResponse.json({ error: aiResponse.error }, { status: 500 });
     }
 
