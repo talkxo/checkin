@@ -214,53 +214,53 @@ export default function AdminChat() {
                     </div>
                   </div>
 
-                        {/* Input */}
-                  <div className="bg-white border-t border-gray-200 p-6 rounded-b-xl">
-                    <div className="max-w-4xl mx-auto flex space-x-3">
-                                              <input
-                          type="text"
-                          value={input}
-                          onChange={(e) => setInput(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && handleSend(input)}
-                          placeholder="Ask about attendance data, employee insights..."
-                          className="flex-1 bg-gray-50 border border-gray-200 text-gray-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 h-[48px]"
-                          disabled={isLoading}
-                        />
+                                                {/* Input */}
+                  <div className="bg-white border-t border-gray-200 p-4 md:p-6 rounded-b-xl">
+                    <div className="max-w-4xl mx-auto flex space-x-2 md:space-x-3">
+                      <input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSend(input)}
+                        placeholder="Ask about attendance data, employee insights..."
+                        className="flex-1 bg-gray-50 border border-gray-200 text-gray-900 rounded-lg px-3 md:px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 h-[48px] text-sm md:text-base"
+                        disabled={isLoading}
+                      />
                       <button
                         onClick={() => handleSend(input)}
                         disabled={isLoading || !input.trim()}
-                        className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white rounded-lg transition-colors h-[48px] w-[48px] flex items-center justify-center"
+                        className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white rounded-lg transition-colors h-[48px] w-[44px] md:w-[48px] flex items-center justify-center flex-shrink-0"
                       >
-                        <Send className="w-5 h-5" />
+                        <Send className="w-4 h-4 md:w-5 md:h-5" />
                       </button>
-                      <div className="relative style-dropdown">
+                      <div className="relative style-dropdown flex-shrink-0">
                         <button
                           onClick={() => setShowStyleDropdown(!showStyleDropdown)}
                           disabled={isLoading}
-                          className="bg-gray-50 border border-gray-200 text-gray-700 rounded-lg px-3 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 hover:bg-gray-100 transition-colors h-[48px] w-[48px] flex items-center justify-center"
+                          className="bg-gray-50 border border-gray-200 text-gray-700 rounded-lg px-2 md:px-3 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 hover:bg-gray-100 transition-colors h-[48px] w-[44px] md:w-[48px] flex items-center justify-center"
                           title="Response Style"
                         >
-                          <Settings className="w-5 h-5" />
+                          <Settings className="w-4 h-4 md:w-5 md:h-5" />
                         </button>
                         
                         {showStyleDropdown && (
-                          <div className="absolute bottom-full right-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px]">
+                          <div className="absolute bottom-full right-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px] md:min-w-[140px]">
                             <div className="py-1">
                               <button
                                 onClick={() => { setResponseStyle('short'); setShowStyleDropdown(false); }}
-                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${responseStyle === 'short' ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
+                                className={`w-full text-left px-3 md:px-4 py-2 text-sm hover:bg-gray-50 ${responseStyle === 'short' ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
                               >
                                 Short
                               </button>
                               <button
                                 onClick={() => { setResponseStyle('detailed'); setShowStyleDropdown(false); }}
-                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${responseStyle === 'detailed' ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
+                                className={`w-full text-left px-3 md:px-4 py-2 text-sm hover:bg-gray-50 ${responseStyle === 'detailed' ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
                               >
                                 Detailed
                               </button>
                               <button
                                 onClick={() => { setResponseStyle('report'); setShowStyleDropdown(false); }}
-                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${responseStyle === 'report' ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
+                                className={`w-full text-left px-3 md:px-4 py-2 text-sm hover:bg-gray-50 ${responseStyle === 'report' ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
                               >
                                 Report
                               </button>
