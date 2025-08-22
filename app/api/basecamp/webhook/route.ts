@@ -125,10 +125,24 @@ Keep it brief and conversational for Basecamp chat.`;
       });
 
       if (!response.ok) {
-        console.error('Failed to send fallback response to Basecamp:', response.status, await response.text());
+        const errorText = await response.text();
+        console.error('Failed to send fallback response to Basecamp:', response.status, errorText);
+        console.error('Request details:', {
+          url: `https://3.basecampapi.com/${process.env.BC_ACCOUNT_ID}/buckets/${process.env.BC_PROJECT_ID}/chats/${chatId}/lines.json`,
+          accountId: process.env.BC_ACCOUNT_ID,
+          projectId: process.env.BC_PROJECT_ID,
+          chatId: chatId,
+          conversationId: conversation.id
+        });
         return NextResponse.json({ 
           status: 'error', 
-          error: 'Failed to send response' 
+          error: 'Failed to send response',
+          details: {
+            status: response.status,
+            error: errorText,
+            chatId: chatId,
+            conversationId: conversation.id
+          }
         }, { status: 500 });
       }
 
@@ -165,10 +179,24 @@ Keep it brief and conversational for Basecamp chat.`;
     });
 
     if (!response.ok) {
-      console.error('Failed to send response to Basecamp:', response.status, await response.text());
+      const errorText = await response.text();
+      console.error('Failed to send response to Basecamp:', response.status, errorText);
+      console.error('Request details:', {
+        url: `https://3.basecampapi.com/${process.env.BC_ACCOUNT_ID}/buckets/${process.env.BC_PROJECT_ID}/chats/${chatId}/lines.json`,
+        accountId: process.env.BC_ACCOUNT_ID,
+        projectId: process.env.BC_PROJECT_ID,
+        chatId: chatId,
+        conversationId: conversation.id
+      });
       return NextResponse.json({ 
         status: 'error', 
-        error: 'Failed to send response' 
+        error: 'Failed to send response',
+        details: {
+          status: response.status,
+          error: errorText,
+          chatId: chatId,
+          conversationId: conversation.id
+        }
       }, { status: 500 });
     }
 
