@@ -470,14 +470,14 @@ export default function HomePage(){
           // Name Input Screen
           <div className="notion-card p-8 slide-up">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-mono text-gray-900 mb-4">Days</h2>
+              <h2 className="text-2xl font-mono text-purple-600 mb-4">INSYDE</h2>
             </div>
             
             <div className="space-y-6">
               <div>
                 <input
                   type="text"
-                  className={`notion-input text-center text-lg py-4 ${selectedEmployee ? 'border-green-500 bg-green-50' : ''}`}
+                  className={`w-full px-4 py-4 text-center text-lg border-2 rounded-lg transition-colors duration-200 focus:outline-none focus:border-purple-500 ${selectedEmployee ? 'border-purple-500 bg-purple-50' : 'border-gray-300'}`}
                   placeholder="Enter your name"
                   value={name}
                   onChange={(e) => {
@@ -515,7 +515,7 @@ export default function HomePage(){
               )}
               
               <button 
-                className="notion-button-primary w-full py-4 text-lg"
+                className="w-full py-4 text-lg bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleNameSubmit}
                 disabled={!name.trim() || !selectedEmployee}
               >
