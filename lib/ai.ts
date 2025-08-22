@@ -144,23 +144,27 @@ Format this as a professional HR report that prioritizes employee well-being and
 
 // AI Feature 4: Smart Notifications & Alerts
 export async function generateSmartNotification(userData: any, context: string): Promise<AIResponse> {
-  const prompt = `Generate a short, motivational message for this user:
+  const prompt = `Generate a smart, actionable message for this user:
 
 User: ${JSON.stringify(userData, null, 2)}
 Context: ${context}
 
-Create a brief, encouraging message (max 50 words) that:
-- Motivates and appreciates their work
-- Focuses on patterns, not specific times
-- Uses positive, uplifting language
-- Feels personal and supportive
+Create a brief, intelligent message (max 60 words) that includes:
+- A relevant "Did you know?" fact about productivity, work patterns, or workplace wellness
+- A practical tip or insight based on their work pattern
+- Encouragement that feels genuine and specific
+- Actionable advice they can use today
 
-Keep it concise and inspiring.`;
+Examples:
+- "Did you know? Taking short breaks every 90 minutes can boost productivity by 20%. Your consistent check-ins show great discipline!"
+- "Did you know? Remote workers often report higher job satisfaction. Your hybrid approach is perfectly balanced!"
+
+Make it educational, motivational, and genuinely helpful.`;
 
   return callOpenRouter([
-    { role: 'system', content: 'You are a motivational workplace assistant. Create short, encouraging messages that inspire and appreciate users.' },
+    { role: 'system', content: 'You are a knowledgeable workplace productivity expert. Provide educational, motivational messages with "Did you know?" facts and actionable tips.' },
     { role: 'user', content: prompt }
-  ], 0.8);
+  ], 0.7);
 }
 
 // AI Feature 5: Team Collaboration Insights

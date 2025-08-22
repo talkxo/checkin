@@ -337,7 +337,10 @@ export default function HomePage(){
           const message = `Checked in at ${formatISTTimeShort(j.session.checkin_ts)}`;
           setMsg(message);
           
-          // AI notification already initiated during hold
+          // Trigger AI notification for check-in
+          setTimeout(() => {
+            generateSmartNotification(`User just checked in and is working in ${checkMode} mode`);
+          }, 1000);
         }
         
         fetchMySummary(j.employee.slug);
@@ -414,7 +417,7 @@ export default function HomePage(){
     setSelectedEmployee(employee);
     setSuggestions([]);
     // Auto-submit when employee is selected
-    handleNameSubmit();
+    setTimeout(() => handleNameSubmit(), 100); // Small delay to ensure state is updated
   };
 
   const handleNameChange = (value: string) => {
@@ -458,7 +461,7 @@ export default function HomePage(){
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="notion-card p-8 text-center fade-in">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -470,7 +473,11 @@ export default function HomePage(){
       <div className="w-full max-w-sm md:max-w-lg mx-auto flex-1 flex flex-col">
         {/* INSYDE Logo */}
         <div className="text-center mb-8 slide-up">
-          <h1 className="text-3xl md:text-4xl font-bold text-purple-600 font-mono">INSYDE</h1>
+          <img 
+            src="/insyde-logo.svg" 
+            alt="INSYDE" 
+            className="h-12 md:h-16 mx-auto"
+          />
         </div>
         
         {showNameInput ? (
@@ -555,7 +562,7 @@ export default function HomePage(){
                   {/* User Profile Header */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                      <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
                         {name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
                       </div>
                       <div>
@@ -571,7 +578,7 @@ export default function HomePage(){
                   <div className="text-center">
                     {isLocationLoading ? (
                       <span className="notion-badge notion-badge-outline">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-2"></div>
                         Detecting location...
                       </span>
                     ) : (
