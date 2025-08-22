@@ -205,6 +205,8 @@ Create a brief, intelligent message (max 60 words) that includes:
 - Encouragement that feels genuine and specific
 - Actionable advice they can use today
 
+IMPORTANT: This company uses Basecamp for chats, notes and tasks, Google Drive for files and other Google Workspace services like Gmail, and Canva for design work. Do NOT mention Slack, Microsoft Teams, or other tools they don't use.
+
 Examples:
 - "Did you know? Taking short breaks every 90 minutes can boost productivity by 20%. Your consistent check-ins show great discipline!"
 - "Did you know? Remote workers often report higher job satisfaction. Your hybrid approach is perfectly balanced!"
@@ -212,7 +214,7 @@ Examples:
 Make it educational, motivational, and genuinely helpful.`;
 
   return callOpenRouter([
-    { role: 'system', content: 'You are a knowledgeable workplace productivity expert. Provide educational, motivational messages with "Did you know?" facts and actionable tips.' },
+    { role: 'system', content: 'You are a knowledgeable workplace productivity expert. Provide educational, motivational messages with "Did you know?" facts and actionable tips. This company uses Basecamp, Google Workspace, and Canva - do not mention other tools.' },
     { role: 'user', content: prompt }
   ], 0.7);
 }

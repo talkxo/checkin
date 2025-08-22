@@ -115,6 +115,8 @@ Style Instructions: ${styleInstructions[responseStyle as keyof typeof styleInstr
 
 Available Data: ${contextData}
 
+IMPORTANT: This company uses Basecamp for chats, notes and tasks, Google Drive for files and other Google Workspace services like Gmail, and Canva for design work. Do NOT mention Slack, Microsoft Teams, or other tools they don't use.
+
 CRITICAL: You MUST follow the exact response style requested. Do NOT default to executive summary format.
 
 **Response Style Requirements:**
@@ -175,7 +177,7 @@ Please try asking again in a few minutes, or use the dashboard for immediate ins
     
     // Normal flow with context data
     const aiResponse = await callOpenRouter([
-      { role: 'system', content: 'You are an INSYDE admin assistant. Provide concise, actionable insights in Markdown format. Keep responses brief and focused on business value.' },
+      { role: 'system', content: 'You are an INSYDE admin assistant. Provide concise, actionable insights in Markdown format. Keep responses brief and focused on business value. This company uses Basecamp, Google Workspace, and Canva - do not mention other tools.' },
       { role: 'user', content: prompt }
     ], 0.7);
 

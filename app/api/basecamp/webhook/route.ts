@@ -71,6 +71,8 @@ export async function POST(req: NextRequest) {
 
 Available Data: ${contextData}
 
+IMPORTANT: This company uses Basecamp for chats, notes and tasks, Google Drive for files and other Google Workspace services like Gmail, and Canva for design work. Do NOT mention Slack, Microsoft Teams, or other tools they don't use.
+
 Provide a helpful, concise response (max 2-3 sentences) about attendance data. Be friendly and professional. Focus on:
 - Current team status
 - Attendance patterns
@@ -81,7 +83,7 @@ Keep it brief and conversational for Basecamp chat.`;
 
     // Get AI response
     const aiResponse = await callOpenRouter([
-      { role: 'system', content: 'You are a helpful INSYDE attendance assistant in Basecamp. Provide brief, friendly responses about attendance data.' },
+      { role: 'system', content: 'You are a helpful INSYDE attendance assistant in Basecamp. Provide brief, friendly responses about attendance data. This company uses Basecamp, Google Workspace, and Canva - do not mention other tools.' },
       { role: 'user', content: prompt }
     ], 0.7);
 
