@@ -38,33 +38,65 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    // Get relevant data based on the query
+    // Get relevant data based on the query - improved logic
     let contextData = '';
+    const messageLower = message.toLowerCase();
     
-    if (message.toLowerCase().includes('week') || message.toLowerCase().includes('statistics')) {
-      // Fetch weekly stats
-      const weeklyResponse = await fetch(`${req.nextUrl.origin}/api/admin/stats`);
-      if (weeklyResponse.ok) {
-        const weeklyData = await weeklyResponse.json();
-        contextData = `Weekly Statistics: ${JSON.stringify(weeklyData, null, 2)}`;
+    // Always fetch basic stats for context
+    try {
+      const statsResponse = await fetch(`${req.nextUrl.origin}/api/admin/stats`);
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        contextData += `Current Stats: ${JSON.stringify(statsData, null, 2)}\n`;
       }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
     }
-
-    if (message.toLowerCase().includes('employee') || message.toLowerCase().includes('attentive')) {
-      // Fetch employee data
+    
+    // Fetch daily stats for location/attendance patterns
+    try {
+      const dailyResponse = await fetch(`${req.nextUrl.origin}/api/admin/daily-stats`);
+      if (dailyResponse.ok) {
+        const dailyData = await dailyResponse.json();
+        contextData += `Daily Stats: ${JSON.stringify(dailyData, null, 2)}\n`;
+      }
+    } catch (error) {
+      console.error('Error fetching daily stats:', error);
+    }
+    
+    // Fetch employee data for detailed insights
+    try {
       const employeeResponse = await fetch(`${req.nextUrl.origin}/api/admin/users`);
       if (employeeResponse.ok) {
         const employeeData = await employeeResponse.json();
-        contextData += `\nEmployee Data: ${JSON.stringify(employeeData, null, 2)}`;
+        contextData += `Employee List: ${JSON.stringify(employeeData.slice(0, 5), null, 2)} (showing first 5)\n`;
+      }
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+    }
+    
+    // Add specific data based on query keywords
+    if (messageLower.includes('pattern') || messageLower.includes('trend') || messageLower.includes('unusual')) {
+      try {
+        const historicalResponse = await fetch(`${req.nextUrl.origin}/api/admin/historical-data`);
+        if (historicalResponse.ok) {
+          const historicalData = await historicalResponse.json();
+          contextData += `Historical Patterns: ${JSON.stringify(historicalData, null, 2)}\n`;
+        }
+      } catch (error) {
+        console.error('Error fetching historical data:', error);
       }
     }
-
-    if (message.toLowerCase().includes('remote') || message.toLowerCase().includes('office')) {
-      // Fetch location data
-      const locationResponse = await fetch(`${req.nextUrl.origin}/api/admin/daily-stats`);
-      if (locationResponse.ok) {
-        const locationData = await locationResponse.json();
-        contextData += `\nLocation Data: ${JSON.stringify(locationData, null, 2)}`;
+    
+    if (messageLower.includes('meeting') || messageLower.includes('collaboration') || messageLower.includes('team')) {
+      try {
+        const moodResponse = await fetch(`${req.nextUrl.origin}/api/admin/mood-data`);
+        if (moodResponse.ok) {
+          const moodData = await moodResponse.json();
+          contextData += `Mood/Engagement Data: ${JSON.stringify(moodData, null, 2)}\n`;
+        }
+      } catch (error) {
+        console.error('Error fetching mood data:', error);
       }
     }
 
@@ -106,7 +138,42 @@ CRITICAL: You MUST follow the exact response style requested. Do NOT default to 
 STRICTLY follow the response style: ${responseStyle}. Do not exceed the specified length.`;
 
     console.log('Calling OpenRouter with prompt:', prompt.substring(0, 200) + '...');
+    console.log('Context data available:', contextData ? 'Yes' : 'No');
     
+    // If no context data is available, provide a fallback prompt
+    if (!contextData.trim()) {
+      console.log('No context data available, using fallback prompt');
+      const fallbackPrompt = `You are an INSYDE admin assistant. The user asked: "${message}"
+
+Unfortunately, I cannot access the current attendance data right now. Please provide a helpful response that:
+1. Acknowledges the data access issue
+2. Suggests alternative ways to get this information
+3. Maintains a professional and helpful tone
+
+Response style: ${responseStyle}`;
+      
+      const aiResponse = await callOpenRouter([
+        { role: 'system', content: 'You are an INSYDE admin assistant. Provide helpful guidance when data is unavailable.' },
+        { role: 'user', content: fallbackPrompt }
+      ], 0.7);
+      
+      if (!aiResponse.success) {
+        // If AI also fails, return the static fallback
+        const staticFallback = `I'm having trouble accessing the attendance data right now. Here are some things you can check:
+
+• **Team Status**: Visit the admin dashboard for current attendance
+• **Quick Stats**: Check today's headcount and remote/office distribution  
+• **Manual Review**: Use the snapshot view for detailed employee status
+
+Please try asking again in a few minutes, or use the dashboard for immediate insights.`;
+        
+        return NextResponse.json({ response: staticFallback });
+      }
+      
+      return NextResponse.json({ response: aiResponse.data });
+    }
+    
+    // Normal flow with context data
     const aiResponse = await callOpenRouter([
       { role: 'system', content: 'You are an INSYDE admin assistant. Provide concise, actionable insights in Markdown format. Keep responses brief and focused on business value.' },
       { role: 'user', content: prompt }
