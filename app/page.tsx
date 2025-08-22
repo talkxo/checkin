@@ -464,8 +464,8 @@ export default function HomePage(){
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="notion-card p-8 text-center fade-in">
+      <div className="min-h-screen flex items-center justify-center p-8">
+        <div className="bg-white rounded-2xl shadow-lg p-8 text-center fade-in">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
         </div>
@@ -474,8 +474,8 @@ export default function HomePage(){
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md lg:max-w-lg xl:max-w-xl mx-auto">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-8">
+      <div className="w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto">
         {/* INSYDE Logo */}
         <div className="text-center mb-8 slide-up">
           <img 
@@ -488,7 +488,7 @@ export default function HomePage(){
         
         {showNameInput ? (
           // Name Input Screen
-          <div className="notion-card p-8 slide-up">
+          <div className="bg-white rounded-2xl shadow-lg p-8 slide-up">
             
             <div className="space-y-6">
               <div>
@@ -536,7 +536,7 @@ export default function HomePage(){
           </div>
         ) : (
           // Main App with Tabs
-          <div className="notion-card slide-up">
+          <div className="bg-white rounded-2xl shadow-lg slide-up">
             {/* Welcome Header */}
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">Hi, {name.split(' ')[0]}! 👋</h2>
