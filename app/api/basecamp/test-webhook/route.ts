@@ -32,11 +32,16 @@ export async function POST(req: NextRequest) {
     
     console.log(`Comparing: "${conversationId}" with [${expectedChatIds.join(', ')}]`);
     
-    if (!expectedChatIds.includes(conversationId)) {
+    // Extract chat ID from conversation ID (format: chat_id@account_id)
+    const chatIdFromConversation = conversationId?.split('@')[0];
+    console.log(`Extracted chat ID from conversation: "${chatIdFromConversation}"`);
+    
+    if (!expectedChatIds.includes(chatIdFromConversation)) {
       return NextResponse.json({ 
         status: 'ignored',
         reason: 'Wrong conversation ID',
         received: conversationId,
+        extractedChatId: chatIdFromConversation,
         expected: expectedChatIds
       });
     }

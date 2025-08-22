@@ -24,8 +24,12 @@ export async function POST(req: NextRequest) {
     const expectedChatIds = process.env.BC_CHAT_ID?.split('\n').map(id => id.trim()).filter(id => id) || [];
     console.log(`Comparing conversation.id: "${conversation.id}" with BC_CHAT_IDs: [${expectedChatIds.join(', ')}]`);
     
-    if (!expectedChatIds.includes(conversation.id)) {
-      console.log(`Message from different chat (${conversation.id}), expected one of: [${expectedChatIds.join(', ')}], ignoring`);
+    // Extract chat ID from conversation ID (format: chat_id@account_id)
+    const chatIdFromConversation = conversation.id.split('@')[0];
+    console.log(`Extracted chat ID from conversation: "${chatIdFromConversation}"`);
+    
+    if (!expectedChatIds.includes(chatIdFromConversation)) {
+      console.log(`Message from different chat (${conversation.id}), extracted chat ID ${chatIdFromConversation} not in expected: [${expectedChatIds.join(', ')}], ignoring`);
       return NextResponse.json({ status: 'ignored' });
     }
 
