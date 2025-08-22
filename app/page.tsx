@@ -460,18 +460,15 @@ export default function HomePage(){
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-md mx-auto">
-        {/* Current Time Display */}
+        {/* INSYDE Logo */}
         <div className="text-center mb-8 slide-up">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">{timeString}</h1>
-          <p className="text-gray-600">{dateString}</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-purple-600 font-mono">INSYDE</h1>
         </div>
         
         {showNameInput ? (
           // Name Input Screen
           <div className="notion-card p-8 slide-up">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-mono text-purple-600 mb-4">INSYDE</h2>
-            </div>
+
             
             <div className="space-y-6">
               <div>
@@ -620,25 +617,24 @@ export default function HomePage(){
                       <div className="bg-white rounded-lg p-6 max-w-sm w-full">
                         <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">How was your day?</h3>
                         
-                        <div className="grid grid-cols-5 gap-2 mb-4">
+                        <div className="grid grid-cols-5 gap-3 mb-4">
                           {[
-                            { emoji: '😊', label: 'Great', value: 'great' },
-                            { emoji: '😐', label: 'Good', value: 'good' },
-                            { emoji: '😞', label: 'Challenging', value: 'challenging' },
-                            { emoji: '😴', label: 'Exhausted', value: 'exhausted' },
-                            { emoji: '🚀', label: 'Productive', value: 'productive' }
+                            { emoji: '😊', value: 'great' },
+                            { emoji: '🙂', value: 'good' },
+                            { emoji: '😞', value: 'challenging' },
+                            { emoji: '😴', value: 'exhausted' },
+                            { emoji: '🚀', value: 'productive' }
                           ].map((mood) => (
                             <button
                               key={mood.value}
                               onClick={() => setSelectedMood(mood.value)}
-                              className={`p-2 rounded-lg border-2 transition-all flex flex-col items-center ${
+                              className={`p-3 rounded-lg border-2 transition-all flex items-center justify-center ${
                                 selectedMood === mood.value
-                                  ? 'border-blue-500 bg-blue-50'
-                                  : 'border-gray-200 hover:border-gray-300'
+                                  ? 'border-purple-500 bg-purple-50 scale-110'
+                                  : 'border-gray-200 hover:border-purple-300 hover:scale-105'
                               }`}
                             >
-                              <div className="text-xl mb-1">{mood.emoji}</div>
-                              <div className="text-xs text-gray-600 text-center leading-tight">{mood.label}</div>
+                              <div className="text-2xl">{mood.emoji}</div>
                             </button>
                           ))}
                         </div>
@@ -669,7 +665,7 @@ export default function HomePage(){
                           <button
                             onClick={handleMoodSubmit}
                             disabled={!selectedMood || isSubmitting}
-                            className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                            className="flex-1 py-2 px-4 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 transition-colors duration-200"
                           >
                             {isSubmitting ? 'Checking out...' : 'Check Out'}
                           </button>
