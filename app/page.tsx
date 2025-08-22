@@ -466,8 +466,8 @@ export default function HomePage(){
   }
 
   return (
-    <div className="h-screen bg-gray-50 p-4 flex items-center justify-center">
-      <div className="w-full max-w-sm md:max-w-lg mx-auto">
+    <div className="h-screen bg-gray-50 p-4 flex flex-col">
+      <div className="w-full max-w-sm md:max-w-lg mx-auto flex-1 flex flex-col">
         {/* INSYDE Logo */}
         <div className="text-center mb-8 slide-up">
           <h1 className="text-3xl md:text-4xl font-bold text-purple-600 font-mono">INSYDE</h1>
@@ -475,8 +475,7 @@ export default function HomePage(){
         
         {showNameInput ? (
           // Name Input Screen
-          <div className="notion-card p-8 slide-up">
-
+          <div className="notion-card p-8 slide-up flex-1 flex flex-col justify-center">
             
             <div className="space-y-6">
               <div>
@@ -524,7 +523,7 @@ export default function HomePage(){
           </div>
         ) : (
           // Main App with Tabs
-          <div className="notion-card slide-up">
+          <div className="notion-card slide-up flex-1 flex flex-col">
             {/* Welcome Header */}
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">Hi, {name.split(' ')[0]}! 👋</h2>

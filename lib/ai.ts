@@ -52,46 +52,20 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
 
 // AI Feature 1: HR-Focused Attendance Insights & Employee Engagement Analysis
 export async function getAttendanceInsights(attendanceData: any[], timeRange: string): Promise<AIResponse> {
-  const prompt = `Analyze this attendance data from an HR and employee engagement perspective for ${timeRange}:
+  const prompt = `Analyze attendance data for ${timeRange}. Format response in Markdown with clear sections:
 
 ${JSON.stringify(attendanceData, null, 2)}
 
-Please provide insights focusing on:
+**Provide concise insights in Markdown format:**
+- Employee engagement patterns
+- Team collaboration trends  
+- Well-being indicators
+- HR recommendations
 
-1. **Employee Engagement Patterns**
-   - Work-life balance indicators
-   - Consistency and reliability patterns
-   - Potential burnout or stress signals
-   - Positive engagement behaviors
-
-2. **Team Dynamics & Collaboration**
-   - Office vs remote collaboration patterns
-   - Team availability for meetings
-   - Cross-functional interaction opportunities
-   - Communication effectiveness indicators
-
-3. **Employee Well-being & Satisfaction**
-   - Work schedule preferences
-   - Flexibility utilization
-   - Potential stress indicators
-   - Positive work habits
-
-4. **HR Recommendations for Engagement**
-   - Recognition opportunities
-   - Support initiatives needed
-   - Policy adjustments for better work-life balance
-   - Team building suggestions
-
-5. **Empathy-Driven Insights**
-   - Individual employee stories and patterns
-   - Personal circumstances considerations
-   - Supportive intervention opportunities
-   - Positive reinforcement areas
-
-Focus on employee-centric analysis with empathy and understanding.`;
+Keep each section brief and actionable.`;
 
   return callOpenRouter([
-    { role: 'system', content: 'You are a compassionate HR professional with expertise in employee engagement, well-being, and organizational psychology. Provide empathetic, employee-focused insights that prioritize human connection and understanding.' },
+    { role: 'system', content: 'You are an HR analyst. Provide concise, actionable insights in Markdown format. Focus on key patterns and recommendations.' },
     { role: 'user', content: prompt }
   ], 0.6);
 }
@@ -170,24 +144,21 @@ Format this as a professional HR report that prioritizes employee well-being and
 
 // AI Feature 4: Smart Notifications & Alerts
 export async function generateSmartNotification(userData: any, context: string): Promise<AIResponse> {
-  const prompt = `Generate a personalized, encouraging notification for this user:
+  const prompt = `Generate a short, motivational message for this user:
 
 User: ${JSON.stringify(userData, null, 2)}
 Context: ${context}
 
-IMPORTANT: Do NOT mention specific check-in or check-out times in your response. Focus on work patterns, duration, mood, and general encouragement instead.
+Create a brief, encouraging message (max 50 words) that:
+- Motivates and appreciates their work
+- Focuses on patterns, not specific times
+- Uses positive, uplifting language
+- Feels personal and supportive
 
-Create a friendly, motivating message that:
-1. Acknowledges their work pattern and dedication
-2. Provides encouragement or productivity tips
-3. Maintains a positive tone
-4. Is specific to their situation
-5. Focuses on work duration, consistency, or mood rather than exact times
-
-Keep it under 100 words and make it feel personal. Avoid mentioning specific times - focus on the work itself.`;
+Keep it concise and inspiring.`;
 
   return callOpenRouter([
-    { role: 'system', content: 'You are a supportive workplace assistant. Create encouraging, personalized messages. Focus on work patterns and encouragement rather than specific times.' },
+    { role: 'system', content: 'You are a motivational workplace assistant. Create short, encouraging messages that inspire and appreciate users.' },
     { role: 'user', content: prompt }
   ], 0.8);
 }
