@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { LogOut } from 'lucide-react';
 
 // Helper function to format IST times consistently
@@ -68,6 +68,62 @@ export default function HomePage(){
   const [showMoodCheck, setShowMoodCheck] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string>('');
   const [moodComment, setMoodComment] = useState<string>('');
+
+  // Swipe button state
+  const [isSwiping, setIsSwiping] = useState(false);
+  const [swipeProgress, setSwipeProgress] = useState(0);
+  const [swipeStartX, setSwipeStartX] = useState(0);
+  const [currentSwipeX, setCurrentSwipeX] = useState(0);
+  const swipeButtonRef = useRef<HTMLDivElement>(null);
+
+  // Swipe button handlers
+  const handleSwipeStart = (e: React.TouchEvent | React.MouseEvent) => {
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    setIsSwiping(true);
+    setSwipeStartX(clientX);
+    setCurrentSwipeX(clientX);
+    setSwipeProgress(0);
+    
+    // Start AI response generation when swipe begins
+    const context = hasOpen 
+      ? `User is about to check out. Current session: ${me?.workedMinutes || 0} minutes worked.`
+      : `User is about to check in. Mode: ${mode}.`;
+    
+    generateSmartNotification(context);
+  };
+
+  const handleSwipeMove = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!isSwiping) return;
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const deltaX = clientX - swipeStartX;
+    const maxSwipe = 200; // Maximum swipe distance
+    const progress = Math.min(Math.max((deltaX / maxSwipe) * 100, 0), 100);
+    
+    setCurrentSwipeX(clientX);
+    setSwipeProgress(progress);
+  };
+
+  const handleSwipeEnd = () => {
+    if (!isSwiping) return;
+    
+    setIsSwiping(false);
+    
+    if (swipeProgress >= 80) {
+      // Swipe completed - trigger action
+      if (hasOpen) {
+        checkout();
+      } else {
+        act(mode);
+      }
+    }
+    
+    // Reset swipe state
+    setSwipeProgress(0);
+    setCurrentSwipeX(0);
+  };
+
+
 
   // Generate AI-powered smart notification
   const generateSmartNotification = async (context: string) => {
@@ -598,30 +654,59 @@ export default function HomePage(){
                   {/* Large Action Button */}
                   <div className="text-center">
                     <div className="space-y-4">
-                      <div 
-                        className="w-32 h-32 mx-auto rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 shadow-lg hover:shadow-xl select-none"
-                        style={{
-                          background: holdProgress > 0 
-                            ? `conic-gradient(from 0deg, ${hasOpen ? '#dc2626' : '#16a34a'} ${holdProgress * 3.6}deg, #f3f4f6 ${holdProgress * 3.6}deg)`
-                            : `linear-gradient(135deg, ${hasOpen ? '#dc2626' : '#16a34a'}, ${hasOpen ? '#b91c1c' : '#15803d'})`,
-                          boxShadow: holdProgress > 0 ? `0 0 20px rgba(${hasOpen ? '220, 38, 38' : '22, 163, 74'}, 0.4)` : '0 10px 25px rgba(0,0,0,0.1)'
-                        }}
-                        onMouseDown={handleHoldStart}
-                        onMouseUp={handleHoldEnd}
-                        onMouseLeave={handleHoldEnd}
-                        onTouchStart={handleHoldStart}
-                        onTouchEnd={handleHoldEnd}
-                      >
-                        <div className="text-white text-center select-none">
-                          <i className={`fas ${hasOpen ? 'fa-sign-out-alt' : 'fa-sign-in-alt'} text-2xl mb-2`}></i>
-                          <p className="font-semibold text-sm">
-                            {hasOpen ? 'Clock Out' : 'Clock In'}
-                          </p>
+                      {/* Swipe Button Container */}
+                      <div className="relative w-full max-w-xs mx-auto">
+                        {/* Background Track */}
+                        <div className="w-full h-16 bg-gray-200 rounded-full relative overflow-hidden">
+                          {/* Progress Fill */}
+                          <div 
+                            className="absolute left-0 top-0 h-full rounded-full transition-all duration-200 ease-out"
+                            style={{
+                              width: `${swipeProgress}%`,
+                              background: `linear-gradient(90deg, ${hasOpen ? '#dc2626' : '#16a34a'}, ${hasOpen ? '#b91c1c' : '#15803d'})`
+                            }}
+                          />
+                          
+                          {/* Swipe Button */}
+                          <div
+                            ref={swipeButtonRef}
+                            className={`absolute left-2 top-2 w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 ease-out select-none shadow-lg ${
+                              isSwiping ? 'scale-110' : 'hover:scale-105'
+                            }`}
+                            style={{
+                              transform: `translateX(${Math.min(swipeProgress * 1.6, 140)}px)`,
+                              background: `linear-gradient(135deg, ${hasOpen ? '#dc2626' : '#16a34a'}, ${hasOpen ? '#b91c1c' : '#15803d'})`,
+                              boxShadow: swipeProgress > 0 ? `0 0 15px rgba(${hasOpen ? '220, 38, 38' : '22, 163, 74'}, 0.5)` : '0 4px 12px rgba(0,0,0,0.15)'
+                            }}
+                            onMouseDown={handleSwipeStart}
+                            onMouseMove={handleSwipeMove}
+                            onMouseUp={handleSwipeEnd}
+                            onMouseLeave={handleSwipeEnd}
+                            onTouchStart={handleSwipeStart}
+                            onTouchMove={handleSwipeMove}
+                            onTouchEnd={handleSwipeEnd}
+                          >
+                            <i className={`fas ${hasOpen ? 'fa-sign-out-alt' : 'fa-sign-in-alt'} text-white text-lg`}></i>
+                          </div>
+                          
+                          {/* Text Labels */}
+                          <div className="absolute inset-0 flex items-center justify-between px-6 pointer-events-none">
+                            <span className="text-sm font-medium text-gray-600">
+                              {hasOpen ? 'Clock Out' : 'Clock In'}
+                            </span>
+                            <span className="text-sm font-medium text-gray-600">
+                              {hasOpen ? 'Confirm' : 'Confirm'}
+                            </span>
+                          </div>
                         </div>
+                        
+                        {/* Progress Text */}
+                        {swipeProgress > 0 && (
+                          <p className="text-sm text-gray-600 text-center mt-2">
+                            Swipe to confirm ({Math.round(swipeProgress)}%)
+                          </p>
+                        )}
                       </div>
-                      {holdProgress > 0 && (
-                        <p className="text-sm text-gray-600">Hold to confirm ({Math.round(holdProgress)}%)</p>
-                      )}
                     </div>
                   </div>
 
