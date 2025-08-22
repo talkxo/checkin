@@ -159,12 +159,6 @@ export default function AdminChat() {
                                       ul: ({children}) => <ul className="list-disc list-inside space-y-2 mb-4">{children}</ul>,
                                       ol: ({children}) => <ol className="list-decimal list-inside space-y-2 mb-4">{children}</ol>,
                                       li: ({children}) => <li className="text-gray-700 leading-relaxed">{children}</li>,
-                                      table: ({children}) => <div className="overflow-x-auto my-4 border border-gray-300 rounded-lg"><table className="min-w-full divide-y divide-gray-200">{children}</table></div>,
-                                      thead: ({children}) => <thead className="bg-gray-50">{children}</thead>,
-                                      tbody: ({children}) => <tbody className="bg-white divide-y divide-gray-200">{children}</tbody>,
-                                      tr: ({children}) => <tr className="hover:bg-gray-50">{children}</tr>,
-                                      th: ({children}) => <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">{children}</th>,
-                                      td: ({children}) => <td className="px-6 py-4 text-sm text-gray-900 border-b border-gray-200 break-words">{children}</td>,
                                     }}
                                   >
                                     {message.content}

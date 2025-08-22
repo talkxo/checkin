@@ -43,9 +43,9 @@ export async function POST(req: NextRequest) {
 
     // Create AI prompt based on response style
     const styleInstructions = {
-      short: 'Provide a very brief summary (1-2 sentences) with only the most critical metric and one key insight. Use simple bullet points or a small table if needed.',
-      detailed: 'Provide a focused analysis (3-4 bullet points) with key insights and 1-2 actionable recommendations. Use tables for data presentation.',
-      report: 'Provide a comprehensive report with executive summary, detailed analysis, and action plan. Include multiple tables and structured sections.'
+      short: 'Provide a very brief summary (1-2 sentences) with only the most critical metric and one key insight. Use simple bullet points.',
+      detailed: 'Provide a focused analysis (3-4 bullet points) with key insights and 1-2 actionable recommendations. Use bullet points for data presentation.',
+      report: 'Provide a comprehensive report with executive summary, detailed analysis, and action plan. Use structured bullet points and sections.'
     };
 
     const prompt = `You are an INSYDE admin assistant for People Ops/HR teams. Analyze this attendance data and provide intelligent insights.
@@ -59,7 +59,7 @@ Available Data: ${contextData}
 CRITICAL: You MUST follow the exact response style requested. Do NOT default to executive summary format.
 
 **Response Style Requirements:**
-- SHORT: Maximum 2 sentences + 1 bullet point or small table
+- SHORT: Maximum 2 sentences + 1 bullet point
 - DETAILED: 3-4 bullet points with 1-2 recommendations
 - REPORT: Full structured report with multiple sections
 
@@ -70,11 +70,11 @@ CRITICAL: You MUST follow the exact response style requested. Do NOT default to 
 - Employee engagement insights
 
 **Formatting Rules:**
-- Use proper Markdown tables with | separators and header rows
-- Keep table rows on single lines
-- Use bullet points for lists
+- Use bullet points for lists (• or -)
 - Keep paragraphs short and focused
-- Use bold text for emphasis
+- Use bold text for emphasis (**text**)
+- Use simple text formatting only
+- NO markdown tables - use simple text lists instead
 
 STRICTLY follow the response style: ${responseStyle}. Do not exceed the specified length.`;
 
