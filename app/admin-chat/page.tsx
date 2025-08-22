@@ -104,7 +104,7 @@ export default function AdminChat() {
                   </div>
 
                         {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
+                  <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-white">
                     <div className="max-w-4xl mx-auto">
                     {messages.length === 0 && (
                       <div className="text-center text-gray-500 mt-20">
@@ -118,7 +118,7 @@ export default function AdminChat() {
                             {messages.map((message) => (
                       <div
                         key={message.id}
-                        className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                        className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} mb-6`}
                       >
                         <div
                           className={`max-w-[80%] rounded-xl p-4 shadow-sm ${
@@ -136,17 +136,20 @@ export default function AdminChat() {
                                 <div className="prose prose-sm max-w-none">
                                   <ReactMarkdown
                                     components={{
-                                      h2: ({children}) => <h2 className="text-lg font-semibold text-gray-900 mb-2">{children}</h2>,
+                                      h2: ({children}) => <h2 className="text-lg font-semibold text-gray-900 mb-3">{children}</h2>,
                                       h3: ({children}) => <h3 className="text-base font-semibold text-gray-900 mb-2">{children}</h3>,
-                                      p: ({children}) => <p className="text-gray-700 mb-2">{children}</p>,
+                                      p: ({children}) => <p className="text-gray-700 mb-3">{children}</p>,
                                       strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
                                       em: ({children}) => <em className="italic text-gray-700">{children}</em>,
-                                      ul: ({children}) => <ul className="list-disc list-inside space-y-1 mb-2">{children}</ul>,
-                                      ol: ({children}) => <ol className="list-decimal list-inside space-y-1 mb-2">{children}</ol>,
+                                      ul: ({children}) => <ul className="list-disc list-inside space-y-1 mb-3">{children}</ul>,
+                                      ol: ({children}) => <ol className="list-decimal list-inside space-y-1 mb-3">{children}</ol>,
                                       li: ({children}) => <li className="text-gray-700">{children}</li>,
-                                      table: ({children}) => <div className="overflow-x-auto"><table className="min-w-full border border-gray-300 rounded-lg">{children}</table></div>,
-                                      th: ({children}) => <th className="border border-gray-300 px-3 py-2 bg-gray-50 font-semibold text-gray-900">{children}</th>,
-                                      td: ({children}) => <td className="border border-gray-300 px-3 py-2 text-gray-700">{children}</td>,
+                                      table: ({children}) => <div className="overflow-x-auto my-4"><table className="min-w-full border border-gray-300 rounded-lg bg-white">{children}</table></div>,
+                                      thead: ({children}) => <thead className="bg-gray-50">{children}</thead>,
+                                      tbody: ({children}) => <tbody>{children}</tbody>,
+                                      tr: ({children}) => <tr className="border-b border-gray-200">{children}</tr>,
+                                      th: ({children}) => <th className="border border-gray-300 px-4 py-3 bg-gray-50 font-semibold text-gray-900 text-left">{children}</th>,
+                                      td: ({children}) => <td className="border border-gray-300 px-4 py-3 text-gray-700">{children}</td>,
                                     }}
                                   >
                                     {message.content}
