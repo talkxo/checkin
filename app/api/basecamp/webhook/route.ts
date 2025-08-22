@@ -8,6 +8,10 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     console.log('Basecamp webhook received:', JSON.stringify(body, null, 2));
+    console.log('Environment variables check:');
+    console.log('- BC_CHAT_ID:', process.env.BC_CHAT_ID ? 'Set' : 'Not set');
+    console.log('- BC_ACCOUNT_ID:', process.env.BC_ACCOUNT_ID ? 'Set' : 'Not set');
+    console.log('- BC_PROJECT_ID:', process.env.BC_PROJECT_ID ? 'Set' : 'Not set');
 
     // Verify this is a chatbot message
     if (body.type !== 'chatbot_message') {
@@ -18,7 +22,7 @@ export async function POST(req: NextRequest) {
     
     // Only respond to messages in the configured chat
     if (conversation.id !== process.env.BC_CHAT_ID) {
-      console.log('Message from different chat, ignoring');
+      console.log(`Message from different chat (${conversation.id}), expected ${process.env.BC_CHAT_ID}, ignoring`);
       return NextResponse.json({ status: 'ignored' });
     }
 
