@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
   try {
+    // Check if required environment variables are set
+    if (!process.env.BC_CLIENT_ID) {
+      console.error('BC_CLIENT_ID not configured');
+      return NextResponse.json({ error: 'Basecamp client ID not configured' }, { status: 500 });
+    }
+
     const base = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
     const redirect = encodeURIComponent(base + '/api/basecamp/callback');
     
@@ -10,6 +16,7 @@ export async function GET(req: NextRequest) {
     
     const url = `https://launchpad.37signals.com/authorization/new?type=web_server&client_id=${process.env.BC_CLIENT_ID}&redirect_uri=${redirect}&state=${state}`;
     
+    console.log('Redirecting to Basecamp OAuth:', url);
     return NextResponse.redirect(url);
   } catch (error) {
     console.error('Basecamp auth error:', error);

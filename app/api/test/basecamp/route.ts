@@ -1,71 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSetting } from '@/lib/settings';
 import { getAccessToken, postCampfire } from '@/lib/basecamp';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    // Check environment variables
-    const envCheck = {
-      BC_CLIENT_ID: !!process.env.BC_CLIENT_ID,
-      BC_CLIENT_SECRET: !!process.env.BC_CLIENT_SECRET,
-      BC_ACCOUNT_ID: !!process.env.BC_ACCOUNT_ID,
-      BC_PROJECT_ID: !!process.env.BC_PROJECT_ID,
-      BC_CHAT_ID: !!process.env.BC_CHAT_ID,
-      NEXT_PUBLIC_APP_URL: !!process.env.NEXT_PUBLIC_APP_URL,
-    };
-
-    // Check if OAuth is configured
-    const oauthSettings = await getSetting('basecamp_oauth');
-    const isOAuthConfigured = !!oauthSettings;
-
-    // Test access token if OAuth is configured
-    let accessTokenTest = null;
-    if (isOAuthConfigured) {
-      try {
-        const token = await getAccessToken();
-        accessTokenTest = { success: true, token: token.substring(0, 10) + '...' };
-      } catch (error) {
-        accessTokenTest = { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-      }
-    }
-
-    // Test posting to campfire if everything is configured
-    let campfireTest = null;
-    if (isOAuthConfigured && accessTokenTest?.success) {
-      try {
-        await postCampfire('🧪 Test message from TalkXO Check-in app - ' + new Date().toISOString());
-        campfireTest = { success: true };
-      } catch (error) {
-        campfireTest = { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-      }
-    }
-
-    return NextResponse.json({
-      status: 'Basecamp Integration Test Results',
-      environment: envCheck,
-      oauth: {
-        configured: isOAuthConfigured,
-        settings: oauthSettings ? {
-          hasAccessToken: !!oauthSettings.access_token,
-          hasRefreshToken: !!oauthSettings.refresh_token,
-          expiresAt: oauthSettings.expires_at,
-          isExpired: Date.now() > oauthSettings.expires_at,
-        } : null,
-      },
-      accessToken: accessTokenTest,
-      campfire: campfireTest,
-      nextSteps: {
-        missingEnvVars: Object.entries(envCheck).filter(([key, value]) => !value).map(([key]) => key),
-        needsOAuth: !isOAuthConfigured ? 'Visit /api/basecamp/auth to connect' : null,
-        needsRefresh: isOAuthConfigured && oauthSettings && Date.now() > oauthSettings.expires_at ? 'OAuth token expired, needs refresh' : null,
-      }
+    // Test if we can get an access token
+    const token = await getAccessToken();
+    
+    return NextResponse.json({ 
+      status: 'success', 
+      message: 'Basecamp is connected!',
+      hasToken: !!token,
+      tokenPreview: token ? `${token.substring(0, 10)}...` : null
     });
   } catch (error) {
-    return NextResponse.json({
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
+    console.error('Basecamp test error:', error);
+    return NextResponse.json({ 
+      status: 'error', 
+      message: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }
 
-export const dynamic = 'force-dynamic';
+export async function POST(req: NextRequest) {
+  try {
+    const { message } = await req.json();
+    
+    if (!message) {
+      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
+    }
+
+    // Test posting to Basecamp
+    const result = await postCampfire(`🧪 Test message from INSYDE: ${message}`);
+    
+    return NextResponse.json({ 
+      status: 'success', 
+      message: 'Message posted to Basecamp!',
+      result
+    });
+  } catch (error) {
+    console.error('Basecamp post test error:', error);
+    return NextResponse.json({ 
+      status: 'error', 
+      message: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
+  }
+}
