@@ -169,6 +169,7 @@ export default function HomePage(){
       setName(savedName);
       setIsLoggedIn(true);
       setShowNameInput(false);
+      // Use full name for lookup, not just first name
       fetchMySummary(savedName, false);
       setIsLoading(false);
     } else {
@@ -362,6 +363,11 @@ export default function HomePage(){
     }
     
     try {
+      console.log('=== CHECKIN DEBUG ===');
+      console.log('Sending checkin request with:', { fullName: name, mode: checkMode });
+      console.log('Name variable value:', name);
+      console.log('Selected employee:', selectedEmployee);
+      
       const r = await fetch('/api/checkin', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 

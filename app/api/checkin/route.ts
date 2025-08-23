@@ -4,6 +4,10 @@ import { nowIST } from '@/lib/time';
 
 export async function POST(req: NextRequest) {
   const { fullName, slug, email, mode } = await req.json();
+  
+  console.log('=== CHECKIN API DEBUG ===');
+  console.log('Received request data:', { fullName, slug, email, mode });
+  
   if (!mode || !['office', 'remote'].includes(mode)) {
     return NextResponse.json({ error: 'mode must be office|remote' }, { status: 400 });
   }
