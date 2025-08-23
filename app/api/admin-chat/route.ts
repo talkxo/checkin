@@ -100,44 +100,27 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Create AI prompt based on response style
-    const styleInstructions = {
-      short: 'Provide a very brief summary (1-2 sentences) with only the most critical metric and one key insight. Use simple bullet points.',
-      detailed: 'Provide a focused analysis (3-4 bullet points) with key insights and 1-2 actionable recommendations. Use bullet points for data presentation.',
-      report: 'Provide a comprehensive report with executive summary, detailed analysis, and action plan. Use structured bullet points and sections.'
-    };
+    // Create a simpler, more focused AI prompt
+    const prompt = `You are an INSYDE admin assistant for People Ops/HR teams. 
 
-    const prompt = `You are an INSYDE admin assistant for People Ops/HR teams. Analyze this attendance data and provide intelligent insights.
-
-User Question: ${message}
+User Question: "${message}"
 Response Style: ${responseStyle}
-Style Instructions: ${styleInstructions[responseStyle as keyof typeof styleInstructions]}
 
-Available Data: ${contextData}
+Available Data: ${contextData || 'No specific data available'}
 
-IMPORTANT: This company uses Basecamp for chats, notes and tasks, Google Drive for files and other Google Workspace services like Gmail, and Canva for design work. Do NOT mention Slack, Microsoft Teams, or other tools they don't use.
+Instructions:
+- Provide helpful insights about team attendance and status
+- Keep responses concise and actionable
+- Use bullet points for lists
+- This company uses Basecamp, Google Workspace, and Canva
+- Do not mention Slack, Microsoft Teams, or other tools
 
-CRITICAL: You MUST follow the exact response style requested. Do NOT default to executive summary format.
+Response Style Guidelines:
+- SHORT: 1-2 sentences maximum
+- DETAILED: 2-3 bullet points with insights
+- REPORT: 3-4 bullet points with recommendations
 
-**Response Style Requirements:**
-- SHORT: Maximum 2 sentences + 1 bullet point
-- DETAILED: 3-4 bullet points with 1-2 recommendations
-- REPORT: Full structured report with multiple sections
-
-**Key Focus Areas:**
-- Team status and patterns
-- Space utilization insights
-- Cost optimization opportunities
-- Employee engagement insights
-
-**Formatting Rules:**
-- Use bullet points for lists (• or -)
-- Keep paragraphs short and focused
-- Use bold text for emphasis (**text**)
-- Use simple text formatting only
-- NO markdown tables - use simple text lists instead
-
-STRICTLY follow the response style: ${responseStyle}. Do not exceed the specified length.`;
+Focus on: team status, attendance patterns, space utilization, and employee engagement.`;
 
     console.log('Calling OpenRouter with prompt:', prompt.substring(0, 200) + '...');
     console.log('Context data available:', contextData ? 'Yes' : 'No');
@@ -177,9 +160,9 @@ Please try asking again in a few minutes, or use the dashboard for immediate ins
     
     // Normal flow with context data
     const aiResponse = await callOpenRouter([
-      { role: 'system', content: 'You are an INSYDE admin assistant. Provide concise, actionable insights in Markdown format. Keep responses brief and focused on business value. This company uses Basecamp, Google Workspace, and Canva - do not mention other tools.' },
+      { role: 'system', content: 'You are an INSYDE admin assistant. Provide brief, helpful responses about team attendance and status. Keep responses concise and actionable.' },
       { role: 'user', content: prompt }
-    ], 0.7);
+    ], 0.3);
 
     console.log('AI Response:', aiResponse);
 

@@ -1,45 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { callOpenRouter } from '@/lib/ai';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest) {
-  const results: any = {};
-  
+export async function POST(req: NextRequest) {
   try {
-    // Test stats API
-    const statsResponse = await fetch(`${req.nextUrl.origin}/api/admin/stats`);
-    results.stats = {
-      status: statsResponse.status,
-      ok: statsResponse.ok,
-      data: statsResponse.ok ? await statsResponse.json() : null
-    };
+    const { message, responseStyle = 'short' } = await req.json();
+
+    console.log('=== ADMIN CHAT DEBUG ===');
+    console.log('Message:', message);
+    console.log('Response Style:', responseStyle);
+
+    // Test with a simple prompt first
+    const simplePrompt = `You are an INSYDE admin assistant. The user asked: "${message}"
+
+Please provide a brief, helpful response about team attendance and status. Keep it under 3 sentences.
+
+Response style: ${responseStyle}`;
+
+    console.log('Simple prompt:', simplePrompt);
+
+    const aiResponse = await callOpenRouter([
+      { role: 'system', content: 'You are an INSYDE admin assistant. Provide brief, helpful responses.' },
+      { role: 'user', content: simplePrompt }
+    ], 0.3);
+
+    console.log('AI Response:', aiResponse);
+
+    return NextResponse.json({
+      success: true,
+      originalMessage: message,
+      responseStyle,
+      aiResponse,
+      debug: {
+        prompt: simplePrompt,
+        timestamp: new Date().toISOString()
+      }
+    });
+
   } catch (error) {
-    results.stats = { error: error instanceof Error ? error.message : 'Unknown error' };
+    console.error('Debug endpoint error:', error);
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
-  
-  try {
-    // Test daily stats API
-    const dailyResponse = await fetch(`${req.nextUrl.origin}/api/admin/daily-stats`);
-    results.dailyStats = {
-      status: dailyResponse.status,
-      ok: dailyResponse.ok,
-      data: dailyResponse.ok ? await dailyResponse.json() : null
-    };
-  } catch (error) {
-    results.dailyStats = { error: error instanceof Error ? error.message : 'Unknown error' };
-  }
-  
-  try {
-    // Test users API
-    const usersResponse = await fetch(`${req.nextUrl.origin}/api/admin/users`);
-    results.users = {
-      status: usersResponse.status,
-      ok: usersResponse.ok,
-      data: usersResponse.ok ? await usersResponse.json() : null
-    };
-  } catch (error) {
-    results.users = { error: error instanceof Error ? error.message : 'Unknown error' };
-  }
-  
-  return NextResponse.json(results);
 }
