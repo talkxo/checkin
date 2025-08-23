@@ -7,11 +7,17 @@ export const dynamic = 'force-dynamic';
 // Helper function to handle check-in
 async function handleCheckin(sender: any, mode: string, origin: string): Promise<string> {
   try {
+    console.log('=== CHECKIN DEBUG ===');
+    console.log('Sender object:', JSON.stringify(sender, null, 2));
+    
     const email = sender.email_address || sender.email;
     const name = sender.name || sender.full_name;
     
+    console.log('Extracted email:', email);
+    console.log('Extracted name:', name);
+    
     if (!email) {
-      return "I need your email address to check you in. Please make sure your Basecamp profile has your email address.";
+      return "I need your email address to check you in. Please make sure your Basecamp profile has your email address. I can see your name is: " + (name || 'Unknown');
     }
 
     const response = await fetch(`${origin}/api/checkin`, {
@@ -39,11 +45,17 @@ async function handleCheckin(sender: any, mode: string, origin: string): Promise
 // Helper function to handle check-out
 async function handleCheckout(sender: any, origin: string): Promise<string> {
   try {
+    console.log('=== CHECKOUT DEBUG ===');
+    console.log('Sender object:', JSON.stringify(sender, null, 2));
+    
     const email = sender.email_address || sender.email;
     const name = sender.name || sender.full_name;
     
+    console.log('Extracted email:', email);
+    console.log('Extracted name:', name);
+    
     if (!email) {
-      return "I need your email address to check you out. Please make sure your Basecamp profile has your email address.";
+      return "I need your email address to check you out. Please make sure your Basecamp profile has your email address. I can see your name is: " + (name || 'Unknown');
     }
 
     const response = await fetch(`${origin}/api/checkout`, {
@@ -85,7 +97,13 @@ export async function POST(req: NextRequest) {
     } else if (body.command) {
       // Command message format (like "hello")
       content = body.command;
-      sender = { type: 'person', id: body.creator?.id, name: body.creator?.name };
+      sender = { 
+        type: 'person', 
+        id: body.creator?.id, 
+        name: body.creator?.name,
+        email_address: body.creator?.email_address,
+        email: body.creator?.email_address
+      };
       // Extract conversation info from callback_url
       const urlParts = body.callback_url?.split('/') || [];
       const chatId = urlParts[urlParts.length - 2]; // Get chat ID from URL
