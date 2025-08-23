@@ -158,11 +158,17 @@ Please try asking again in a few minutes, or use the dashboard for immediate ins
       return NextResponse.json({ response: aiResponse.data });
     }
     
-    // Normal flow with context data
-    const aiResponse = await callOpenRouter([
-      { role: 'system', content: 'You are an INSYDE admin assistant. Provide brief, helpful responses about team attendance and status. Keep responses concise and actionable.' },
-      { role: 'user', content: prompt }
-    ], 0.3);
+    // Try AI response with better error handling
+    let aiResponse;
+    try {
+      aiResponse = await callOpenRouter([
+        { role: 'system', content: 'You are an INSYDE admin assistant. Provide brief, helpful responses about team attendance and status. Keep responses concise and actionable.' },
+        { role: 'user', content: prompt }
+      ], 0.3);
+    } catch (aiError) {
+      console.error('AI call failed completely:', aiError);
+      aiResponse = { success: false, error: 'AI service unavailable' };
+    }
 
     console.log('AI Response:', aiResponse);
 
@@ -181,7 +187,56 @@ Please try asking again in a few minutes, or use the dashboard for immediate ins
       return NextResponse.json({ response: fallbackResponse });
     }
 
-    return NextResponse.json({ response: aiResponse.data });
+    // Validate AI response content
+    const responseContent = aiResponse.data || '';
+    
+    // Check if response looks like an error or corrupted data
+    const errorIndicators = [
+      'at ', 'Error:', 'Exception:', 'stack trace', 'undefined', 'null',
+      'function', 'system', 'lib', 'from', 'at at', '))":', 'is the', 'space'
+    ];
+    
+    const hasErrorIndicators = errorIndicators.some(indicator => 
+      responseContent.toLowerCase().includes(indicator.toLowerCase())
+    );
+    
+    // Check if response is too short or too long
+    const isTooShort = responseContent.trim().length < 10;
+    const isTooLong = responseContent.length > 2000;
+    
+    // Check if response contains suspicious patterns
+    const suspiciousPatterns = [
+      /at\s+\w+/, // Stack trace patterns
+      /function\s+\w+/, // Function definitions
+      /from\s+\w+/, // Import statements
+      /\w+\s+is\s+\w+/, // "x is y" patterns
+    ];
+    
+    const hasSuspiciousPatterns = suspiciousPatterns.some(pattern => 
+      pattern.test(responseContent)
+    );
+    
+    if (hasErrorIndicators || isTooShort || isTooLong || hasSuspiciousPatterns) {
+      console.error('AI response appears corrupted or contains errors:', {
+        content: responseContent.substring(0, 200),
+        hasErrorIndicators,
+        isTooShort,
+        isTooLong,
+        hasSuspiciousPatterns
+      });
+      
+      const safeFallbackResponse = `I'm having trouble processing that request right now. Here are some things you can check:
+
+• **Team Status**: Visit the admin dashboard for current attendance
+• **Quick Stats**: Check today's headcount and remote/office distribution  
+• **Manual Review**: Use the snapshot view for detailed employee status
+
+Please try asking again in a few minutes, or use the dashboard for immediate insights.`;
+      
+      return NextResponse.json({ response: safeFallbackResponse });
+    }
+
+    return NextResponse.json({ response: responseContent });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
