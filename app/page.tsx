@@ -166,6 +166,8 @@ export default function HomePage(){
       }
     } else if (savedName) {
       // User is logged in but no active session
+      console.log('=== SESSION RESTORE DEBUG ===');
+      console.log('Restored savedName from localStorage:', savedName);
       setName(savedName);
       setIsLoggedIn(true);
       setShowNameInput(false);
@@ -319,10 +321,23 @@ export default function HomePage(){
 
   const fetchMySummary = async (identifier: string, useSlug: boolean = false) => {
     try {
+      console.log('=== FETCH SUMMARY DEBUG ===');
+      console.log('Identifier:', identifier);
+      console.log('Use slug:', useSlug);
+      
       const param = useSlug ? `slug=${identifier}` : `fullName=${encodeURIComponent(identifier)}`;
+      console.log('API URL param:', param);
+      
       const r = await fetch(`/api/summary/me?${param}`);
-      if (!r.ok) return;
+      console.log('Response status:', r.status);
+      
+      if (!r.ok) {
+        console.log('Response not ok, status:', r.status);
+        return;
+      }
+      
       const data = await r.json();
+      console.log('Summary data:', data);
       setMe(data);
     } catch (e) {
       console.error('Error fetching my summary:', e);
@@ -474,12 +489,18 @@ export default function HomePage(){
   };
 
   const handleEmployeeSelect = (employee: any) => {
+    console.log('=== EMPLOYEE SELECT DEBUG ===');
+    console.log('Selected employee:', employee);
+    console.log('Full name:', employee.full_name);
+    console.log('Slug:', employee.slug);
+    
     setName(employee.full_name);
     setSelectedEmployee(employee);
     setSuggestions([]);
     // Auto-submit when employee is selected
     setTimeout(() => {
       localStorage.setItem('userName', employee.full_name);
+      console.log('Stored in localStorage:', employee.full_name);
       setIsLoggedIn(true);
       setShowNameInput(false);
       fetchMySummary(employee.slug, true);
