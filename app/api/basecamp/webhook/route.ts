@@ -84,6 +84,18 @@ export async function POST(req: NextRequest) {
           console.log('Employee data fetched:', employeeData);
         }
       }
+
+      // Fetch recent activity data if requested
+      if (content.toLowerCase().includes('recent') || content.toLowerCase().includes('last') || 
+          content.toLowerCase().includes('logged in') || content.toLowerCase().includes('check in') ||
+          content.toLowerCase().includes('who') && (content.toLowerCase().includes('recent') || content.toLowerCase().includes('last'))) {
+        const recentResponse = await fetch(`${req.nextUrl.origin}/api/admin/recent-activity`);
+        if (recentResponse.ok) {
+          const recentData = await recentResponse.json();
+          contextData += `\nRecent Activity Data: ${JSON.stringify(recentData, null, 2)}`;
+          console.log('Recent activity data fetched:', recentData);
+        }
+      }
     } catch (error) {
       console.error('Error fetching attendance data:', error);
       contextData = 'Error: Unable to fetch attendance data';
