@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, BarChart3, Users, Calendar, TrendingUp, MapPin, Settings, Bookmark } from 'lucide-react';
+import { Send, Bot, User, BarChart3, Users, Calendar, TrendingUp, MapPin, Settings, Bookmark, LogOut } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import SaveResponseModal from '@/components/save-response-modal';
 
@@ -130,6 +130,27 @@ export default function AdminChat() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/admin/logout', {
+        method: 'POST'
+      });
+      
+      if (response.ok) {
+        // Redirect to login page
+        window.location.href = '/admin/login';
+      } else {
+        console.error('Logout failed');
+        // Fallback: redirect anyway
+        window.location.href = '/admin/login';
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Fallback: redirect anyway
+      window.location.href = '/admin/login';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       <div className="w-full max-w-6xl bg-white rounded-xl shadow-lg overflow-hidden">
@@ -145,8 +166,17 @@ export default function AdminChat() {
               />
               <h1 className="text-xl font-semibold text-gray-900">InsydeChat</h1>
             </div>
-            <div className="text-sm text-gray-500">
-              Powered by AI
+            <div className="flex items-center space-x-4">
+              <div className="text-sm text-gray-500">
+                Powered by AI
+              </div>
+              <button
+                onClick={handleLogout}
+                className="text-sm text-gray-600 hover:text-gray-800 flex items-center space-x-1 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Logout</span>
+              </button>
             </div>
           </div>
         </div>
