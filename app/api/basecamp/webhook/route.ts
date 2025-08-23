@@ -51,34 +51,42 @@ export async function POST(req: NextRequest) {
 
     console.log('Processing message:', content);
 
-    // Get attendance data based on the query
+    // Always fetch attendance data for accurate responses
     let contextData = '';
     
-    if (content.toLowerCase().includes('today') || content.toLowerCase().includes('status')) {
-      // Fetch today's stats
+    try {
+      // Fetch today's stats (always)
       const todayResponse = await fetch(`${req.nextUrl.origin}/api/admin/daily-stats`);
       if (todayResponse.ok) {
         const todayData = await todayResponse.json();
         contextData = `Today's Statistics: ${JSON.stringify(todayData, null, 2)}`;
+        console.log('Today stats fetched:', todayData);
+      } else {
+        console.log('Failed to fetch today stats:', todayResponse.status);
       }
-    }
 
-    if (content.toLowerCase().includes('week') || content.toLowerCase().includes('trend')) {
-      // Fetch weekly stats
-      const weeklyResponse = await fetch(`${req.nextUrl.origin}/api/admin/stats`);
-      if (weeklyResponse.ok) {
-        const weeklyData = await weeklyResponse.json();
-        contextData += `\nWeekly Statistics: ${JSON.stringify(weeklyData, null, 2)}`;
+      // Fetch weekly stats if requested
+      if (content.toLowerCase().includes('week') || content.toLowerCase().includes('trend')) {
+        const weeklyResponse = await fetch(`${req.nextUrl.origin}/api/admin/stats`);
+        if (weeklyResponse.ok) {
+          const weeklyData = await weeklyResponse.json();
+          contextData += `\nWeekly Statistics: ${JSON.stringify(weeklyData, null, 2)}`;
+          console.log('Weekly stats fetched:', weeklyData);
+        }
       }
-    }
 
-    if (content.toLowerCase().includes('employee') || content.toLowerCase().includes('team')) {
-      // Fetch employee data
-      const employeeResponse = await fetch(`${req.nextUrl.origin}/api/admin/users`);
-      if (employeeResponse.ok) {
-        const employeeData = await employeeResponse.json();
-        contextData += `\nEmployee Data: ${JSON.stringify(employeeData, null, 2)}`;
+      // Fetch employee data if requested
+      if (content.toLowerCase().includes('employee') || content.toLowerCase().includes('team')) {
+        const employeeResponse = await fetch(`${req.nextUrl.origin}/api/admin/users`);
+        if (employeeResponse.ok) {
+          const employeeData = await employeeResponse.json();
+          contextData += `\nEmployee Data: ${JSON.stringify(employeeData, null, 2)}`;
+          console.log('Employee data fetched:', employeeData);
+        }
       }
+    } catch (error) {
+      console.error('Error fetching attendance data:', error);
+      contextData = 'Error: Unable to fetch attendance data';
     }
 
     // Create AI prompt for Basecamp chatbot
