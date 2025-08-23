@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Send, Bot, User, BarChart3, Users, Calendar, TrendingUp, MapPin, Settings, Bookmark, LogOut } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import SaveResponseModal from '@/components/save-response-modal';
@@ -12,6 +13,7 @@ interface Message {
 }
 
 export default function AdminChat() {
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -36,6 +38,23 @@ export default function AdminChat() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Check authentication on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/admin/check-auth');
+        if (!response.ok) {
+          router.push('/admin/login');
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        router.push('/admin/login');
+      }
+    };
+
+    checkAuth();
+  }, [router]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
