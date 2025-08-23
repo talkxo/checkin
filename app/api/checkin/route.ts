@@ -3,14 +3,18 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { nowIST } from '@/lib/time';
 
 export async function POST(req: NextRequest) {
-  const { fullName, slug, mode } = await req.json();
+  const { fullName, slug, email, mode } = await req.json();
   if (!mode || !['office', 'remote'].includes(mode)) {
     return NextResponse.json({ error: 'mode must be office|remote' }, { status: 400 });
   }
   
   let emp;
-  // Prefer slug lookup; fallback to ilike match; if none, create safely
-  if (slug) {
+  // Prefer email lookup (most reliable); fallback to slug; then name
+  if (email) {
+    const { data } = await supabaseAdmin.from('employees').select('*').eq('email', email).maybeSingle();
+    emp = data as any;
+  }
+  if (!emp && slug) {
     const { data } = await supabaseAdmin.from('employees').select('*').eq('slug', slug).maybeSingle();
     emp = data as any;
   }

@@ -3,9 +3,19 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { nowIST } from '@/lib/time';
 
 export async function POST(req: NextRequest){
-  const { slug, mood, moodComment } = await req.json();
-  if(!slug) return NextResponse.json({ error: 'slug required' }, { status: 400 });
-  const { data: emp } = await supabaseAdmin.from('employees').select('id').eq('slug', slug).maybeSingle();
+  const { slug, email, mood, moodComment } = await req.json();
+  
+  let emp;
+  // Prefer email lookup (most reliable); fallback to slug
+  if (email) {
+    const { data } = await supabaseAdmin.from('employees').select('id').eq('email', email).maybeSingle();
+    emp = data;
+  }
+  if (!emp && slug) {
+    const { data } = await supabaseAdmin.from('employees').select('id').eq('slug', slug).maybeSingle();
+    emp = data;
+  }
+  
   if(!emp) return NextResponse.json({ error: 'employee not found' }, { status: 404 });
   const { data: ses } = await supabaseAdmin.from('sessions').select('*').eq('employee_id', emp.id).is('checkout_ts', null).order('checkin_ts', { ascending: false }).maybeSingle();
   if(!ses) return NextResponse.json({ error: 'no open session' }, { status: 404 });

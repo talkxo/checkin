@@ -16,71 +16,28 @@ async function handleCheckin(sender: any, mode: string, origin: string): Promise
     console.log('Extracted email:', email);
     console.log('Extracted name:', name);
     
-    if (!name) {
-      return "I need your name to check you in. Please make sure your Basecamp profile has your name.";
+    if (!email) {
+      return "I need your email address to check you in. Please make sure your Basecamp profile has your email address.";
     }
 
-    // Try multiple lookup strategies
-    let employee = null;
-    
-    // Strategy 1: Try exact name match
-    const exactResponse = await fetch(`${origin}/api/checkin`, {
+    // Use email as primary lookup (most reliable)
+    const response = await fetch(`${origin}/api/checkin`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        fullName: name,
+        email: email,
+        fullName: name, // Include name for reference
         mode: mode 
       })
     });
+
+    const result = await response.json();
     
-    if (exactResponse.ok) {
+    if (response.ok) {
       return `✅ Checked in successfully! Mode: ${mode}. Welcome to work!`;
+    } else {
+      return `❌ Check-in failed: ${result.error || 'Unknown error'}. Please make sure your email "${email}" is registered in the system.`;
     }
-    
-    // Strategy 2: Try with email if available
-    if (email) {
-      const emailResponse = await fetch(`${origin}/api/checkin`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          fullName: name,
-          email: email,
-          mode: mode 
-        })
-      });
-      
-      if (emailResponse.ok) {
-        return `✅ Checked in successfully! Mode: ${mode}. Welcome to work!`;
-      }
-    }
-    
-    // Strategy 3: Try different name variations
-    const nameVariations = [
-      name,
-      name + ' ' + (sender.title || ''),
-      sender.title + ' ' + name,
-      name.toLowerCase(),
-      name.toUpperCase()
-    ];
-    
-    for (const nameVar of nameVariations) {
-      if (!nameVar) continue;
-      
-      const varResponse = await fetch(`${origin}/api/checkin`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          fullName: nameVar,
-          mode: mode 
-        })
-      });
-      
-      if (varResponse.ok) {
-        return `✅ Checked in successfully! Mode: ${mode}. Welcome to work!`;
-      }
-    }
-    
-    return `❌ Check-in failed: Employee not found. Your name "${name}" is not in the system. Please contact admin to add you.`;
     
   } catch (error) {
     return `❌ Check-in failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
@@ -100,17 +57,15 @@ async function handleCheckout(sender: any, origin: string): Promise<string> {
     console.log('Extracted name:', name);
     
     if (!email) {
-      return "I need your email address to check you out. Please make sure your Basecamp profile has your email address. I can see your name is: " + (name || 'Unknown');
+      return "I need your email address to check you out. Please make sure your Basecamp profile has your email address.";
     }
 
-    // Generate slug from name (same logic as database)
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    
+    // Use email as primary lookup (most reliable)
     const response = await fetch(`${origin}/api/checkout`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        slug: slug
+        email: email
       })
     });
 
@@ -119,7 +74,7 @@ async function handleCheckout(sender: any, origin: string): Promise<string> {
     if (response.ok) {
       return `✅ Checked out successfully! Have a great day!`;
     } else {
-      return `❌ Check-out failed: ${result.error || 'Unknown error'}`;
+      return `❌ Check-out failed: ${result.error || 'Unknown error'}. Please make sure your email "${email}" is registered in the system.`;
     }
   } catch (error) {
     return `❌ Check-out failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
