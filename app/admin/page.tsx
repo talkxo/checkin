@@ -185,38 +185,11 @@ export default function AdminPage() {
     }
   };
 
+  // TODO: Implement proper Google Sheets API integration
+  // For now, this is disabled to avoid confusion with CSV export
   const handleExportGoogleSheets = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Get the attendance data as CSV
-      const response = await fetch('/api/admin/today-export');
-      if (!response.ok) {
-        throw new Error('Failed to fetch attendance data');
-      }
-      
-      const csvText = await response.text();
-      
-      // Create a downloadable CSV file
-      const blob = new Blob([csvText], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `attendance_${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      // Show instructions for Google Sheets import
-      alert(`CSV file downloaded successfully!\n\nTo import into Google Sheets:\n1. Go to sheets.google.com\n2. Create a new spreadsheet\n3. Go to File → Import → Upload\n4. Select the downloaded CSV file\n5. Choose "Replace current sheet" and click Import`);
-      
-    } catch (error) {
-      console.error('Google Sheets export error:', error);
-      alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setIsLoading(false);
-    }
+    // This function is temporarily disabled
+    alert('Google Sheets export is temporarily disabled. Please use CSV export instead.');
   };
 
   // Session reset functions
@@ -654,10 +627,11 @@ export default function AdminPage() {
                   <Button
                     variant="outline"
                     onClick={handleExportGoogleSheets}
-                    disabled={todayData.length === 0 || isLoading}
+                    disabled={true}
+                    title="Google Sheets export temporarily disabled"
                   >
                     <FileSpreadsheet className="w-4 h-4 mr-2" />
-                    Export for Google Sheets
+                    Export Google Sheets
                   </Button>
                 </div>
               </CardHeader>
