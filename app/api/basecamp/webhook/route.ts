@@ -191,23 +191,43 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Get current time in IST for proper greetings
+    const now = new Date();
+    const istTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+    const hour = istTime.getHours();
+    
+    // Determine appropriate greeting based on time
+    let timeGreeting = '';
+    if (hour >= 5 && hour < 12) {
+      timeGreeting = 'Good morning!';
+    } else if (hour >= 12 && hour < 17) {
+      timeGreeting = 'Good afternoon!';
+    } else if (hour >= 17 && hour < 21) {
+      timeGreeting = 'Good evening!';
+    } else {
+      timeGreeting = 'Hello!';
+    }
+
     // Create AI prompt for Basecamp chatbot
     const prompt = `You are the INSYDE attendance assistant chatbot in Basecamp. A user has asked: "${content}"
+
+Current time context: ${timeGreeting} (${istTime.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} IST)
 
 Available Data: ${contextData}
 
 CRITICAL RULES:
-1. ONLY use the data provided above. If no data is available, say "I don't have current attendance data available right now."
-2. DO NOT make up any numbers, percentages, or statistics that aren't in the provided data.
-3. DO NOT mention specific attendance figures unless they are explicitly in the data.
-4. If the data shows "Error: Unable to fetch attendance data", respond with "I'm having trouble accessing the attendance data right now. Please try again in a few minutes."
-5. This company uses Basecamp, Google Workspace, and Canva - do NOT mention Slack, Microsoft Teams, or other tools they don't use.
+1. Start your response with "${timeGreeting}" - use this exact greeting based on the current time.
+2. ONLY use the data provided above. If no data is available, say "I don't have current attendance data available right now."
+3. DO NOT make up any numbers, percentages, or statistics that aren't in the provided data.
+4. DO NOT mention specific attendance figures unless they are explicitly in the provided data.
+5. If the data shows "Error: Unable to fetch attendance data", respond with "I'm having trouble accessing the attendance data right now. Please try again in a few minutes."
+6. This company uses Basecamp, Google Workspace, and Canva - do NOT mention Slack, Microsoft Teams, or other tools they don't use.
 
 Provide a helpful, concise response (max 2-3 sentences) based ONLY on the available data. Be friendly and professional. If no relevant data is available, acknowledge the request but explain the limitation.`;
 
     // Get AI response
     const aiResponse = await callOpenRouter([
-      { role: 'system', content: 'You are a helpful INSYDE attendance assistant in Basecamp. CRITICAL: Only use the data provided to you. Do not make up any numbers, percentages, or statistics. If no data is available, clearly state that. Be brief, friendly, and accurate. This company uses Basecamp, Google Workspace, and Canva - do not mention other tools.' },
+      { role: 'system', content: `You are a helpful INSYDE attendance assistant in Basecamp. CRITICAL: Only use the data provided to you. Do not make up any numbers, percentages, or statistics. If no data is available, clearly state that. Be brief, friendly, and accurate. This company uses Basecamp, Google Workspace, and Canva - do not mention other tools. IMPORTANT: Always use the exact time greeting provided in the prompt (Good morning/afternoon/evening/Hello) based on the current time.` },
       { role: 'user', content: prompt }
     ], 0.3); // Lower temperature for more conservative responses
 
