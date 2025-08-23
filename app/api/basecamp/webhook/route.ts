@@ -89,26 +89,50 @@ export async function POST(req: NextRequest) {
       contextData = 'Error: Unable to fetch attendance data';
     }
 
+    // Check if we have valid data
+    if (!contextData || contextData.includes('Error:') || contextData === '') {
+      console.log('No valid attendance data available, using fallback response');
+      const fallbackResponse = `I don't have current attendance data available right now. Please try again in a few minutes, or check the admin dashboard for current information.`;
+      
+      // Check if this is a test request (no Basecamp headers)
+      const isTestRequest = !req.headers.get('user-agent')?.includes('Basecamp') && !req.headers.get('x-forwarded-for');
+      
+      if (isTestRequest) {
+        return NextResponse.json({ 
+          status: 'success', 
+          message: 'Test webhook successful (no data available)',
+          aiResponse: fallbackResponse,
+          note: 'No attendance data available'
+        });
+      }
+
+      // Return fallback response for Basecamp chatbot to post
+      return NextResponse.json({ 
+        content: fallbackResponse,
+        status: 'success',
+        note: 'No attendance data available'
+      });
+    }
+
     // Create AI prompt for Basecamp chatbot
     const prompt = `You are the INSYDE attendance assistant chatbot in Basecamp. A user has asked: "${content}"
 
 Available Data: ${contextData}
 
-IMPORTANT: This company uses Basecamp for chats, notes and tasks, Google Drive for files and other Google Workspace services like Gmail, and Canva for design work. Do NOT mention Slack, Microsoft Teams, or other tools they don't use.
+CRITICAL RULES:
+1. ONLY use the data provided above. If no data is available, say "I don't have current attendance data available right now."
+2. DO NOT make up any numbers, percentages, or statistics that aren't in the provided data.
+3. DO NOT mention specific attendance figures unless they are explicitly in the data.
+4. If the data shows "Error: Unable to fetch attendance data", respond with "I'm having trouble accessing the attendance data right now. Please try again in a few minutes."
+5. This company uses Basecamp, Google Workspace, and Canva - do NOT mention Slack, Microsoft Teams, or other tools they don't use.
 
-Provide a helpful, concise response (max 2-3 sentences) about attendance data. Be friendly and professional. Focus on:
-- Current team status
-- Attendance patterns
-- Quick insights
-- Actionable information
-
-Keep it brief and conversational for Basecamp chat.`;
+Provide a helpful, concise response (max 2-3 sentences) based ONLY on the available data. Be friendly and professional. If no relevant data is available, acknowledge the request but explain the limitation.`;
 
     // Get AI response
     const aiResponse = await callOpenRouter([
-      { role: 'system', content: 'You are a helpful INSYDE attendance assistant in Basecamp. Provide brief, friendly responses about attendance data. This company uses Basecamp, Google Workspace, and Canva - do not mention other tools.' },
+      { role: 'system', content: 'You are a helpful INSYDE attendance assistant in Basecamp. CRITICAL: Only use the data provided to you. Do not make up any numbers, percentages, or statistics. If no data is available, clearly state that. Be brief, friendly, and accurate. This company uses Basecamp, Google Workspace, and Canva - do not mention other tools.' },
       { role: 'user', content: prompt }
-    ], 0.7);
+    ], 0.3); // Lower temperature for more conservative responses
 
     if (!aiResponse.success) {
       console.error('AI response failed:', aiResponse.error);
