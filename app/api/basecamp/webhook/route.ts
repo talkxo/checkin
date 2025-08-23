@@ -51,53 +51,21 @@ export async function POST(req: NextRequest) {
 
     console.log('Processing message:', content);
 
-    // Always fetch attendance data for accurate responses
+    // Fetch all attendance data from single comprehensive endpoint
     let contextData = '';
     
     try {
-      // Fetch today's stats (always)
-      const todayResponse = await fetch(`${req.nextUrl.origin}/api/admin/daily-stats`);
-      if (todayResponse.ok) {
-        const todayData = await todayResponse.json();
-        contextData = `Today's Statistics: ${JSON.stringify(todayData, null, 2)}`;
-        console.log('Today stats fetched:', todayData);
+      const chatbotDataResponse = await fetch(`${req.nextUrl.origin}/api/admin/chatbot-data`);
+      if (chatbotDataResponse.ok) {
+        const chatbotData = await chatbotDataResponse.json();
+        contextData = `Complete Attendance Data: ${JSON.stringify(chatbotData, null, 2)}`;
+        console.log('Chatbot data fetched successfully');
       } else {
-        console.log('Failed to fetch today stats:', todayResponse.status);
-      }
-
-      // Fetch weekly stats if requested
-      if (content.toLowerCase().includes('week') || content.toLowerCase().includes('trend')) {
-        const weeklyResponse = await fetch(`${req.nextUrl.origin}/api/admin/stats`);
-        if (weeklyResponse.ok) {
-          const weeklyData = await weeklyResponse.json();
-          contextData += `\nWeekly Statistics: ${JSON.stringify(weeklyData, null, 2)}`;
-          console.log('Weekly stats fetched:', weeklyData);
-        }
-      }
-
-      // Fetch employee data if requested
-      if (content.toLowerCase().includes('employee') || content.toLowerCase().includes('team')) {
-        const employeeResponse = await fetch(`${req.nextUrl.origin}/api/admin/users`);
-        if (employeeResponse.ok) {
-          const employeeData = await employeeResponse.json();
-          contextData += `\nEmployee Data: ${JSON.stringify(employeeData, null, 2)}`;
-          console.log('Employee data fetched:', employeeData);
-        }
-      }
-
-      // Fetch recent activity data if requested
-      if (content.toLowerCase().includes('recent') || content.toLowerCase().includes('last') || 
-          content.toLowerCase().includes('logged in') || content.toLowerCase().includes('check in') ||
-          content.toLowerCase().includes('who') && (content.toLowerCase().includes('recent') || content.toLowerCase().includes('last'))) {
-        const recentResponse = await fetch(`${req.nextUrl.origin}/api/admin/recent-activity`);
-        if (recentResponse.ok) {
-          const recentData = await recentResponse.json();
-          contextData += `\nRecent Activity Data: ${JSON.stringify(recentData, null, 2)}`;
-          console.log('Recent activity data fetched:', recentData);
-        }
+        console.log('Failed to fetch chatbot data:', chatbotDataResponse.status);
+        contextData = 'Error: Unable to fetch attendance data';
       }
     } catch (error) {
-      console.error('Error fetching attendance data:', error);
+      console.error('Error fetching chatbot data:', error);
       contextData = 'Error: Unable to fetch attendance data';
     }
 
