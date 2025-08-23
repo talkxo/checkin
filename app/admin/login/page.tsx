@@ -22,15 +22,27 @@ export default function AdminLogin() {
     setIsLoading(true);
     setError('');
 
-    // Simple authentication (like the old system)
-    if (username === 'admin' && password === 'talkxo2024') {
-      // Set authentication in localStorage
-      localStorage.setItem('admin_authenticated', 'true');
-      
-      // Redirect to the intended page
-      router.push(redirectTo);
-    } else {
-      setError('Invalid username or password');
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          username, 
+          password, 
+          redirectTo 
+        })
+      });
+
+      if (response.ok) {
+        // Redirect to the intended page
+        router.push(redirectTo);
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Login failed');
+        setIsLoading(false);
+      }
+    } catch (error) {
+      setError('Network error. Please try again.');
       setIsLoading(false);
     }
   };
@@ -125,7 +137,7 @@ export default function AdminLogin() {
           <div className="mt-4 text-xs text-gray-500 text-center">
             <p>Default credentials:</p>
             <p>Username: <code>admin</code></p>
-            <p>Password: <code>talkxo2024</code></p>
+            <p>Password: <code>admin123</code></p>
           </div>
         </CardContent>
       </Card>

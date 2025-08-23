@@ -258,11 +258,25 @@ export default function AdminPage() {
     setResetResult(null);
   };
 
-  const handleLogout = () => {
-    // Clear authentication
-    localStorage.removeItem('admin_authenticated');
-    // Redirect to login
-    window.location.href = '/admin/login';
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/admin/logout', {
+        method: 'POST'
+      });
+      
+      if (response.ok) {
+        // Redirect to login page
+        window.location.href = '/admin/login';
+      } else {
+        console.error('Logout failed');
+        // Fallback: redirect anyway
+        window.location.href = '/admin/login';
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Fallback: redirect anyway
+      window.location.href = '/admin/login';
+    }
   };
 
   // User management states

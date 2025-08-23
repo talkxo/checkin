@@ -34,6 +34,18 @@ async function handleCheckin(sender: any, mode: string, origin: string): Promise
     const result = await response.json();
     
     if (response.ok) {
+      // Check if this is an existing session (duplicate check-in)
+      if (result.message === 'Open session already exists') {
+        const session = result.session;
+        const checkinTime = new Date(session.checkin_ts).toLocaleString('en-US', {
+          timeZone: 'Asia/Kolkata',
+          hour12: true,
+          hour: 'numeric',
+          minute: '2-digit'
+        });
+        return `ℹ️ You're already checked in! You logged in at ${checkinTime} in ${session.mode} mode.`;
+      }
+      
       return `✅ Checked in successfully! Mode: ${mode}. Welcome to work!`;
     } else {
       return `❌ Check-in failed: ${result.error || 'Unknown error'}. Please make sure your email "${email}" is registered in the system.`;

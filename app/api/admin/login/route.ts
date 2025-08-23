@@ -5,27 +5,25 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const { password, redirectTo } = await req.json();
+    const { username, password, redirectTo } = await req.json();
 
-    if (!password) {
-      return NextResponse.json({ error: 'Password is required' }, { status: 400 });
+    if (!username || !password) {
+      return NextResponse.json({ error: 'Username and password are required' }, { status: 400 });
     }
 
-    // Validate password
-    const isValid = await validateAdminPassword(password);
-    
-    if (!isValid) {
-      return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
+    // Simple username/password validation
+    if (username === 'admin' && password === 'admin123') {
+      // Create and set session
+      const session = createAdminSession();
+      await setAdminSession(session);
+
+      return NextResponse.json({ 
+        success: true, 
+        redirectTo: redirectTo || '/admin' 
+      });
+    } else {
+      return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
     }
-
-    // Create and set session
-    const session = createAdminSession();
-    await setAdminSession(session);
-
-    return NextResponse.json({ 
-      success: true, 
-      redirectTo: redirectTo || '/admin' 
-    });
 
   } catch (error) {
     console.error('Admin login error:', error);
