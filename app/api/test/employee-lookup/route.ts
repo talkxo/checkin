@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     console.log('All employees:', allEmployees);
     
     // Test different lookup methods
-    const lookups = {
+    const lookups: any = {
       byExactName: null,
       byILikeName: null,
       bySlug: null,
