@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 
 export default function AdminLogin() {
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,22 +22,15 @@ export default function AdminLogin() {
     setIsLoading(true);
     setError('');
 
-    try {
-      const response = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password, redirectTo })
-      });
-
-      if (response.ok) {
-        router.push(redirectTo);
-      } else {
-        const data = await response.json();
-        setError(data.error || 'Login failed');
-      }
-    } catch (error) {
-      setError('Network error. Please try again.');
-    } finally {
+    // Simple authentication (like the old system)
+    if (username === 'admin' && password === 'talkxo2024') {
+      // Set authentication in localStorage
+      localStorage.setItem('admin_authenticated', 'true');
+      
+      // Redirect to the intended page
+      router.push(redirectTo);
+    } else {
+      setError('Invalid username or password');
       setIsLoading(false);
     }
   };
@@ -57,11 +51,26 @@ export default function AdminLogin() {
             Admin Access
           </CardTitle>
           <p className="text-gray-600 mt-2">
-            Enter your password to access admin features
+            Enter your credentials to access admin features
           </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="username" className="text-sm font-medium text-gray-700">
+                Username
+              </label>
+              <Input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter username"
+                required
+                disabled={isLoading}
+              />
+            </div>
+            
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium text-gray-700">
                 Password
@@ -72,7 +81,7 @@ export default function AdminLogin() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter admin password"
+                  placeholder="Enter password"
                   className="pr-10"
                   required
                   disabled={isLoading}
@@ -97,7 +106,7 @@ export default function AdminLogin() {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || !password.trim()}
+              disabled={isLoading || !username.trim() || !password.trim()}
             >
               {isLoading ? (
                 <div className="flex items-center space-x-2">
@@ -112,6 +121,12 @@ export default function AdminLogin() {
               )}
             </Button>
           </form>
+          
+          <div className="mt-4 text-xs text-gray-500 text-center">
+            <p>Default credentials:</p>
+            <p>Username: <code>admin</code></p>
+            <p>Password: <code>talkxo2024</code></p>
+          </div>
         </CardContent>
       </Card>
     </div>
