@@ -16,11 +16,15 @@ async function handleCheckin(sender: any, mode: string, origin: string): Promise
     console.log('Extracted email:', email);
     console.log('Extracted name:', name);
     
-    if (!email) {
-      return "I need your email address to check you in. Please make sure your Basecamp profile has your email address. I can see your name is: " + (name || 'Unknown');
+    if (!name) {
+      return "I need your name to check you in. Please make sure your Basecamp profile has your name.";
     }
 
-    const response = await fetch(`${origin}/api/checkin`, {
+    // Try multiple lookup strategies
+    let employee = null;
+    
+    // Strategy 1: Try exact name match
+    const exactResponse = await fetch(`${origin}/api/checkin`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
@@ -28,14 +32,56 @@ async function handleCheckin(sender: any, mode: string, origin: string): Promise
         mode: mode 
       })
     });
-
-    const result = await response.json();
     
-    if (response.ok) {
+    if (exactResponse.ok) {
       return `✅ Checked in successfully! Mode: ${mode}. Welcome to work!`;
-    } else {
-      return `❌ Check-in failed: ${result.error || 'Unknown error'}`;
     }
+    
+    // Strategy 2: Try with email if available
+    if (email) {
+      const emailResponse = await fetch(`${origin}/api/checkin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          fullName: name,
+          email: email,
+          mode: mode 
+        })
+      });
+      
+      if (emailResponse.ok) {
+        return `✅ Checked in successfully! Mode: ${mode}. Welcome to work!`;
+      }
+    }
+    
+    // Strategy 3: Try different name variations
+    const nameVariations = [
+      name,
+      name + ' ' + (sender.title || ''),
+      sender.title + ' ' + name,
+      name.toLowerCase(),
+      name.toUpperCase()
+    ];
+    
+    for (const nameVar of nameVariations) {
+      if (!nameVar) continue;
+      
+      const varResponse = await fetch(`${origin}/api/checkin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          fullName: nameVar,
+          mode: mode 
+        })
+      });
+      
+      if (varResponse.ok) {
+        return `✅ Checked in successfully! Mode: ${mode}. Welcome to work!`;
+      }
+    }
+    
+    return `❌ Check-in failed: Employee not found. Your name "${name}" is not in the system. Please contact admin to add you.`;
+    
   } catch (error) {
     return `❌ Check-in failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
   }
