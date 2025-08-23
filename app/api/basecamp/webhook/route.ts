@@ -4,6 +4,69 @@ import { getAccessToken } from '@/lib/basecamp';
 
 export const dynamic = 'force-dynamic';
 
+// Helper function to handle check-in
+async function handleCheckin(sender: any, mode: string, origin: string): Promise<string> {
+  try {
+    const email = sender.email_address || sender.email;
+    const name = sender.name || sender.full_name;
+    
+    if (!email) {
+      return "I need your email address to check you in. Please make sure your Basecamp profile has your email address.";
+    }
+
+    const response = await fetch(`${origin}/api/checkin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        email: email,
+        fullName: name,
+        mode: mode 
+      })
+    });
+
+    const result = await response.json();
+    
+    if (response.ok) {
+      return `✅ Checked in successfully! Mode: ${mode}. Welcome to work!`;
+    } else {
+      return `❌ Check-in failed: ${result.error || 'Unknown error'}`;
+    }
+  } catch (error) {
+    return `❌ Check-in failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
+  }
+}
+
+// Helper function to handle check-out
+async function handleCheckout(sender: any, origin: string): Promise<string> {
+  try {
+    const email = sender.email_address || sender.email;
+    const name = sender.name || sender.full_name;
+    
+    if (!email) {
+      return "I need your email address to check you out. Please make sure your Basecamp profile has your email address.";
+    }
+
+    const response = await fetch(`${origin}/api/checkout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        email: email,
+        fullName: name
+      })
+    });
+
+    const result = await response.json();
+    
+    if (response.ok) {
+      return `✅ Checked out successfully! Have a great day!`;
+    } else {
+      return `❌ Check-out failed: ${result.error || 'Unknown error'}`;
+    }
+  } catch (error) {
+    return `❌ Check-out failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -51,6 +114,22 @@ export async function POST(req: NextRequest) {
 
     console.log('Processing message:', content);
 
+    // Handle check-in/check-out commands
+    if (content.toLowerCase().includes('check in') || content.toLowerCase().includes('checkin') || content.toLowerCase().includes('clock in')) {
+      const mode = content.toLowerCase().includes('remote') ? 'remote' : 'office';
+      const checkinResult = await handleCheckin(sender, mode, req.nextUrl.origin);
+      return new Response(checkinResult, {
+        headers: { 'Content-Type': 'text/plain' }
+      });
+    }
+
+    if (content.toLowerCase().includes('check out') || content.toLowerCase().includes('checkout') || content.toLowerCase().includes('clock out')) {
+      const checkoutResult = await handleCheckout(sender, req.nextUrl.origin);
+      return new Response(checkoutResult, {
+        headers: { 'Content-Type': 'text/plain' }
+      });
+    }
+
     // Fetch all attendance data from single comprehensive endpoint
     let contextData = '';
     
@@ -87,7 +166,9 @@ export async function POST(req: NextRequest) {
       }
 
       // Return fallback response for Basecamp chatbot to post
-      return NextResponse.json(fallbackResponse);
+      return new Response(fallbackResponse, {
+        headers: { 'Content-Type': 'text/plain' }
+      });
     }
 
     // Create AI prompt for Basecamp chatbot
@@ -130,7 +211,9 @@ Provide a helpful, concise response (max 2-3 sentences) based ONLY on the availa
 
       // Return fallback response for Basecamp chatbot to post
       console.log('AI failed, returning fallback response for chatbot to post');
-      return NextResponse.json(fallbackResponse);
+      return new Response(fallbackResponse, {
+        headers: { 'Content-Type': 'text/plain' }
+      });
     }
 
     // Check if this is a test request (no Basecamp headers)
@@ -148,7 +231,9 @@ Provide a helpful, concise response (max 2-3 sentences) based ONLY on the availa
 
     // Return just the content text for Basecamp chatbot to post
     console.log('AI response generated successfully, returning content for chatbot to post');
-    return NextResponse.json(aiResponse.data);
+    return new Response(aiResponse.data, {
+      headers: { 'Content-Type': 'text/plain' }
+    });
 
   } catch (error) {
     console.error('Basecamp webhook error:', error);
