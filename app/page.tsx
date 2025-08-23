@@ -168,11 +168,21 @@ export default function HomePage(){
       // User is logged in but no active session
       console.log('=== SESSION RESTORE DEBUG ===');
       console.log('Restored savedName from localStorage:', savedName);
+      
+      // Try to get the slug from localStorage
+      const savedSlug = localStorage.getItem('userSlug');
+      console.log('Restored savedSlug from localStorage:', savedSlug);
+      
       setName(savedName);
       setIsLoggedIn(true);
       setShowNameInput(false);
-      // Use full name for lookup, not just first name
-      fetchMySummary(savedName, false);
+      
+      // Use slug if available, otherwise fall back to full name
+      if (savedSlug) {
+        fetchMySummary(savedSlug, true);
+      } else {
+        fetchMySummary(savedName, false);
+      }
       setIsLoading(false);
     } else {
       setIsLoading(false);
@@ -383,10 +393,17 @@ export default function HomePage(){
       console.log('Name variable value:', name);
       console.log('Selected employee:', selectedEmployee);
       
+      // Use slug for checkin if available, otherwise use full name
+      const checkinData = selectedEmployee?.slug 
+        ? { slug: selectedEmployee.slug, mode: checkMode }
+        : { fullName: name, mode: checkMode };
+      
+      console.log('Final checkin data:', checkinData);
+      
       const r = await fetch('/api/checkin', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ fullName: name, mode: checkMode }) 
+        body: JSON.stringify(checkinData) 
       });
       const j = await r.json();
       
@@ -500,10 +517,12 @@ export default function HomePage(){
     // Auto-submit when employee is selected
     setTimeout(() => {
       localStorage.setItem('userName', employee.full_name);
+      localStorage.setItem('userSlug', employee.slug); // Store slug separately
       console.log('Stored in localStorage:', employee.full_name);
+      console.log('Stored slug in localStorage:', employee.slug);
       setIsLoggedIn(true);
       setShowNameInput(false);
-      fetchMySummary(employee.slug, true);
+      fetchMySummary(employee.slug, true); // Use slug for API calls
     }, 100);
   };
 
