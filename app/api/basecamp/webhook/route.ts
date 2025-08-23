@@ -24,7 +24,6 @@ async function handleCheckin(sender: any, mode: string, origin: string): Promise
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        email: email,
         fullName: name,
         mode: mode 
       })
@@ -58,12 +57,14 @@ async function handleCheckout(sender: any, origin: string): Promise<string> {
       return "I need your email address to check you out. Please make sure your Basecamp profile has your email address. I can see your name is: " + (name || 'Unknown');
     }
 
+    // Generate slug from name (same logic as database)
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    
     const response = await fetch(`${origin}/api/checkout`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        email: email,
-        fullName: name
+        slug: slug
       })
     });
 
