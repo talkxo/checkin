@@ -186,9 +186,13 @@ export default function AdminChat() {
               <h1 className="text-xl font-semibold text-gray-900">InsydeChat</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-500">
-                Powered by AI
-              </div>
+              <button
+                onClick={() => window.location.href = '/admin'}
+                className="text-sm text-gray-600 hover:text-gray-800 flex items-center space-x-1 transition-colors"
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span>Dashboard</span>
+              </button>
               <button
                 onClick={handleLogout}
                 className="text-sm text-gray-600 hover:text-gray-800 flex items-center space-x-1 transition-colors"

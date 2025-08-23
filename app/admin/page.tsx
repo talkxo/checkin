@@ -499,12 +499,11 @@ export default function AdminPage() {
           </div>
           <div className="flex gap-2">
             <Button
-              variant="destructive"
-              onClick={handleResetSessions}
-              disabled={isResetting}
+              variant="outline"
+              onClick={() => window.location.href = '/admin-chat'}
             >
-              <LogOut className="w-4 h-4 mr-2" />
-              Reset All Sessions
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Chat Mode
             </Button>
             <Button
               variant="outline"
@@ -862,13 +861,23 @@ export default function AdminPage() {
                 <Users className="w-5 h-5" />
                 User Management
               </CardTitle>
-              <Button
-                onClick={() => setShowAddUserDialog(true)}
-                className="flex items-center gap-2"
-              >
-                <UserPlus className="w-4 h-4" />
-                Add User
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="destructive"
+                  onClick={handleResetSessions}
+                  disabled={isResetting}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Reset All Sessions
+                </Button>
+                <Button
+                  onClick={() => setShowAddUserDialog(true)}
+                  className="flex items-center gap-2"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Add User
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <Table>
