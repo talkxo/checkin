@@ -1,7 +1,8 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, BarChart3, Users, Calendar, TrendingUp, MapPin, Settings } from 'lucide-react';
+import { Send, Bot, User, BarChart3, Users, Calendar, TrendingUp, MapPin, Settings, Bookmark } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import SaveResponseModal from '@/components/save-response-modal';
 
 interface Message {
   id: string;
@@ -16,6 +17,8 @@ export default function AdminChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [responseStyle, setResponseStyle] = useState<'short' | 'detailed' | 'report'>('short');
   const [showStyleDropdown, setShowStyleDropdown] = useState(false);
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [selectedResponse, setSelectedResponse] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const hotClues = [
@@ -97,7 +100,37 @@ export default function AdminChat() {
     setInput(query);
   };
 
-          return (
+  const handleSaveResponse = (content: string) => {
+    setSelectedResponse(content);
+    setSaveModalOpen(true);
+  };
+
+  const handleSave = async (title: string, tags: string[]) => {
+    try {
+      const response = await fetch('/api/admin/saved-responses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: 'admin',
+          title,
+          content: selectedResponse,
+          tags
+        })
+      });
+
+      if (response.ok) {
+        // Show success message or toast
+        console.log('Response saved successfully');
+      } else {
+        throw new Error('Failed to save response');
+      }
+    } catch (error) {
+      console.error('Error saving response:', error);
+      alert('Failed to save response. Please try again.');
+    }
+  };
+
+  return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
         <div className="w-full max-w-6xl bg-white rounded-xl shadow-lg overflow-hidden">
           {/* Header */}
@@ -167,8 +200,20 @@ export default function AdminChat() {
                               ) : (
                                 <div className="whitespace-pre-wrap">{message.content}</div>
                               )}
-                              <div className={`text-xs mt-3 ${message.role === 'user' ? 'text-purple-200' : 'text-gray-400'}`}>
-                                {message.timestamp.toLocaleTimeString()}
+                              <div className={`flex items-center justify-between mt-3 ${message.role === 'user' ? 'text-purple-200' : 'text-gray-400'}`}>
+                                <div className="text-xs">
+                                  {message.timestamp.toLocaleTimeString()}
+                                </div>
+                                {message.role === 'assistant' && (
+                                  <button
+                                    onClick={() => handleSaveResponse(message.content)}
+                                    className="text-xs text-purple-600 hover:text-purple-700 flex items-center gap-1 transition-colors"
+                                    title="Save this response"
+                                  >
+                                    <Bookmark className="w-3 h-3" />
+                                    Save
+                                  </button>
+                                )}
                               </div>
                             </div>
                             {message.role === 'user' && (
@@ -211,6 +256,13 @@ export default function AdminChat() {
                           <span>{clue.label}</span>
                         </button>
                       ))}
+                      <button
+                        onClick={() => window.location.href = '/admin/saved-responses'}
+                        className="flex items-center space-x-2 bg-purple-100 hover:bg-purple-200 text-purple-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-colors border border-purple-200"
+                      >
+                        <Bookmark className="w-4 h-4" />
+                        <span>Saved Responses</span>
+                      </button>
                     </div>
                   </div>
 
@@ -272,5 +324,13 @@ export default function AdminChat() {
                   </div>
         </div>
       </div>
+
+      {/* Save Response Modal */}
+      <SaveResponseModal
+        isOpen={saveModalOpen}
+        onClose={() => setSaveModalOpen(false)}
+        content={selectedResponse}
+        onSave={handleSave}
+      />
     );
   }
