@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function AdminLayout({
   children,
@@ -11,9 +11,16 @@ export default function AdminLayout({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    // Check authentication status
+    // Don't check authentication for the login page itself
+    if (pathname === '/admin/login') {
+      setIsLoading(false);
+      return;
+    }
+
+    // Check authentication status for other admin routes
     const checkAuth = async () => {
       try {
         const response = await fetch('/api/admin/check-auth');
@@ -30,7 +37,16 @@ export default function AdminLayout({
     };
 
     checkAuth();
-  }, [router]);
+  }, [router, pathname]);
+
+  // For login page, just render children without authentication check
+  if (pathname === '/admin/login') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {children}
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
