@@ -185,13 +185,38 @@ export default function AdminPage() {
     }
   };
 
-  const handleExportGoogleSheets = () => {
-    // For Google Sheets integration, we would need:
-    // 1. Google Sheets API credentials
-    // 2. OAuth2 setup
-    // 3. Service account or user authentication
-    // 4. API calls to create/update sheets
-    alert('Google Sheets export requires additional setup. For now, please use CSV export.');
+  const handleExportGoogleSheets = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Get the attendance data as CSV
+      const response = await fetch('/api/admin/today-export');
+      if (!response.ok) {
+        throw new Error('Failed to fetch attendance data');
+      }
+      
+      const csvText = await response.text();
+      
+      // Create a downloadable CSV file
+      const blob = new Blob([csvText], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `attendance_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      // Show instructions for Google Sheets import
+      alert(`CSV file downloaded successfully!\n\nTo import into Google Sheets:\n1. Go to sheets.google.com\n2. Create a new spreadsheet\n3. Go to File → Import → Upload\n4. Select the downloaded CSV file\n5. Choose "Replace current sheet" and click Import`);
+      
+    } catch (error) {
+      console.error('Google Sheets export error:', error);
+      alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Session reset functions
@@ -629,10 +654,10 @@ export default function AdminPage() {
                   <Button
                     variant="outline"
                     onClick={handleExportGoogleSheets}
-                    disabled={todayData.length === 0}
+                    disabled={todayData.length === 0 || isLoading}
                   >
                     <FileSpreadsheet className="w-4 h-4 mr-2" />
-                    Export Google Sheets
+                    Export for Google Sheets
                   </Button>
                 </div>
               </CardHeader>
