@@ -489,7 +489,7 @@ export default function AdminPage() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -710,7 +710,7 @@ export default function AdminPage() {
                         <p className="text-sm font-medium text-gray-600">Total Employees</p>
                         <p className="text-2xl font-bold text-gray-900">{stats.totalEmployees}</p>
                       </div>
-                      <Users className="w-8 h-8 text-blue-600" />
+                      <Users className="w-8 h-8 text-purple-600" />
                     </div>
                   </CardContent>
                 </Card>
@@ -732,7 +732,7 @@ export default function AdminPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">Office</p>
-                        <p className="text-2xl font-bold text-blue-600">{stats.officeCount}</p>
+                        <p className="text-2xl font-bold text-purple-600">{stats.officeCount}</p>
                       </div>
                       <Badge variant="default">Office</Badge>
                     </div>
@@ -968,10 +968,10 @@ export default function AdminPage() {
                 </div>
 
                 {/* Combined AI Analysis */}
-                <div className="p-6 border rounded-lg bg-gradient-to-r from-blue-50 to-purple-50">
+                <div className="p-6 border rounded-lg bg-gradient-to-r from-purple-50 to-purple-50">
                   <div className="text-center mb-6">
                     <div className="flex items-center justify-center gap-2 mb-2">
-                      <Brain className="w-6 h-6 text-blue-600" />
+                                              <Brain className="w-6 h-6 text-purple-600" />
                       <h3 className="text-xl font-semibold text-gray-900">HR-Focused AI Analysis</h3>
                     </div>
                     <p className="text-sm text-gray-600 max-w-2xl mx-auto">
@@ -993,7 +993,7 @@ export default function AdminPage() {
 
                     <div className="text-center">
                       <div className="flex items-center justify-center gap-2 mb-2">
-                        <BarChart3 className="w-5 h-5 text-blue-600" />
+                        <BarChart3 className="w-5 h-5 text-purple-600" />
                         <h4 className="font-semibold">Professional HR Reports</h4>
                       </div>
                       <p className="text-xs text-gray-600">
@@ -1088,7 +1088,7 @@ export default function AdminPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-blue-600" />
+                                            <BarChart3 className="w-5 h-5 text-purple-600" />
                     AI-Generated Report
                   </CardTitle>
                 </CardHeader>
