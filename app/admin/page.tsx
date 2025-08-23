@@ -69,9 +69,6 @@ interface User {
 }
 
 export default function AdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [timeRange, setTimeRange] = useState<'week' | 'fortnight' | 'month' | '6months' | 'year'>('week');
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -87,33 +84,14 @@ export default function AdminPage() {
   const [isResetting, setIsResetting] = useState(false);
   const [resetResult, setResetResult] = useState<string | null>(null);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Simple admin authentication (in production, use proper auth)
-    if (username === 'admin' && password === 'talkxo2024') {
-      setIsAuthenticated(true);
-      localStorage.setItem('admin_authenticated', 'true');
-    } else {
-      alert('Invalid credentials');
-    }
-  };
-
+  // Load data on component mount (authentication is handled by layout)
   useEffect(() => {
-    const auth = localStorage.getItem('admin_authenticated');
-    if (auth === 'true') {
-      setIsAuthenticated(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadStats();
-      loadUserStats();
-      loadChartData();
-      loadTodayData();
-      loadAllUsers();
-    }
-  }, [isAuthenticated, timeRange]);
+    loadStats();
+    loadUserStats();
+    loadChartData();
+    loadTodayData();
+    loadAllUsers();
+  }, [timeRange]);
 
   const loadStats = async () => {
     try {
@@ -508,49 +486,7 @@ export default function AdminPage() {
     }
   }, [showResetDialog, resetCountdown]);
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mb-4">
-              <AlertTriangle className="w-6 h-6 text-white" />
-            </div>
-            <CardTitle>Admin Access</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <Input
-                  type="text"
-                  placeholder="Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading}
-              >
-                Login
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
