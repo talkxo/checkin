@@ -13,12 +13,23 @@ export async function POST(req: NextRequest) {
     console.log('- BC_ACCOUNT_ID:', process.env.BC_ACCOUNT_ID ? `Set: ${process.env.BC_ACCOUNT_ID}` : 'Not set');
     console.log('- BC_PROJECT_ID:', process.env.BC_PROJECT_ID ? `Set: ${process.env.BC_PROJECT_ID}` : 'Not set');
 
-    // Verify this is a chatbot message
-    if (body.type !== 'chatbot_message') {
-      return NextResponse.json({ status: 'ignored' });
+    // Handle both chatbot_message and command message types
+    let content, sender, conversation;
+    
+    if (body.type === 'chatbot_message') {
+      // Standard chatbot message format
+      ({ content, sender, conversation } = body);
+    } else if (body.command) {
+      // Command message format (like "hello")
+      content = body.command;
+      sender = { type: 'person', id: body.creator?.id, name: body.creator?.name };
+      // Extract conversation info from callback_url
+      const urlParts = body.callback_url?.split('/') || [];
+      const chatId = urlParts[urlParts.length - 2]; // Get chat ID from URL
+      conversation = { id: `${chatId}@${process.env.BC_ACCOUNT_ID}` };
+    } else {
+      return NextResponse.json({ status: 'ignored', reason: 'Unknown message format' });
     }
-
-    const { content, sender, conversation } = body;
     
     // Only respond to messages in the configured chat
     const expectedChatIds = process.env.BC_CHAT_ID?.split('\n').map(id => id.trim()).filter(id => id) || [];
@@ -35,7 +46,7 @@ export async function POST(req: NextRequest) {
 
     // Don't respond to our own messages
     if (sender.type === 'chatbot') {
-      return NextResponse.json({ status: 'ignored' });
+      return NextResponse.json({ status: 'ignored', reason: 'Sender is chatbot' });
     }
 
     console.log('Processing message:', content);
