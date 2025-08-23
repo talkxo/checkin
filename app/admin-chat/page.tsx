@@ -183,7 +183,7 @@ export default function AdminChat() {
                 className="h-6 w-auto"
                 style={{ maxWidth: '120px' }}
               />
-              <h1 className="text-xl font-semibold text-gray-900">InsydeChat</h1>
+              <h1 className="text-xl font-semibold text-gray-900">Chat</h1>
             </div>
             <div className="flex items-center space-x-4">
               <button
@@ -210,7 +210,7 @@ export default function AdminChat() {
             {messages.length === 0 && (
               <div className="text-center text-gray-500 mt-20">
                 <Bot className="w-12 h-12 mx-auto mb-4 text-purple-600" />
-                <h2 className="text-xl font-semibold mb-2 text-gray-900">Hello, I'm your InsydeChat Assistant</h2>
+                <h2 className="text-xl font-semibold mb-2 text-gray-900">Hello, I'm your Chat Assistant</h2>
                 <p className="text-sm mb-4">I help People Ops teams manage hybrid work with intelligent insights.</p>
                 <p className="text-sm text-gray-400">Ask me about team status, attendance patterns, space utilization, or use the quick actions below.</p>
               </div>
