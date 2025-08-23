@@ -75,6 +75,18 @@ export async function GET(req: NextRequest) {
       .order('checkin_ts', { ascending: false })
       .limit(20);
 
+    // Debug time information
+    console.log('=== TIME DEBUG ===');
+    console.log('Current time (now):', now.toISOString());
+    console.log('Current time (IST):', now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    if (recentSessions && recentSessions.length > 0) {
+      const latestSession = recentSessions[0];
+      console.log('Latest session checkin_ts (raw):', latestSession.checkin_ts);
+      console.log('Latest session checkin_ts (parsed):', new Date(latestSession.checkin_ts).toISOString());
+      console.log('Latest session checkin_ts (IST):', new Date(latestSession.checkin_ts).toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    }
+    console.log('=== END TIME DEBUG ===');
+
     // Process the data
     const processedData = {
       summary: {
@@ -102,6 +114,7 @@ export async function GET(req: NextRequest) {
       recentActivity: recentSessions?.map(session => {
         const employee = Array.isArray(session.employees) ? session.employees[0] : session.employees;
         const checkinTime = new Date(session.checkin_ts);
+        
         return {
           name: employee?.full_name || 'Unknown',
           checkinTime: checkinTime.toLocaleTimeString('en-GB', { 
