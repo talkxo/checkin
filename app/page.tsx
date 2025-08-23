@@ -177,10 +177,17 @@ export default function HomePage(){
       setIsLoggedIn(true);
       setShowNameInput(false);
       
-      // Use slug if available, otherwise fall back to full name
+      // If we have a slug, try to reconstruct the selectedEmployee object and check session
       if (savedSlug) {
+        setSelectedEmployee({
+          full_name: savedName,
+          slug: savedSlug
+        });
+        // Check if there's an open session
+        checkSessionStatus(savedSlug);
         fetchMySummary(savedSlug, true);
       } else {
+        // No slug available, use full name
         fetchMySummary(savedName, false);
       }
       setIsLoading(false);
@@ -294,23 +301,27 @@ export default function HomePage(){
 
   const checkSessionStatus = async (slug: string) => {
     try {
+      console.log('=== SESSION STATUS DEBUG ===');
+      console.log('Checking session status for slug:', slug);
+      
       const r = await fetch(`/api/session/open?slug=${slug}`);
       const data = await r.json();
-      setHasOpen(data.ok);
-      if (!data.ok) {
-        // Session closed, but keep user logged in
-        localStorage.removeItem('currentSession');
-        setCurrentSession(null);
-        setElapsedTime(0);
-        // Don't show name input - user stays logged in
+      
+      console.log('Session status response:', data);
+      
+      if (data.ok && data.session) {
+        setCurrentSession(data);
+        setHasOpen(true);
+        console.log('Found open session:', data.session);
       } else {
-        // Session is still open, fetch summary
-        fetchMySummary(slug, true);
+        setHasOpen(false);
+        setCurrentSession(null);
+        console.log('No open session found');
       }
-      setIsLoading(false);
     } catch (e) {
       console.error('Error checking session status:', e);
-      setIsLoading(false);
+      setHasOpen(false);
+      setCurrentSession(null);
     }
   };
 
@@ -335,7 +346,14 @@ export default function HomePage(){
       console.log('Identifier:', identifier);
       console.log('Use slug:', useSlug);
       
-      const param = useSlug ? `slug=${identifier}` : `fullName=${encodeURIComponent(identifier)}`;
+      // Auto-detect if identifier looks like a slug (contains hyphens, lowercase)
+      const looksLikeSlug = identifier.includes('-') && identifier === identifier.toLowerCase();
+      const shouldUseSlug = useSlug || looksLikeSlug;
+      
+      console.log('Identifier looks like slug:', looksLikeSlug);
+      console.log('Should use slug:', shouldUseSlug);
+      
+      const param = shouldUseSlug ? `slug=${identifier}` : `fullName=${encodeURIComponent(identifier)}`;
       console.log('API URL param:', param);
       
       const r = await fetch(`/api/summary/me?${param}`);
@@ -393,9 +411,13 @@ export default function HomePage(){
       console.log('Name variable value:', name);
       console.log('Selected employee:', selectedEmployee);
       
+      // Get slug from localStorage if selectedEmployee is null
+      const storedSlug = localStorage.getItem('userSlug');
+      console.log('Stored slug from localStorage:', storedSlug);
+      
       // Use slug for checkin if available, otherwise use full name
-      const checkinData = selectedEmployee?.slug 
-        ? { slug: selectedEmployee.slug, mode: checkMode }
+      const checkinData = (selectedEmployee?.slug || storedSlug)
+        ? { slug: selectedEmployee?.slug || storedSlug, mode: checkMode }
         : { fullName: name, mode: checkMode };
       
       console.log('Final checkin data:', checkinData);
