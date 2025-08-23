@@ -107,11 +107,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Return fallback response for Basecamp chatbot to post
-      return NextResponse.json({ 
-        content: fallbackResponse,
-        status: 'success',
-        note: 'No attendance data available'
-      });
+      return NextResponse.json(fallbackResponse);
     }
 
     // Create AI prompt for Basecamp chatbot
@@ -154,11 +150,7 @@ Provide a helpful, concise response (max 2-3 sentences) based ONLY on the availa
 
       // Return fallback response for Basecamp chatbot to post
       console.log('AI failed, returning fallback response for chatbot to post');
-      return NextResponse.json({ 
-        content: fallbackResponse,
-        status: 'success',
-        note: 'Used fallback response'
-      });
+      return NextResponse.json(fallbackResponse);
     }
 
     // Check if this is a test request (no Basecamp headers)
@@ -174,12 +166,9 @@ Provide a helpful, concise response (max 2-3 sentences) based ONLY on the availa
       });
     }
 
-    // Return the response for Basecamp chatbot to post
-    console.log('AI response generated successfully, returning for chatbot to post');
-    return NextResponse.json({ 
-      content: aiResponse.data,
-      status: 'success'
-    });
+    // Return just the content text for Basecamp chatbot to post
+    console.log('AI response generated successfully, returning content for chatbot to post');
+    return NextResponse.json(aiResponse.data);
 
   } catch (error) {
     console.error('Basecamp webhook error:', error);
