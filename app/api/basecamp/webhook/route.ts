@@ -108,8 +108,8 @@ Keep it brief and conversational for Basecamp chat.`;
       // Provide a fallback response when AI fails
       const fallbackResponse = `I'm having trouble accessing the attendance data right now. Please try asking again in a few minutes, or check the admin dashboard for current information.`;
       
-      // Check if this is a test request
-      const isTestRequest = !req.headers.get('user-agent')?.includes('Basecamp');
+      // Check if this is a test request (no Basecamp headers)
+      const isTestRequest = !req.headers.get('user-agent')?.includes('Basecamp') && !req.headers.get('x-forwarded-for');
       
       if (isTestRequest) {
         return NextResponse.json({ 
@@ -120,49 +120,17 @@ Keep it brief and conversational for Basecamp chat.`;
         });
       }
 
-      // Send fallback response to Basecamp
-      const accessToken = await getAccessToken();
-      const chatId = conversation.id.split('@')[0]; // Extract just the chat ID part
-      const response = await fetch(`https://3.basecampapi.com/${process.env.BC_ACCOUNT_ID}/buckets/${process.env.BC_PROJECT_ID}/chats/${chatId}/lines.json`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          'User-Agent': 'PROJECT INSYDE (ops@talkxo.com)'
-        },
-        body: JSON.stringify({
-          content: fallbackResponse
-        })
+      // Return fallback response for Basecamp chatbot to post
+      console.log('AI failed, returning fallback response for chatbot to post');
+      return NextResponse.json({ 
+        content: fallbackResponse,
+        status: 'success',
+        note: 'Used fallback response'
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Failed to send fallback response to Basecamp:', response.status, errorText);
-        console.error('Request details:', {
-          url: `https://3.basecampapi.com/${process.env.BC_ACCOUNT_ID}/buckets/${process.env.BC_PROJECT_ID}/chats/${chatId}/lines.json`,
-          accountId: process.env.BC_ACCOUNT_ID,
-          projectId: process.env.BC_PROJECT_ID,
-          chatId: chatId,
-          conversationId: conversation.id
-        });
-        return NextResponse.json({ 
-          status: 'error', 
-          error: 'Failed to send response',
-          details: {
-            status: response.status,
-            error: errorText,
-            chatId: chatId,
-            conversationId: conversation.id
-          }
-        }, { status: 500 });
-      }
-
-      console.log('Fallback response sent to Basecamp successfully');
-      return NextResponse.json({ status: 'success', note: 'Used fallback response' });
     }
 
     // Check if this is a test request (no Basecamp headers)
-    const isTestRequest = !req.headers.get('user-agent')?.includes('Basecamp');
+    const isTestRequest = !req.headers.get('user-agent')?.includes('Basecamp') && !req.headers.get('x-forwarded-for');
     
     if (isTestRequest) {
       console.log('Test request detected, returning AI response without posting to Basecamp');
@@ -174,45 +142,12 @@ Keep it brief and conversational for Basecamp chat.`;
       });
     }
 
-    // Send response back to Basecamp
-    const accessToken = await getAccessToken();
-    const chatId = conversation.id.split('@')[0]; // Extract just the chat ID part
-    const response = await fetch(`https://3.basecampapi.com/${process.env.BC_ACCOUNT_ID}/buckets/${process.env.BC_PROJECT_ID}/chats/${chatId}/lines.json`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        'User-Agent': 'PROJECT INSYDE (ops@talkxo.com)'
-      },
-      body: JSON.stringify({
-        content: aiResponse.data
-      })
+    // Return the response for Basecamp chatbot to post
+    console.log('AI response generated successfully, returning for chatbot to post');
+    return NextResponse.json({ 
+      content: aiResponse.data,
+      status: 'success'
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Failed to send response to Basecamp:', response.status, errorText);
-      console.error('Request details:', {
-        url: `https://3.basecampapi.com/${process.env.BC_ACCOUNT_ID}/buckets/${process.env.BC_PROJECT_ID}/chats/${chatId}/lines.json`,
-        accountId: process.env.BC_ACCOUNT_ID,
-        projectId: process.env.BC_PROJECT_ID,
-        chatId: chatId,
-        conversationId: conversation.id
-      });
-      return NextResponse.json({ 
-        status: 'error', 
-        error: 'Failed to send response',
-        details: {
-          status: response.status,
-          error: errorText,
-          chatId: chatId,
-          conversationId: conversation.id
-        }
-      }, { status: 500 });
-    }
-
-    console.log('Response sent to Basecamp successfully');
-    return NextResponse.json({ status: 'success' });
 
   } catch (error) {
     console.error('Basecamp webhook error:', error);
