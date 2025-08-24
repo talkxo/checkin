@@ -52,12 +52,9 @@ function AdminLoginContent() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <img 
-              src="/insyde-logo.png" 
-              alt="INSYDE" 
-              className="h-8 w-auto"
-              style={{ maxWidth: '120px' }}
-            />
+            <h1 className="font-cal-sans text-3xl font-semibold text-purple-600 tracking-tight">
+              insyde
+            </h1>
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">
             Admin Access

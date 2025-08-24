@@ -601,12 +601,9 @@ export default function HomePage(){
       <div className="w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto">
         {/* INSYDE Logo */}
         <div className="text-center mb-8 slide-up">
-          <img 
-            src="/insyde-logo.png" 
-            alt="INSYDE" 
-            className="h-12 md:h-16 mx-auto"
-            style={{ maxWidth: '200px', width: 'auto', height: 'auto' }}
-          />
+          <h1 className="font-cal-sans text-4xl md:text-5xl font-semibold text-purple-600 tracking-tight">
+            insyde
+          </h1>
         </div>
         
         {showNameInput ? (
