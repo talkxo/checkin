@@ -171,6 +171,7 @@ Please try asking again in a few minutes, or use the dashboard for immediate ins
     }
 
     console.log('AI Response:', aiResponse);
+    console.log('AI Response Content:', aiResponse.data);
 
     if (!aiResponse.success) {
       console.error('AI Error:', aiResponse.error);
@@ -192,8 +193,8 @@ Please try asking again in a few minutes, or use the dashboard for immediate ins
     
     // Check if response looks like an error or corrupted data
     const errorIndicators = [
-      'at ', 'Error:', 'Exception:', 'stack trace', 'undefined', 'null',
-      'function', 'system', 'lib', 'from', 'at at', '))":', 'is the', 'space'
+      'Error:', 'Exception:', 'stack trace', 'undefined', 'null',
+      'function', 'system', 'lib', 'from', 'at at', '))":'
     ];
     
     const hasErrorIndicators = errorIndicators.some(indicator => 
@@ -204,12 +205,11 @@ Please try asking again in a few minutes, or use the dashboard for immediate ins
     const isTooShort = responseContent.trim().length < 10;
     const isTooLong = responseContent.length > 2000;
     
-    // Check if response contains suspicious patterns
+    // Check if response contains suspicious patterns (more specific)
     const suspiciousPatterns = [
-      /at\s+\w+/, // Stack trace patterns
-      /function\s+\w+/, // Function definitions
-      /from\s+\w+/, // Import statements
-      /\w+\s+is\s+\w+/, // "x is y" patterns
+      /at\s+\w+\s+\(/, // Stack trace patterns with parentheses
+      /function\s+\w+\s*\(/, // Function definitions with parentheses
+      /from\s+['"]\w+/, // Import statements with quotes
     ];
     
     const hasSuspiciousPatterns = suspiciousPatterns.some(pattern => 
@@ -222,7 +222,10 @@ Please try asking again in a few minutes, or use the dashboard for immediate ins
         hasErrorIndicators,
         isTooShort,
         isTooLong,
-        hasSuspiciousPatterns
+        hasSuspiciousPatterns,
+        errorIndicators: errorIndicators.filter(indicator => 
+          responseContent.toLowerCase().includes(indicator.toLowerCase())
+        )
       });
       
       const safeFallbackResponse = `I'm having trouble processing that request right now. Here are some things you can check:
