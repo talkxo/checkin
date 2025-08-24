@@ -176,7 +176,7 @@ export default function AdminChat() {
         {/* Header */}
         <div className="bg-white border-b border-gray-200 p-6 rounded-t-xl">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-baseline space-x-1">
               <h1 className="font-cal-sans text-2xl font-semibold text-purple-600 tracking-tight">
                 insyde
               </h1>
