@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Send, Bot, User, BarChart3, Users, Calendar, TrendingUp, MapPin, Settings, Bookmark, LogOut } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 import ReactMarkdown from 'react-markdown';
 import SaveResponseModal from '@/components/save-response-modal';
 
@@ -171,7 +172,7 @@ export default function AdminChat() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 flex items-center justify-center p-6">
       <div className="w-full max-w-6xl bg-white rounded-xl shadow-lg overflow-hidden">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 p-6 rounded-t-xl">
@@ -182,21 +183,23 @@ export default function AdminChat() {
               </h1>
               <h2 className="text-xl font-semibold text-gray-900">Chat</h2>
             </div>
-            <div className="flex items-center space-x-4">
-              <button
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => window.location.href = '/admin'}
-                className="text-sm text-gray-600 hover:text-gray-800 flex items-center space-x-1 transition-colors"
               >
-                <BarChart3 className="w-4 h-4" />
-                <span>Dashboard</span>
-              </button>
-              <button
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Dashboard
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleLogout}
-                className="text-sm text-gray-600 hover:text-gray-800 flex items-center space-x-1 transition-colors"
               >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </button>
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
             </div>
           </div>
         </div>

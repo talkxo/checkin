@@ -491,9 +491,14 @@ export default function AdminPage() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-gray-600">Attendance analytics and insights</p>
+          <div className="flex items-center gap-4">
+            <h1 className="font-cal-sans text-3xl font-semibold text-purple-600 tracking-tight">
+              insyde
+            </h1>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Admin Dashboard</h2>
+              <p className="text-gray-600">Attendance analytics and insights</p>
+            </div>
           </div>
           <div className="flex gap-2">
             <Button

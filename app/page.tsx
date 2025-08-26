@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
 import { LogOut } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 
 // Helper function to format IST times consistently
 const formatISTTime = (timestamp: string) => {
@@ -587,7 +588,7 @@ export default function HomePage(){
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 flex items-center justify-center p-8">
         <div className="bg-white rounded-2xl shadow-lg p-8 text-center fade-in">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
@@ -597,7 +598,7 @@ export default function HomePage(){
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 flex items-center justify-center p-8">
       <div className="w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto">
         {/* INSYDE Logo */}
         <div className="text-center mb-8 slide-up">
@@ -659,7 +660,12 @@ export default function HomePage(){
           <div className="bg-white rounded-2xl shadow-lg slide-up">
             {/* Welcome Header */}
             <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Hi, {name.split(' ')[0]}! 👋</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">Hi, {name.split(' ')[0]}! 👋</h2>
+                <h1 className="font-cal-sans text-2xl font-semibold text-purple-600 tracking-tight">
+                  insyde
+                </h1>
+              </div>
             </div>
 
             {/* Tab Navigation */}
@@ -933,13 +939,13 @@ export default function HomePage(){
         {/* Logout Button */}
         {isLoggedIn && (
           <div className="mt-6 text-center slide-up">
-            <button 
-              className="notion-button-secondary"
+            <Button 
+              variant="outline"
               onClick={handleLogout}
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-4 h-4 mr-2" />
               Logout
-            </button>
+            </Button>
           </div>
         )}
 
