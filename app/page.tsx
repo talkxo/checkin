@@ -858,7 +858,7 @@ export default function HomePage(){
                       ) : (
                         // Not checked in - show last check-in time
                         <span className="notion-badge notion-badge-info">
-                          Last In: {formatDisplayTime(me.lastIn)}
+                          Clock In: {formatDisplayTime(me.lastIn)}
                         </span>
                       )}
                       
@@ -870,14 +870,14 @@ export default function HomePage(){
                       ) : me.lastOut ? (
                         // Not checked in - show last checkout time
                         <span className="notion-badge notion-badge-outline">
-                          Last Out: {formatDisplayTime(me.lastOut)}
+                          Clock Out: {formatDisplayTime(me.lastOut)}
                         </span>
                       ) : null}
                       
                       {/* Show completed session duration only when not currently checked in */}
                       {!hasOpen && me.workedMinutes > 0 && (
                         <span className="notion-badge notion-badge-success">
-                          Worked: {me.workedMinutes}m
+                          Duration: {me.workedMinutes}m
                         </span>
                       )}
                     </div>
