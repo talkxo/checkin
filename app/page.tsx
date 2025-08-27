@@ -851,9 +851,9 @@ export default function HomePage(){
                   {me && (
                     <div className="flex flex-wrap gap-2 justify-center">
                       {hasOpen ? (
-                        // Currently checked in - show current session time
+                        // Currently checked in - show current session start time
                         <span className="notion-badge notion-badge-info">
-                          Clocked in at {formatDisplayTime(me.lastIn)}
+                          Started at {formatDisplayTime(me.lastIn)}
                         </span>
                       ) : (
                         // Not checked in - show last check-in time
@@ -862,13 +862,19 @@ export default function HomePage(){
                         </span>
                       )}
                       
-                      {me.lastOut && (
+                      {hasOpen ? (
+                        // Currently checked in - show current session duration
+                        <span className="notion-badge notion-badge-success">
+                          Working: {me.workedMinutes}m
+                        </span>
+                      ) : me.lastOut ? (
+                        // Not checked in - show last checkout time
                         <span className="notion-badge notion-badge-outline">
                           Last Out: {formatDisplayTime(me.lastOut)}
                         </span>
-                      )}
+                      ) : null}
                       
-                      {/* Show Worked time only when not currently checked in */}
+                      {/* Show completed session duration only when not currently checked in */}
                       {!hasOpen && me.workedMinutes > 0 && (
                         <span className="notion-badge notion-badge-success">
                           Worked: {me.workedMinutes}m
