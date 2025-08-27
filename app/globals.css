@@ -140,6 +140,44 @@
     @apply bg-white border border-gray-300 text-gray-700;
   }
 
+  /* Override shadcn/ui blue colors with purple theme */
+  .bg-primary {
+    @apply bg-purple-600 !important;
+  }
+  
+  .text-primary {
+    @apply text-purple-600 !important;
+  }
+  
+  .border-primary {
+    @apply border-purple-600 !important;
+  }
+  
+  .hover\:bg-primary:hover {
+    @apply bg-purple-700 !important;
+  }
+  
+  .focus\:ring-primary:focus {
+    @apply ring-purple-500 !important;
+  }
+  
+  /* Override button variants */
+  .bg-blue-600 {
+    @apply bg-purple-600 !important;
+  }
+  
+  .bg-blue-700 {
+    @apply bg-purple-700 !important;
+  }
+  
+  .hover\:bg-blue-700:hover {
+    @apply hover:bg-purple-700 !important;
+  }
+  
+  .focus\:ring-blue-500:focus {
+    @apply focus:ring-purple-500 !important;
+  }
+
   /* Tab styles */
   .notion-tab {
     @apply flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2;
