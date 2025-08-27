@@ -194,29 +194,26 @@ Format this as a professional HR report that prioritizes employee well-being and
 
 // AI Feature 4: Smart Notifications & Alerts
 export async function generateSmartNotification(userData: any, context: string): Promise<AIResponse> {
-  const prompt = `Generate a smart, actionable message for this user:
+  const prompt = `Generate a brief, motivational message for this user:
 
-User: ${JSON.stringify(userData, null, 2)}
+User: ${userData?.full_name || 'Employee'}
 Context: ${context}
 
-Create a brief, intelligent message (max 60 words) that includes:
-- A relevant "Did you know?" fact about productivity, work patterns, or workplace wellness
-- A practical tip or insight based on their work pattern
-- Encouragement that feels genuine and specific
-- Actionable advice they can use today
-
-IMPORTANT: This company uses Basecamp for chats, notes and tasks, Google Drive for files and other Google Workspace services like Gmail, and Canva for design work. Do NOT mention Slack, Microsoft Teams, or other tools they don't use.
+Create a short message (max 30 words) that includes:
+- A "Did you know?" fact about productivity or workplace wellness
+- A practical tip or encouragement
+- Mention Basecamp, Google Drive, or Canva if relevant
 
 Examples:
 - "Did you know? Taking short breaks every 90 minutes can boost productivity by 20%. Your consistent check-ins show great discipline!"
 - "Did you know? Remote workers often report higher job satisfaction. Your hybrid approach is perfectly balanced!"
 
-Make it educational, motivational, and genuinely helpful.`;
+Keep it simple, educational, and motivational.`;
 
   return callOpenRouter([
-    { role: 'system', content: 'You are a knowledgeable workplace productivity expert. Provide educational, motivational messages with "Did you know?" facts and actionable tips. This company uses Basecamp, Google Workspace, and Canva - do not mention other tools.' },
+    { role: 'system', content: 'You are a workplace productivity expert. Create brief, motivational messages with "Did you know?" facts. Use Basecamp, Google Workspace, and Canva - avoid other tools.' },
     { role: 'user', content: prompt }
-  ], 0.7);
+  ], 0.5);
 }
 
 // AI Feature 5: Team Collaboration Insights

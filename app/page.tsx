@@ -124,6 +124,8 @@ export default function HomePage(){
     if (!me) return;
     
     try {
+      console.log('Generating AI notification for context:', context.substring(0, 100) + '...');
+      
       const response = await fetch('/api/ai/notification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -135,11 +137,15 @@ export default function HomePage(){
 
       if (response.ok) {
         const data = await response.json();
+        console.log('AI notification received:', data.notification?.substring(0, 100) + '...');
         setAiNotification(data.notification);
         // Don't auto-clear AI notifications - let user see them
+      } else {
+        console.warn('AI notification request failed:', response.status);
       }
     } catch (error) {
-      // Silently fail - AI notifications are optional
+      console.warn('AI notification error (non-blocking):', error);
+      // Silently fail - AI notifications are optional and shouldn't break the main flow
     }
   };
 
@@ -660,11 +666,8 @@ export default function HomePage(){
           <div className="bg-white rounded-2xl shadow-lg slide-up">
             {/* Welcome Header */}
             <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center">
                 <h2 className="text-lg font-semibold text-gray-900">Hi, {name.split(' ')[0]}! 👋</h2>
-                <h1 className="font-cal-sans text-2xl font-semibold text-purple-600 tracking-tight">
-                  insyde
-                </h1>
               </div>
             </div>
 
