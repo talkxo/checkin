@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import AdminLeaveManagement from '@/components/admin-leave-management';
 import { Bar, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -17,7 +18,7 @@ import {
   Legend,
   PointElement,
 } from 'chart.js';
-import { AlertTriangle, Clock, Users, TrendingUp, LogOut, Download, FileSpreadsheet, UserPlus, Edit, Trash2, Eye, Brain, Lightbulb, MessageSquare, BarChart3 } from 'lucide-react';
+import { AlertTriangle, Clock, Users, TrendingUp, LogOut, Download, FileSpreadsheet, UserPlus, Edit, Trash2, Eye, Brain, Lightbulb, MessageSquare, BarChart3, Calendar } from 'lucide-react';
 
 ChartJS.register(
   CategoryScale,
@@ -76,7 +77,7 @@ export default function AdminPage() {
   const [chartData, setChartData] = useState<any>(null);
   const [todayData, setTodayData] = useState<TodayData[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'ai'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'ai' | 'leave'>('dashboard');
   
   // Session reset states
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -545,6 +546,15 @@ export default function AdminPage() {
           >
             <Brain className="w-4 h-4 mr-2" />
             AI Insights
+          </Button>
+          <Button
+            variant={activeTab === 'leave' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveTab('leave')}
+            className="flex-1"
+          >
+            <Calendar className="w-4 h-4 mr-2" />
+            Leave Management
           </Button>
         </div>
 
@@ -1204,6 +1214,21 @@ export default function AdminPage() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        )}
+
+        {/* Leave Management Tab Content */}
+        {activeTab === 'leave' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Leave Management</h2>
+                <p className="text-gray-600">Manage employee leave requests and balances</p>
+              </div>
+            </div>
+            
+            {/* Leave Management Component */}
+            <AdminLeaveManagement />
           </div>
         )}
 

@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { LogOut } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import AssistantChat from '@/components/assistant-chat';
 
 // Helper function to format IST times consistently
 const formatISTTime = (timestamp: string) => {
@@ -61,7 +62,7 @@ export default function HomePage(){
   const [isLocationLoading, setIsLocationLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [activeTab, setActiveTab] = useState<'control' | 'snapshot'>('control');
+  const [activeTab, setActiveTab] = useState<'control' | 'snapshot' | 'assistant'>('control');
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [aiNotification, setAiNotification] = useState<string>('');
   const [showMoodCheck, setShowMoodCheck] = useState(false);
@@ -666,8 +667,17 @@ export default function HomePage(){
           <div className="bg-white rounded-2xl shadow-lg slide-up">
             {/* Welcome Header */}
             <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center">
+              <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-900">Hi, {name.split(' ')[0]}! 👋</h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open('/leave', '_blank')}
+                  className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400"
+                >
+                  <i className="fas fa-calendar-alt mr-1"></i>
+                  Manage Leave
+                </Button>
               </div>
             </div>
 
@@ -686,6 +696,13 @@ export default function HomePage(){
               >
                 <i className="fas fa-chart-bar mr-2"></i>
                 Snapshot
+              </button>
+              <button
+                className={`notion-tab ${activeTab === 'assistant' ? 'notion-tab-active' : 'notion-tab-inactive'}`}
+                onClick={() => setActiveTab('assistant')}
+              >
+                <i className="fas fa-robot mr-2"></i>
+                Assistant
               </button>
             </div>
 
@@ -883,6 +900,12 @@ export default function HomePage(){
                     </div>
                   )}
                 </div>
+              ) : activeTab === 'assistant' ? (
+                // Assistant Tab
+                <AssistantChat 
+                  isVisible={true} 
+                  userSlug={selectedEmployee?.slug}
+                />
               ) : (
                 // Snapshot Tab
                 <div>
