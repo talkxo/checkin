@@ -201,12 +201,12 @@ Write ONLY the final message (max 30 words) with:
 - A "Did you know?" fact about productivity or workplace wellness
 - A practical tip or encouragement
 
-DO NOT include any reasoning, analysis, or word counting. Return ONLY the message.
+CRITICAL: Return ONLY the message. No reasoning, no analysis, no word counting, no explanations.
 
 Example: "Did you know? Taking short breaks every 90 minutes can boost productivity by 20%. Your consistent check-ins show great discipline!"`;
 
   return callOpenRouter([
-    { role: 'system', content: 'You are a workplace productivity expert. Return ONLY the final motivational message with "Did you know?" facts. Do not include any reasoning or analysis.' },
+    { role: 'system', content: 'You are a workplace productivity expert. Return ONLY the final motivational message. Never include reasoning, analysis, or explanations. Just the message.' },
     { role: 'user', content: prompt }
   ], 0.1);
 }

@@ -850,18 +850,30 @@ export default function HomePage(){
 
                   {me && (
                     <div className="flex flex-wrap gap-2 justify-center">
-                      <span className="notion-badge notion-badge-info">
-                        Last In: {formatDisplayTime(me.lastIn)}
-                      </span>
-                      <span className="notion-badge notion-badge-outline">
-                        Last Out: {formatDisplayTime(me.lastOut)}
-                      </span>
-                      <span className="notion-badge notion-badge-success">
-                        Worked: {me.workedMinutes}m
-                      </span>
-                      <span className="notion-badge notion-badge-primary">
-                        Mode: {me.mode || 'N/A'}
-                      </span>
+                      {hasOpen ? (
+                        // Currently checked in - show current session time
+                        <span className="notion-badge notion-badge-info">
+                          Clocked in at {formatDisplayTime(me.lastIn)}
+                        </span>
+                      ) : (
+                        // Not checked in - show last check-in time
+                        <span className="notion-badge notion-badge-info">
+                          Last In: {formatDisplayTime(me.lastIn)}
+                        </span>
+                      )}
+                      
+                      {me.lastOut && (
+                        <span className="notion-badge notion-badge-outline">
+                          Last Out: {formatDisplayTime(me.lastOut)}
+                        </span>
+                      )}
+                      
+                      {/* Show Worked time only when not currently checked in */}
+                      {!hasOpen && me.workedMinutes > 0 && (
+                        <span className="notion-badge notion-badge-success">
+                          Worked: {me.workedMinutes}m
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>

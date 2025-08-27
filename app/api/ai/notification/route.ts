@@ -38,7 +38,20 @@ export async function POST(req: NextRequest) {
       /we need to.*?good\./i,
       /let's craft.*?words, within/i,
       /count words.*?good\./i,
-      /that's \d+ words.*?good\./i
+      /that's \d+ words.*?good\./i,
+      /we need to produce.*?just the message\./i,
+      /so it's a short session.*?just the message\./i,
+      /max 30 words.*?just the message\./i,
+      /no analysis.*?just the message\./i,
+      /let's craft something like.*?it's fine\./i,
+      /provide only the message\./i,
+      /we need to produce.*?provide only the message\./i,
+      /current session.*?provide only the message\./i,
+      /so it's a short session.*?provide only the message\./i,
+      /let's craft something like.*?provide only the message\./i,
+      /we need to ensure.*?provide only the message\./i,
+      /it's fine\./i,
+      /provide only the message\./i
     ];
     
     reasoningPatterns.forEach(pattern => {
