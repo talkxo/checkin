@@ -29,8 +29,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ notification: fallbackNotification });
     }
 
-    console.log('AI Notification success:', notification.data?.substring(0, 100) + '...');
-    return NextResponse.json({ notification: notification.data });
+    // Clean the AI response to remove any reasoning or analysis
+    let cleanNotification = notification.data || '';
+    
+    // Remove common reasoning patterns
+    const reasoningPatterns = [
+      /analysis.*?assistantfinal/i,
+      /we need to.*?good\./i,
+      /let's craft.*?words, within/i,
+      /count words.*?good\./i,
+      /that's \d+ words.*?good\./i
+    ];
+    
+    reasoningPatterns.forEach(pattern => {
+      cleanNotification = cleanNotification.replace(pattern, '');
+    });
+    
+    // Clean up any remaining artifacts
+    cleanNotification = cleanNotification
+      .replace(/analysis/i, '')
+      .replace(/assistantfinal/i, '')
+      .replace(/^\s*/, '') // Remove leading whitespace
+      .replace(/\s*$/, ''); // Remove trailing whitespace
+
+    console.log('AI Notification success:', cleanNotification?.substring(0, 100) + '...');
+    return NextResponse.json({ notification: cleanNotification });
   } catch (error) {
     console.error('AI Notification endpoint error:', error);
     // Return a fallback notification instead of error
