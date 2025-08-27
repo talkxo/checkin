@@ -21,9 +21,10 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
 
   // Define models in order of preference with fallbacks
   const models = [
-    'openai/gpt-oss-20b:free',        // Primary (more reliable)
-    'moonshotai/kimi-k2:free',        // Fallback 1
-    'anthropic/claude-3-haiku:free'   // Fallback 2
+    'google/gemma-3n-e4b-it:free',    // Primary (Google's Gemma model)
+    'openai/gpt-oss-20b:free',        // Fallback 1
+    'moonshotai/kimi-k2:free',        // Fallback 2
+    'anthropic/claude-3-haiku:free'   // Fallback 3
   ];
 
   const maxRetries = 2;
