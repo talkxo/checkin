@@ -239,7 +239,32 @@ Please try asking again in a few minutes, or use the dashboard for immediate ins
       return NextResponse.json({ response: safeFallbackResponse });
     }
 
-    return NextResponse.json({ response: responseContent });
+    // Clean the AI response to remove any reasoning or analysis
+    let cleanResponse = responseContent;
+    
+    // Remove common reasoning patterns
+    const reasoningPatterns = [
+      /analysis.*?assistantfinal/i,
+      /we need to.*?good\./i,
+      /let's craft.*?words, within/i,
+      /count words.*?good\./i,
+      /that's \d+ words.*?good\./i,
+      /provide concise.*?assistantfinal/i,
+      /use short style.*?assistantfinal/i
+    ];
+    
+    reasoningPatterns.forEach(pattern => {
+      cleanResponse = cleanResponse.replace(pattern, '');
+    });
+    
+    // Clean up any remaining artifacts
+    cleanResponse = cleanResponse
+      .replace(/analysis/i, '')
+      .replace(/assistantfinal/i, '')
+      .replace(/^\s*/, '') // Remove leading whitespace
+      .replace(/\s*$/, ''); // Remove trailing whitespace
+
+    return NextResponse.json({ response: cleanResponse });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
