@@ -1,4 +1,5 @@
-const TZ = (process.env.TZ || 'Asia/Kolkata').replace(/^:/, '') || 'UTC';
+// Force IST for all server-side formatting to avoid env-based UTC drift in Vercel
+const TZ = 'Asia/Kolkata';
 
 export const nowIST = () => {
   // Return current UTC time; always format with IST for display.
