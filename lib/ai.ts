@@ -87,7 +87,9 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
         console.log(`Model ${model} error (attempt ${attempt}):`, error);
         
         // If it's a timeout, try next model immediately
-        if (error.name === 'AbortError' || error.message?.includes('timeout')) {
+        const isAbortError = typeof DOMException !== 'undefined' && error instanceof DOMException && error.name === 'AbortError';
+        const isTimeoutMessage = error instanceof Error && typeof error.message === 'string' && error.message.includes('timeout');
+        if (isAbortError || isTimeoutMessage) {
           console.log(`Timeout on ${model}, trying next model...`);
           break;
         }

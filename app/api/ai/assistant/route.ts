@@ -208,17 +208,20 @@ ${context}`;
     const userMessage = `${conversationContext}Current user question: ${query}`;
 
     // Call the AI model with very short timeout
-    let aiResponse;
+    let aiResponse: { success: boolean; data?: any; error?: string };
     try {
-      aiResponse = await Promise.race([
+      const result = await Promise.race<
+        { success: boolean; data?: any; error?: string } | Promise<{ success: boolean; data?: any; error?: string }>
+      >([
         callOpenRouter([
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userMessage }
         ], 0.7),
-        new Promise((_, reject) => 
+        new Promise<{ success: boolean; data?: any; error?: string }>((_, reject) => 
           setTimeout(() => reject(new Error('AI request timeout')), 8000) // 8 second timeout
         )
       ]);
+      aiResponse = result as { success: boolean; data?: any; error?: string };
     } catch (error) {
       console.log('AI request failed or timed out, using fallback response');
       aiResponse = {
