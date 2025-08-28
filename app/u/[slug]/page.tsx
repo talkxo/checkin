@@ -1,6 +1,7 @@
 "use client";
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { hhmmIST } from '@/lib/time';
 
 export default function UserPage(){
   const params = useParams();
@@ -22,7 +23,7 @@ export default function UserPage(){
     const r = await fetch('/api/checkin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug, mode: checkMode }) });
     const j = await r.json();
     if (r.ok) {
-      const message = `Checked in at ${new Date(j.session.checkin_ts).toLocaleTimeString()}`;
+      const message = `Checked in at ${hhmmIST(j.session.checkin_ts)}`;
       setMsg(message);
     } else {
       setMsg(j.error || 'Error');
@@ -37,7 +38,7 @@ export default function UserPage(){
     const r = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug }) });
     const j = await r.json();
     if (r.ok) {
-      const message = `Checked out at ${new Date(j.checkout_ts).toLocaleTimeString()}`;
+      const message = `Checked out at ${hhmmIST(j.checkout_ts)}`;
       setMsg(message);
     } else {
       setMsg(j.error || 'Error');

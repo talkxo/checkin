@@ -51,8 +51,10 @@ export default function HomePage(){
   const [mode,setMode]=useState<'office'|'remote'>('office');
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [me, setMe] = useState<any>(null);
+  const [meYesterday, setMeYesterday] = useState<any>(null);
   const [hasOpen, setHasOpen] = useState(false);
   const [todaySummary, setTodaySummary] = useState<any[]>([]);
+  const [yesterdaySummary, setYesterdaySummary] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentSession, setCurrentSession] = useState<any>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -162,11 +164,22 @@ export default function HomePage(){
       try {
         const sessionData = JSON.parse(session);
         setCurrentSession(sessionData);
+        console.log('Setting name from session:', savedName);
         setName(savedName);
         setIsLoggedIn(true);
         setShowNameInput(false);
         // Check if session is still open
         checkSessionStatus(sessionData.employee.slug);
+        // Ensure UI leaves loading state when restoring from a valid session
+        setIsLoading(false);
+        // Fetch personal logs consistently on restore
+        fetchMySummary(sessionData.employee.slug, true);
+        fetchMySummaryYesterday(sessionData.employee.slug, true);
+        // Fetch summaries for Today and Yesterday
+        if (sessionData?.employee?.slug) {
+          fetchMySummary(sessionData.employee.slug, true);
+          fetchMySummaryYesterday(sessionData.employee.slug, true);
+        }
       } catch (e) {
         localStorage.removeItem('currentSession');
         localStorage.removeItem('userName');
@@ -194,9 +207,13 @@ export default function HomePage(){
         // Check if there's an open session
         checkSessionStatus(savedSlug);
         fetchMySummary(savedSlug, true);
+        fetchMySummaryYesterday(savedSlug, true);
+        fetchMySummaryYesterday(savedSlug, true);
       } else {
         // No slug available, use full name
         fetchMySummary(savedName, false);
+        fetchMySummaryYesterday(savedName, false);
+        fetchMySummaryYesterday(savedName, false);
       }
       setIsLoading(false);
     } else {
@@ -261,16 +278,22 @@ export default function HomePage(){
 
   // Timer effect for elapsed time (hidden from UI but still tracked)
   useEffect(() => {
-    if (!currentSession || !hasOpen) return;
-    
-    const interval = setInterval(() => {
-      const startTime = new Date(currentSession.session.checkin_ts).getTime();
-      const now = Date.now();
-      setElapsedTime(Math.floor((now - startTime) / 1000));
-    }, 1000);
+    if (!currentSession || !hasOpen) {
+      setElapsedTime(0);
+      return;
+    }
 
+    const update = () => {
+      const start = new Date(currentSession.session.checkin_ts).getTime();
+      const now = Date.now();
+      const diff = Math.max(0, Math.floor((now - start) / 1000));
+      setElapsedTime(diff);
+    };
+
+    update();
+    const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [currentSession, hasOpen]);
+  }, [currentSession?.session?.checkin_ts, hasOpen]);
 
   // Hold progress effect with AI initiation
   useEffect(() => {
@@ -380,6 +403,21 @@ export default function HomePage(){
     }
   };
 
+  const fetchMySummaryYesterday = async (identifier: string, useSlug: boolean = false) => {
+    try {
+      // Auto-detect if identifier looks like a slug (contains hyphens, lowercase)
+      const looksLikeSlug = identifier.includes('-') && identifier === identifier.toLowerCase();
+      const shouldUseSlug = useSlug || looksLikeSlug;
+      const param = shouldUseSlug ? `slug=${identifier}` : `fullName=${encodeURIComponent(identifier)}`;
+      const r = await fetch(`/api/summary/me?${param}&offsetDays=-1`);
+      if (!r.ok) return;
+      const data = await r.json();
+      setMeYesterday(data);
+    } catch (e) {
+      console.error('Error fetching my summary (yesterday):', e);
+    }
+  };
+
   const fetchTodaySummary = async () => {
     try {
       // Add timestamp to prevent caching
@@ -393,11 +431,24 @@ export default function HomePage(){
     }
   };
 
-  // Format elapsed time as HH:MM:SS (for internal use)
+  const fetchYesterdaySummary = async () => {
+    try {
+      const timestamp = new Date().getTime();
+      const r = await fetch(`/api/today/summary?offsetDays=-1&t=${timestamp}`);
+      if (!r.ok) return;
+      const data = await r.json();
+      setYesterdaySummary(data);
+    } catch (e) {
+      console.error('Error fetching yesterday summary:', e);
+    }
+  };
+
+  // Format elapsed time as HH:MM:SS (clamped to 0)
   const formatTime = (seconds: number) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
+    const safe = Math.max(0, seconds | 0);
+    const hrs = Math.floor(safe / 3600);
+    const mins = Math.floor((safe % 3600) / 60);
+    const secs = safe % 60;
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
@@ -460,6 +511,10 @@ export default function HomePage(){
         
         fetchMySummary(j.employee.slug);
         fetchTodaySummary();
+        // Refresh my summary immediately so last in/out badges update without full reload
+        if (j?.employee?.slug) {
+          fetchMySummary(j.employee.slug, true);
+        }
       } else {
         if (j.error && j.error.includes('unique constraint')) {
           setMsg('You already have an open session. Please check out first.');
@@ -513,6 +568,10 @@ export default function HomePage(){
         // AI notification already initiated during hold
         
         fetchTodaySummary();
+        // Also refresh summary for last in/out immediately after checkout
+        if (currentSession?.employee?.slug) {
+          fetchMySummary(currentSession.employee.slug, true);
+        }
       } else {
         setMsg(j.error || 'Error');
         // If checkout failed, recheck session status
@@ -532,6 +591,7 @@ export default function HomePage(){
       setIsLoggedIn(true);
       setShowNameInput(false);
       fetchMySummary(selectedEmployee.slug, true);
+      fetchMySummaryYesterday(selectedEmployee.slug, true);
     }
   };
 
@@ -553,6 +613,7 @@ export default function HomePage(){
       setIsLoggedIn(true);
       setShowNameInput(false);
       fetchMySummary(employee.slug, true); // Use slug for API calls
+      fetchMySummaryYesterday(employee.slug, true);
     }, 100);
   };
 
@@ -578,7 +639,7 @@ export default function HomePage(){
   };
 
   useEffect(()=>{ if(typeof window!== 'undefined') localStorage.setItem('mode', mode); },[mode]);
-  useEffect(()=>{ fetchTodaySummary(); },[]);
+  useEffect(()=>{ fetchTodaySummary(); fetchYesterdaySummary(); },[]);
 
   // Format current time and date in IST
   const timeString = currentTime.toLocaleTimeString('en-GB', { 
@@ -668,7 +729,7 @@ export default function HomePage(){
             {/* Welcome Header */}
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">Hi, {name.split(' ')[0]}! 👋</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Hi, {name ? name.split(' ')[0] : 'there'}! 👋</h2>
                 <Button
                   variant="outline"
                   size="sm"
@@ -676,7 +737,7 @@ export default function HomePage(){
                   className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400"
                 >
                   <i className="fas fa-calendar-alt mr-1"></i>
-                  Manage Leave
+                  Manage Leaves
                 </Button>
               </div>
             </div>
@@ -714,13 +775,22 @@ export default function HomePage(){
                   {/* User Profile Header */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                        {name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                      <div className="w-16 h-10 bg-purple-600 rounded-md flex items-center justify-center text-white font-mono text-sm">
+                        {currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900">{name}</p>
                         <p className="text-sm text-gray-600">
-                          {hasOpen ? 'Currently checked in' : 'Ready to check in'}
+                          {hasOpen && currentSession?.session?.checkin_ts ? (
+                            <>
+                              Checked in at {formatISTTimeShort(currentSession.session.checkin_ts)} • {formatTime(elapsedTime)}
+                              <span className="block text-xs text-gray-400">{dateString}</span>
+                            </>
+                          ) : (
+                            <>
+                              Ready to check in
+                              <span className="block text-xs text-gray-400">{dateString}</span>
+                            </>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -765,7 +835,7 @@ export default function HomePage(){
                           <div className="text-white text-center select-none flex items-center space-x-3">
                             <i className={`fas ${hasOpen ? 'fa-sign-out-alt' : 'fa-sign-in-alt'} text-2xl`}></i>
                             <span className="font-semibold text-lg">
-                              {hasOpen ? 'Clock Out' : 'Clock In'}
+                              {hasOpen ? 'Check Out' : 'Check In'}
                             </span>
                           </div>
                         </button>
@@ -865,38 +935,32 @@ export default function HomePage(){
                     </div>
                   )}
 
-                  {me && (
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      {hasOpen ? (
-                        // Currently checked in - show current session start time
-                        <span className="notion-badge notion-badge-info">
-                          Started at {formatDisplayTime(me.lastIn)}
-                        </span>
-                      ) : (
-                        // Not checked in - show last check-in time
-                        <span className="notion-badge notion-badge-info">
-                          Clock In: {formatDisplayTime(me.lastIn)}
-                        </span>
-                      )}
-                      
-                      {hasOpen ? (
-                        // Currently checked in - show current session duration
-                        <span className="notion-badge notion-badge-success">
-                          Working: {me.workedMinutes}m
-                        </span>
-                      ) : me.lastOut ? (
-                        // Not checked in - show last checkout time
-                        <span className="notion-badge notion-badge-outline">
-                          Clock Out: {formatDisplayTime(me.lastOut)}
-                        </span>
-                      ) : null}
-                      
-                      {/* Show completed session duration only when not currently checked in */}
-                      {!hasOpen && me.workedMinutes > 0 && (
-                        <span className="notion-badge notion-badge-success">
-                          Duration: {me.workedMinutes}m
-                        </span>
-                      )}
+                  {/* Divider below action area */}
+                  <div className="my-4 h-px bg-purple-200" />
+
+                  {/* Personal Log: Today & Yesterday */}
+                  {(me || meYesterday) && (
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600 font-medium">Today</span>
+                        <div className="flex gap-2">
+                          <span className="notion-badge notion-badge-info">In: {formatDisplayTime(me?.lastIn)}</span>
+                          <span className="notion-badge notion-badge-outline">Out: {formatDisplayTime(me?.lastOut)}</span>
+                          {typeof me?.workedMinutes === 'number' && (
+                            <span className="notion-badge notion-badge-success">Worked: {me.workedMinutes}m</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600 font-medium">Yesterday</span>
+                        <div className="flex gap-2">
+                          <span className="notion-badge notion-badge-info">In: {formatDisplayTime(meYesterday?.lastIn)}</span>
+                          <span className="notion-badge notion-badge-outline">Out: {formatDisplayTime(meYesterday?.lastOut)}</span>
+                          {typeof meYesterday?.workedMinutes === 'number' && (
+                            <span className="notion-badge notion-badge-success">Worked: {meYesterday.workedMinutes}m</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -909,7 +973,7 @@ export default function HomePage(){
               ) : (
                 // Snapshot Tab
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Today's Attendance</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Today's Attendance</h3>
                   {todaySummary.length === 0 ? (
                     <div className="text-center py-8">
                       <p className="text-gray-500">No check-ins yet.</p>
@@ -974,6 +1038,8 @@ export default function HomePage(){
                       </table>
                     </div>
                   )}
+
+                  {/* Removed Yesterday's Attendance from Snapshot as requested */}
                 </div>
               )}
             </div>

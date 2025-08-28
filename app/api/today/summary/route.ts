@@ -2,19 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { nowIST, hhmmIST } from '@/lib/time';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const url = new URL(req.url);
+  const offsetDaysParam = url.searchParams.get('offsetDays');
+  const offsetDays = offsetDaysParam ? parseInt(offsetDaysParam, 10) : 0;
+
   const now = nowIST();
-  const start = new Date(now);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(now);
-  end.setHours(23, 59, 59, 999);
+  // Build IST boundaries for the target day (today + offsetDays)
+  const istNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  istNow.setDate(istNow.getDate() + offsetDays);
+  const istStart = new Date(istNow); istStart.setHours(0,0,0,0);
+  const istEnd = new Date(istNow); istEnd.setHours(23,59,59,999);
+  // Convert IST boundaries to UTC for querying stored UTC timestamps
+  const start = new Date(istStart.toLocaleString('en-US', { timeZone: 'UTC' }));
+  const end = new Date(istEnd.toLocaleString('en-US', { timeZone: 'UTC' }));
 
   console.log('=== TODAY SUMMARY DEBUG ===');
-  console.log('Current IST time:', now.toISOString());
-  console.log('Current IST time (local):', now.toString());
-  console.log('Today start (IST):', start.toISOString());
-  console.log('Today end (IST):', end.toISOString());
-  console.log('Date range for query:', start.toISOString(), 'to', end.toISOString());
+  console.log('OffsetDays:', offsetDays);
+  console.log('Current time UTC:', now.toISOString());
+  console.log('Query start UTC:', start.toISOString());
+  console.log('Query end UTC:', end.toISOString());
 
   // Get all employees
   const { data: employees, error: empError } = await supabaseAdmin

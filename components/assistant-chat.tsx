@@ -233,7 +233,46 @@ export default function AssistantChat({ isVisible, userSlug }: AssistantChatProp
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</div>
+                  <div className="text-sm whitespace-pre-wrap leading-relaxed">
+                    {message.role === 'assistant' ? (
+                      <div className="prose prose-sm max-w-none">
+                        {message.content.split('\n').map((line, index) => {
+                          // Handle bold text
+                          if (line.includes('**')) {
+                            const parts = line.split('**');
+                            return (
+                              <div key={index} className="mb-1">
+                                {parts.map((part, partIndex) => 
+                                  partIndex % 2 === 1 ? (
+                                    <strong key={partIndex} className="font-semibold">{part}</strong>
+                                  ) : (
+                                    <span key={partIndex}>{part}</span>
+                                  )
+                                )}
+                              </div>
+                            );
+                          }
+                          // Handle bullet points
+                          if (line.trim().startsWith('•')) {
+                            return (
+                              <div key={index} className="flex items-start mb-1">
+                                <span className="text-gray-500 mr-2 mt-1">•</span>
+                                <span>{line.substring(1).trim()}</span>
+                              </div>
+                            );
+                          }
+                          // Handle empty lines
+                          if (line.trim() === '') {
+                            return <div key={index} className="mb-2"></div>;
+                          }
+                          // Regular text
+                          return <div key={index} className="mb-1">{line}</div>;
+                        })}
+                      </div>
+                    ) : (
+                      <span>{message.content}</span>
+                    )}
+                  </div>
                   {message.sources && message.sources.length > 0 && (
                     <div className="mt-3 pt-2 border-t border-gray-200">
                       <div className="flex items-center space-x-2">

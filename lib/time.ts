@@ -1,10 +1,9 @@
 const TZ = (process.env.TZ || 'Asia/Kolkata').replace(/^:/, '') || 'UTC';
 
 export const nowIST = () => {
-  // Get current time and add IST offset (UTC+5:30)
-  const now = new Date();
-  const istOffset = 5.5 * 60 * 60 * 1000; // 5:30 hours in milliseconds
-  return new Date(now.getTime() + istOffset);
+  // Return current UTC time; always format with IST for display.
+  // Storing shifted timestamps leads to incorrect values across environments.
+  return new Date();
 };
 
 export const isWorkdayIST = () => { const d = nowIST().getDay(); return d>=1 && d<=5; };

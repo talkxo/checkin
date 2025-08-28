@@ -178,17 +178,91 @@
     @apply focus:ring-purple-500 !important;
   }
 
+  /* Brand purple overrides - comprehensive coverage */
+  /* Primary brand: #6a63b6; Hover/Darker: #5a54a4; Focus ring (~500): #7b74c2 */
+  
+  /* Text colors */
+  .text-purple-600 { color: #6a63b6 !important; }
+  .text-purple-400 { color: #7b74c2 !important; }
+  .text-purple-700 { color: #5a54a4 !important; }
+  .text-purple-800 { color: #4a447a !important; }
+  .text-purple-900 { color: #3a3658 !important; }
+  .text-purple-200 { color: #d1cde8 !important; }
+  
+  /* Background colors */
+  .bg-purple-600 { background-color: #6a63b6 !important; }
+  .bg-purple-700 { background-color: #5a54a4 !important; }
+  .bg-purple-500 { background-color: #7b74c2 !important; }
+  .bg-purple-400 { background-color: #8a84d0 !important; }
+  .bg-purple-100 { background-color: #e8e7f7 !important; }
+  .bg-purple-50 { background-color: #f3f2fb !important; }
+  .bg-purple-200 { background-color: #d1cde8 !important; }
+  .bg-purple-300 { background-color: #b8b3e0 !important; }
+  .bg-purple-800 { background-color: #4a447a !important; }
+  .bg-purple-900 { background-color: #3a3658 !important; }
+  
+  /* Border colors */
+  .border-purple-600 { border-color: #6a63b6 !important; }
+  .border-purple-500 { border-color: #7b74c2 !important; }
+  .border-purple-400 { border-color: #8a84d0 !important; }
+  .border-purple-300 { border-color: #b8b3e0 !important; }
+  .border-purple-200 { border-color: #d1cde8 !important; }
+  .border-purple-700 { border-color: #5a54a4 !important; }
+  
+  /* Hover states */
+  .hover\:bg-purple-700:hover { background-color: #5a54a4 !important; }
+  .hover\:bg-purple-100:hover { background-color: #e8e7f7 !important; }
+  .hover\:bg-purple-50:hover { background-color: #f3f2fb !important; }
+  .hover\:text-purple-600:hover { color: #6a63b6 !important; }
+  .hover\:border-purple-300:hover { border-color: #b8b3e0 !important; }
+  .hover\:border-purple-400:hover { border-color: #8a84d0 !important; }
+  
+  /* Focus states */
+  .focus\:ring-purple-500:focus { --tw-ring-color: #7b74c2 !important; }
+  .focus\:border-purple-500:focus { border-color: #7b74c2 !important; }
+  
+  /* Gradient backgrounds */
+  .from-purple-50 { --tw-gradient-from: #f3f2fb !important; }
+  .to-purple-50 { --tw-gradient-to: #f3f2fb !important; }
+  .from-purple-100 { --tw-gradient-from: #e8e7f7 !important; }
+  .to-purple-100 { --tw-gradient-to: #e8e7f7 !important; }
+  .from-purple-500 { --tw-gradient-from: #7b74c2 !important; }
+  .to-purple-500 { --tw-gradient-to: #7b74c2 !important; }
+  .from-purple-600 { --tw-gradient-from: #6a63b6 !important; }
+  .to-purple-600 { --tw-gradient-to: #6a63b6 !important; }
+  
+  /* Dark mode variants */
+  .dark .text-purple-400 { color: #8a84d0 !important; }
+  .dark .bg-purple-900\/30 { background-color: rgba(58, 54, 88, 0.3) !important; }
+  .dark .bg-purple-900\/20 { background-color: rgba(58, 54, 88, 0.2) !important; }
+  .dark .border-purple-700 { border-color: #5a54a4 !important; }
+  .dark .from-purple-900\/20 { --tw-gradient-from: rgba(58, 54, 88, 0.2) !important; }
+  .dark .to-purple-800\/20 { --tw-gradient-to: rgba(74, 68, 122, 0.2) !important; }
+
+  /* Keep primary helpers aligned to brand */
+  .text-primary { color: #6a63b6 !important; }
+  .border-primary { border-color: #6a63b6 !important; }
+  .hover\:bg-primary:hover { background-color: #5a54a4 !important; }
+  .focus\:ring-primary:focus { --tw-ring-color: #7b74c2 !important; }
+
   /* Tab styles */
   .notion-tab {
     @apply flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2;
   }
 
   .notion-tab-active {
-    @apply text-purple-600 border-purple-600 bg-purple-50;
+    color: #6a63b6 !important;
+    border-color: #6a63b6 !important;
+    background-color: #f3f2fb !important;
   }
 
   .notion-tab-inactive {
-    @apply text-gray-500 border-transparent hover:text-purple-700 hover:bg-purple-50;
+    @apply text-gray-500 border-transparent;
+  }
+
+  .notion-tab-inactive:hover {
+    color: #5a54a4 !important;
+    background-color: #f3f2fb !important;
   }
 
   /* Custom animations */

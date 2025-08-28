@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { callOpenRouter } from '@/lib/ai';
+import { getEmployeeLeaveBalance } from '@/lib/leave';
 
 // Company Knowledge Base - Using the actual handbook.md file
 import { readFileSync } from 'fs';
@@ -114,20 +115,21 @@ export async function POST(request: NextRequest) {
                                query.toLowerCase().includes('remaining leaves');
 
     if (isLeaveBalanceQuery && userSlug) {
-      // Fetch actual leave balance data
+      // Fetch actual leave balance data using shared function
       try {
-        const leaveResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'}/api/leave/balance?slug=${userSlug}`);
+        const leaveData = await getEmployeeLeaveBalance(userSlug);
         
-        if (leaveResponse.ok) {
-          const leaveData = await leaveResponse.json();
+        if (!leaveData.error) {
           
-          // Format the leave balance response
+          // Format the leave balance response with clean formatting
           let leaveBalanceText = '';
           
           if (leaveData.leaveBalance && leaveData.leaveBalance.length > 0) {
-            leaveBalanceText = 'Here\'s your current leave balance:\n\n';
+            leaveBalanceText = '**Your Leave Balance**\n\n';
+            
+            // Clean formatting for each leave type
             leaveData.leaveBalance.forEach((leave: any) => {
-              leaveBalanceText += `• **${leave.leave_type_name}**: ${leave.remaining_days} days remaining\n`;
+              leaveBalanceText += `• **${leave.leave_type_name}**: ${leave.available_leaves} days remaining\n`;
             });
           } else {
             leaveBalanceText = 'I couldn\'t find your leave balance information. ';
@@ -135,10 +137,18 @@ export async function POST(request: NextRequest) {
 
           // Add pending requests if any
           if (leaveData.pendingRequests && leaveData.pendingRequests.length > 0) {
-            leaveBalanceText += '\n**Pending Leave Requests:**\n';
+            leaveBalanceText += '\n**Pending Requests:**\n';
             leaveData.pendingRequests.forEach((request: any) => {
-              const status = request.status === 'pending' ? '⏳ Pending' : '✅ Approved';
-              leaveBalanceText += `• ${request.start_date} to ${request.end_date} (${request.total_days} days) - ${status}\n`;
+              const status = request.status === 'pending' ? 'Pending' : 'Approved';
+              const startDate = new Date(request.start_date).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric' 
+              });
+              const endDate = new Date(request.end_date).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric' 
+              });
+              leaveBalanceText += `• ${startDate} - ${endDate} (${request.total_days} days) - ${status}\n`;
             });
           }
 
@@ -151,7 +161,13 @@ export async function POST(request: NextRequest) {
         }
       } catch (leaveError) {
         console.error('Error fetching leave balance:', leaveError);
-        // Continue with normal AI response if leave API fails
+        // Provide a helpful response even if leave API fails
+        return NextResponse.json({
+          success: true,
+          response: `I'm having trouble accessing your leave balance right now. You can check your leave balance by clicking the "Leave Balance" button below, or visit the Leave Management system directly.`,
+          sources: ['Leave Management System'],
+          timestamp: new Date().toISOString()
+        });
       }
     }
 
@@ -191,17 +207,49 @@ ${context}`;
     // Create the user message
     const userMessage = `${conversationContext}Current user question: ${query}`;
 
-    // Call the AI model
-    const aiResponse = await callOpenRouter([
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userMessage }
-    ], 0.7);
+    // Call the AI model with very short timeout
+    let aiResponse;
+    try {
+      aiResponse = await Promise.race([
+        callOpenRouter([
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage }
+        ], 0.7),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('AI request timeout')), 8000) // 8 second timeout
+        )
+      ]);
+    } catch (error) {
+      console.log('AI request failed or timed out, using fallback response');
+      aiResponse = {
+        success: false,
+        error: 'AI request failed'
+      };
+    }
 
     if (!aiResponse.success) {
-      return NextResponse.json(
-        { error: 'Failed to generate response', details: aiResponse.error },
-        { status: 500 }
-      );
+      // Provide a smart fallback response based on the query
+      console.log('AI models failed, providing smart fallback response');
+      
+      let fallbackResponse = '';
+      const queryLower = query.toLowerCase();
+      
+      if (queryLower.includes('leave') || queryLower.includes('balance')) {
+        fallbackResponse = `I can help you with leave-related questions! You can check your leave balance by clicking the "Leave Balance" button below, or visit the Leave Management system. For specific leave policies, I can provide information from our company handbook.`;
+      } else if (queryLower.includes('work') || queryLower.includes('culture') || queryLower.includes('policy')) {
+        fallbackResponse = `I can help you with work culture and company policies! Based on our handbook, I can provide information about how we work, our principles, and company policies. What specific aspect would you like to know about?`;
+      } else if (queryLower.includes('benefit') || queryLower.includes('perk')) {
+        fallbackResponse = `I can help you with benefits and perks information! Our company offers various benefits including paid time off, health insurance, and work culture perks. You can find detailed information in our handbook or contact HR for specific questions.`;
+      } else {
+        fallbackResponse = `I'm here to help with company-related questions! I can assist with leave policies, work culture, benefits, and general company information. You can also use the quick action buttons below for common queries.`;
+      }
+      
+      return NextResponse.json({
+        success: true,
+        response: fallbackResponse,
+        sources: relevantDocs.map(doc => doc.category),
+        timestamp: new Date().toISOString()
+      });
     }
 
     return NextResponse.json({

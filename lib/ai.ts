@@ -19,12 +19,9 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
 
   console.log('OpenRouter API Key available:', OPENROUTER_API_KEY.substring(0, 10) + '...');
 
-  // Define models in order of preference with fallbacks
+  // Use only the specified model per requirement
   const models = [
-    'google/gemma-3n-e4b-it:free',    // Primary (Google's Gemma model)
-    'openai/gpt-oss-20b:free',        // Fallback 1
-    'moonshotai/kimi-k2:free',        // Fallback 2
-    'anthropic/claude-3-haiku:free'   // Fallback 3
+    'google/gemma-3n-e4b-it:free'
   ];
 
   const maxRetries = 2;
@@ -35,6 +32,9 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout per request
+
         const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
           method: 'POST',
           headers: {
@@ -48,8 +48,11 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
             messages,
             temperature,
             max_tokens: 800 // Reduced to avoid rate limits
-          })
+          }),
+          signal: controller.signal
         });
+
+        clearTimeout(timeoutId);
 
         if (response.status === 429) {
           // Rate limited - try next model
@@ -82,6 +85,12 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
         };
       } catch (error) {
         console.log(`Model ${model} error (attempt ${attempt}):`, error);
+        
+        // If it's a timeout, try next model immediately
+        if (error.name === 'AbortError' || error.message?.includes('timeout')) {
+          console.log(`Timeout on ${model}, trying next model...`);
+          break;
+        }
         
         if (attempt === maxRetries) {
           // Try next model

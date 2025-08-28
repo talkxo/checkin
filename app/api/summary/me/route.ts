@@ -6,6 +6,8 @@ export async function GET(req: NextRequest){
   const url = new URL(req.url);
   const slug = url.searchParams.get('slug') || '';
   const fullName = url.searchParams.get('fullName') || '';
+  const offsetDaysParam = url.searchParams.get('offsetDays');
+  const offsetDays = offsetDaysParam ? parseInt(offsetDaysParam, 10) : 0;
   if(!slug && !fullName) return NextResponse.json({ error: 'slug or fullName required' }, { status: 400 });
 
   let emp: any = null;
@@ -13,7 +15,15 @@ export async function GET(req: NextRequest){
   if(!emp && fullName){ const { data } = await supabaseAdmin.from('employees').select('id, full_name, slug').ilike('full_name', fullName).maybeSingle(); emp = data; }
   if(!emp) return NextResponse.json({ error: 'employee not found' }, { status: 404 });
 
-  const now = nowIST(); const start = new Date(now); start.setHours(0,0,0,0); const end = new Date(now); end.setHours(23,59,59,999);
+  // Compute start/end of day in IST, then convert to UTC for querying
+  const now = nowIST();
+  const istNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  istNow.setDate(istNow.getDate() + offsetDays);
+  const istStart = new Date(istNow); istStart.setHours(0,0,0,0);
+  const istEnd = new Date(istNow); istEnd.setHours(23,59,59,999);
+  // Convert IST boundaries to UTC Date objects by formatting as UTC strings
+  const start = new Date(istStart.toLocaleString('en-US', { timeZone: 'UTC' }));
+  const end = new Date(istEnd.toLocaleString('en-US', { timeZone: 'UTC' }));
   const { data: sessions, error } = await supabaseAdmin
     .from('sessions')
     .select('*')
