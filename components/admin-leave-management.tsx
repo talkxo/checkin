@@ -187,25 +187,34 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
   const fetchEmployeeLeaveBalances = async () => {
     try {
       const currentYear = new Date().getFullYear();
-      const balances = [];
-      
-      for (const employee of employees) {
-        try {
-          const response = await fetch(`/api/leave/balance?slug=${employee.slug}&year=${currentYear}`);
-          if (response.ok) {
-            const data = await response.json();
-            balances.push({
-              employee: data.employee,
-              leaveBalance: data.leaveBalance,
-              year: data.year
-            });
+      const concurrency = 6;
+      const results: any[] = [];
+      let index = 0;
+
+      const worker = async () => {
+        while (index < employees.length) {
+          const i = index++;
+          const employee = employees[i];
+          try {
+            const response = await fetch(`/api/leave/balance?slug=${employee.slug}&year=${currentYear}`);
+            if (response.ok) {
+              const data = await response.json();
+              results.push({
+                employee: data.employee,
+                leaveBalance: data.leaveBalance,
+                year: data.year
+              });
+            }
+          } catch (err) {
+            console.error(`Error fetching balance for ${employee.slug}:`, err);
           }
-        } catch (err) {
-          console.error(`Error fetching balance for ${employee.slug}:`, err);
         }
-      }
-      
-      setEmployeeLeaveBalances(balances);
+      };
+
+      const workers = Array.from({ length: Math.min(concurrency, employees.length) }, () => worker());
+      await Promise.all(workers);
+
+      setEmployeeLeaveBalances(results);
     } catch (err) {
       console.error('Error fetching employee leave balances:', err);
     }

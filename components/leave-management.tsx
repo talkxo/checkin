@@ -44,6 +44,12 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
       setIsLoading(true);
       setError(null);
 
+      // If no identifier is available yet, don't call the API
+      if (!employeeSlug && !employeeEmail) {
+        setIsLoading(false);
+        return;
+      }
+
       const params = new URLSearchParams();
       if (employeeSlug) params.append('slug', employeeSlug);
       if (employeeEmail) params.append('email', employeeEmail);
