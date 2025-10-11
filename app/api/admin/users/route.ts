@@ -55,6 +55,64 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Initialize leave balances for the new employee
+    try {
+      // Get all active leave types
+      const { data: leaveTypes, error: typeError } = await supabaseAdmin
+        .from('leave_types')
+        .select('id, name')
+        .eq('is_active', true);
+
+      if (!typeError && leaveTypes && leaveTypes.length > 0) {
+        const currentYear = new Date().getFullYear();
+        
+        // Prepare leave balance records
+        const leaveBalances = leaveTypes.map(leaveType => {
+          let defaultEntitlement = 0;
+          
+          // Set default entitlements based on leave type
+          switch (leaveType.name) {
+            case 'Privilege Leave':
+              defaultEntitlement = 15; // 15 days per year
+              break;
+            case 'Sick Leave':
+              defaultEntitlement = 10; // 10 days per year
+              break;
+            case 'Bonus Leave':
+              defaultEntitlement = 0; // Starts at 0, earned through attendance
+              break;
+            default:
+              defaultEntitlement = 0;
+          }
+
+          return {
+            employee_id: data.id,
+            leave_type_id: leaveType.id,
+            year: currentYear,
+            total_entitlement: defaultEntitlement,
+            used_leaves: 0,
+            pending_leaves: 0
+          };
+        });
+
+        // Insert all leave balances
+        const { error: balanceError } = await supabaseAdmin
+          .from('leave_balances')
+          .insert(leaveBalances);
+
+        if (balanceError) {
+          console.error('Error initializing leave balances:', balanceError);
+          // Don't fail the employee creation, just log the error
+          // The admin can manually set up leaves if needed
+        } else {
+          console.log(`Successfully initialized leave balances for ${data.full_name}`);
+        }
+      }
+    } catch (leaveError) {
+      // Log but don't fail the employee creation
+      console.error('Error in leave balance initialization:', leaveError);
+    }
+
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json(
