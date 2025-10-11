@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { callOpenRouter } from '@/lib/ai';
 import { getEmployeeLeaveBalance } from '@/lib/leave';
 import { supabaseAdmin } from '@/lib/supabase';
-import { createEmbedding } from '@/lib/embeddings';
+// import { createEmbedding } from '@/lib/embeddings';
 
 // Company Knowledge Base - Using the actual handbook.md file
 import { readFileSync } from 'fs';
@@ -99,27 +99,10 @@ function keywordSearchKnowledgeBase(query: string, topK: number = 3) {
     .slice(0, topK);
 }
 
-// Embedding-based retrieval using Supabase pgvector
+// Embedding-based retrieval using Supabase pgvector (disabled for now)
 async function embeddingSearch(query: string, topK: number = 5) {
-  try {
-    const { embedding } = await createEmbedding(query);
-    // call SQL function match_kb_chunks
-    const { data, error } = await supabaseAdmin.rpc('match_kb_chunks', {
-      query_embedding: embedding,
-      match_count: topK
-    });
-    if (error) {
-      console.error('match_kb_chunks error:', error);
-      return [] as { category: string; content: string }[];
-    }
-    return (data || []).map((row: any) => ({
-      category: row.category || 'Knowledge',
-      content: row.content
-    }));
-  } catch (e) {
-    console.error('embeddingSearch failed:', e);
-    return [] as { category: string; content: string }[];
-  }
+  // Temporarily disabled - embeddings not available
+  return [] as { category: string; content: string }[];
 }
 
 export async function POST(request: NextRequest) {
