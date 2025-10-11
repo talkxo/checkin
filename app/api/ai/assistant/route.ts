@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { callOpenRouter } from '@/lib/ai';
 import { getEmployeeLeaveBalance } from '@/lib/leave';
+import { supabaseAdmin } from '@/lib/supabase';
+import { createEmbedding } from '@/lib/embeddings';
 
 // Company Knowledge Base - Using the actual handbook.md file
 import { readFileSync } from 'fs';
@@ -60,8 +62,8 @@ function parseHandbookSections(content: string) {
 // Get the knowledge base from the handbook
 const COMPANY_KNOWLEDGE_BASE = parseHandbookSections(getHandbookContent());
 
-// Simple vector similarity search (in production, use a proper vector database)
-function searchKnowledgeBase(query: string, topK: number = 3) {
+// Simple keyword search fallback
+function keywordSearchKnowledgeBase(query: string, topK: number = 3) {
   const queryLower = query.toLowerCase();
   const results = [];
 
@@ -95,6 +97,29 @@ function searchKnowledgeBase(query: string, topK: number = 3) {
   return results
     .sort((a, b) => b.score - a.score)
     .slice(0, topK);
+}
+
+// Embedding-based retrieval using Supabase pgvector
+async function embeddingSearch(query: string, topK: number = 5) {
+  try {
+    const { embedding } = await createEmbedding(query);
+    // call SQL function match_kb_chunks
+    const { data, error } = await supabaseAdmin.rpc('match_kb_chunks', {
+      query_embedding: embedding,
+      match_count: topK
+    });
+    if (error) {
+      console.error('match_kb_chunks error:', error);
+      return [] as { category: string; content: string }[];
+    }
+    return (data || []).map((row: any) => ({
+      category: row.category || 'Knowledge',
+      content: row.content
+    }));
+  } catch (e) {
+    console.error('embeddingSearch failed:', e);
+    return [] as { category: string; content: string }[];
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -171,12 +196,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Search knowledge base for relevant information
-    const relevantDocs = searchKnowledgeBase(query);
+    // Prefer embeddings retrieval with fallback to keyword search
+    let relevantDocs = await embeddingSearch(query, 5);
+    if (!relevantDocs || relevantDocs.length === 0) {
+      relevantDocs = keywordSearchKnowledgeBase(query, 3);
+    }
     
     // Build context from relevant documents
     const context = relevantDocs.length > 0 
-      ? relevantDocs.map(doc => `${doc.category}:\n${doc.content}`).join('\n\n')
+      ? relevantDocs.map((doc: any) => `${doc.category}:\n${doc.content}`).join('\n\n')
       : 'No specific company information found for this query.';
 
     // Create the system prompt
@@ -250,7 +278,7 @@ ${context}`;
       return NextResponse.json({
         success: true,
         response: fallbackResponse,
-        sources: relevantDocs.map(doc => doc.category),
+        sources: relevantDocs.map((doc: any) => doc.category),
         timestamp: new Date().toISOString()
       });
     }
@@ -258,7 +286,7 @@ ${context}`;
     return NextResponse.json({
       success: true,
       response: aiResponse.data,
-      sources: relevantDocs.map(doc => doc.category),
+      sources: relevantDocs.map((doc: any) => doc.category),
       timestamp: new Date().toISOString()
     });
 

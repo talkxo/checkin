@@ -33,7 +33,7 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout per request
+        const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout per request
 
         const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
           method: 'POST',
@@ -47,7 +47,7 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
             model,
             messages,
             temperature,
-            max_tokens: 800 // Reduced to avoid rate limits
+            max_tokens: 1200 // Increased for more complete responses
           }),
           signal: controller.signal
         });

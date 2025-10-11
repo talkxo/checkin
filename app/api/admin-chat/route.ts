@@ -38,124 +38,146 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    // Get relevant data based on the query - improved logic
+    // Smart data fetching based on query type
     let contextData = '';
     const messageLower = message.toLowerCase();
     
-    // Always fetch basic stats for context
-    try {
-      const statsResponse = await fetch(`${req.nextUrl.origin}/api/admin/stats`);
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json();
-        contextData += `Current Stats: ${JSON.stringify(statsData, null, 2)}\n`;
+    // Helper function to fetch with timeout
+    const fetchWithTimeout = async (url: string, timeoutMs: number = 5000) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      
+      try {
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        return response.ok ? await response.json() : null;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        console.error(`Timeout or error fetching ${url}:`, error);
+        return null;
       }
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    }
+    };
+
+    // Determine which data to fetch based on query
+    const fetchPromises: Promise<any>[] = [];
     
-    // Fetch daily stats for location/attendance patterns
-    try {
-      const dailyResponse = await fetch(`${req.nextUrl.origin}/api/admin/daily-stats`);
-      if (dailyResponse.ok) {
-        const dailyData = await dailyResponse.json();
-        contextData += `Daily Stats: ${JSON.stringify(dailyData, null, 2)}\n`;
-      }
-    } catch (error) {
-      console.error('Error fetching daily stats:', error);
-    }
-    
-    // Fetch employee data for detailed insights
-    try {
-      const employeeResponse = await fetch(`${req.nextUrl.origin}/api/admin/users`);
-      if (employeeResponse.ok) {
-        const employeeData = await employeeResponse.json();
-        contextData += `Employee List: ${JSON.stringify(employeeData.slice(0, 5), null, 2)} (showing first 5)\n`;
-      }
-    } catch (error) {
-      console.error('Error fetching employees:', error);
-    }
-    
+    // Always fetch basic chatbot data (most comprehensive)
+    fetchPromises.push(
+      fetchWithTimeout(`${req.nextUrl.origin}/api/admin/chatbot-data`)
+        .then(data => data ? { type: 'chatbot', data } : null)
+    );
+
     // Add specific data based on query keywords
     if (messageLower.includes('pattern') || messageLower.includes('trend') || messageLower.includes('unusual')) {
-      try {
-        const historicalResponse = await fetch(`${req.nextUrl.origin}/api/admin/historical-data`);
-        if (historicalResponse.ok) {
-          const historicalData = await historicalResponse.json();
-          contextData += `Historical Patterns: ${JSON.stringify(historicalData, null, 2)}\n`;
-        }
-      } catch (error) {
-        console.error('Error fetching historical data:', error);
-      }
+      fetchPromises.push(
+        fetchWithTimeout(`${req.nextUrl.origin}/api/admin/historical-data`)
+          .then(data => data ? { type: 'historical', data } : null)
+      );
     }
     
-    if (messageLower.includes('meeting') || messageLower.includes('collaboration') || messageLower.includes('team')) {
-      try {
-        const moodResponse = await fetch(`${req.nextUrl.origin}/api/admin/mood-data`);
-        if (moodResponse.ok) {
-          const moodData = await moodResponse.json();
-          contextData += `Mood/Engagement Data: ${JSON.stringify(moodData, null, 2)}\n`;
-        }
-      } catch (error) {
-        console.error('Error fetching mood data:', error);
-      }
+    if (messageLower.includes('mood') || messageLower.includes('engagement') || messageLower.includes('wellbeing')) {
+      fetchPromises.push(
+        fetchWithTimeout(`${req.nextUrl.origin}/api/admin/mood-data`)
+          .then(data => data ? { type: 'mood', data } : null)
+      );
     }
 
-    // Create a simpler, more focused AI prompt
-    const prompt = `You are an INSYDE admin assistant for People Ops/HR teams. 
+    // Execute all fetches in parallel with timeout
+    try {
+      const results = await Promise.allSettled(fetchPromises);
+      
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled' && result.value) {
+          const { type, data } = result.value;
+          if (type === 'chatbot') {
+            contextData += `Team Status: ${JSON.stringify(data.summary, null, 2)}\n`;
+            if (data.currentlyCheckedIn?.length > 0) {
+              contextData += `Currently Active: ${JSON.stringify(data.currentlyCheckedIn, null, 2)}\n`;
+            }
+            if (data.todayStats) {
+              contextData += `Today's Distribution: ${JSON.stringify(data.todayStats, null, 2)}\n`;
+            }
+          } else if (type === 'historical') {
+            contextData += `Historical Patterns: ${JSON.stringify(data, null, 2)}\n`;
+          } else if (type === 'mood') {
+            contextData += `Mood/Engagement Data: ${JSON.stringify(data, null, 2)}\n`;
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error in parallel data fetching:', error);
+    }
+
+    // Create a focused AI prompt based on available data
+    const hasData = contextData.trim().length > 0;
+    
+    let prompt = `You are an INSYDE admin assistant for People Ops/HR teams.
 
 User Question: "${message}"
-Response Style: ${responseStyle}
+Response Style: ${responseStyle}`;
 
-Available Data: ${contextData || 'No specific data available'}
+    if (hasData) {
+      prompt += `
+
+Available Data: ${contextData}
 
 Instructions:
-- Provide helpful insights about team attendance and status
-- Keep responses concise and actionable
+- Analyze the provided data to answer the user's question
+- Provide specific insights based on the actual data
 - Use bullet points for lists
+- Be concise and actionable
 - This company uses Basecamp, Google Workspace, and Canva
-- Do not mention Slack, Microsoft Teams, or other tools
 
 Response Style Guidelines:
 - SHORT: 1-2 sentences maximum
-- DETAILED: 2-3 bullet points with insights
-- REPORT: 3-4 bullet points with recommendations
+- DETAILED: 2-3 bullet points with insights  
+- REPORT: 3-4 bullet points with recommendations`;
+    } else {
+      prompt += `
 
-Focus on: team status, attendance patterns, space utilization, and employee engagement.`;
+No specific data available. Provide a helpful response that:
+- Acknowledges the data access limitation
+- Suggests alternative ways to get the information
+- Maintains a professional and helpful tone
+
+Response Style: ${responseStyle}`;
+    }
 
     console.log('Calling OpenRouter with prompt:', prompt.substring(0, 200) + '...');
     console.log('Context data available:', contextData ? 'Yes' : 'No');
     
-    // If no context data is available, provide a fallback prompt
-    if (!contextData.trim()) {
-      console.log('No context data available, using fallback prompt');
-      const fallbackPrompt = `You are an INSYDE admin assistant. The user asked: "${message}"
-
-Unfortunately, I cannot access the current attendance data right now. Please provide a helpful response that:
-1. Acknowledges the data access issue
-2. Suggests alternative ways to get this information
-3. Maintains a professional and helpful tone
-
-Response style: ${responseStyle}`;
+    // If no context data is available, provide a helpful fallback
+    if (!hasData) {
+      console.log('No context data available, using fallback response');
       
-      const aiResponse = await callOpenRouter([
-        { role: 'system', content: 'You are an INSYDE admin assistant. Provide helpful guidance when data is unavailable.' },
-        { role: 'user', content: fallbackPrompt }
-      ], 0.7);
+      // Try to get at least basic chatbot data as fallback
+      try {
+        const basicData = await fetchWithTimeout(`${req.nextUrl.origin}/api/admin/chatbot-data`, 3000);
+        if (basicData) {
+          const fallbackResponse = `I'm having trouble accessing detailed data right now, but here's what I can tell you:
+
+• **Team Overview**: ${basicData.summary?.totalEmployees || 'Unknown'} total employees
+• **Active Today**: ${basicData.summary?.activeToday || 0} people have checked in
+• **Currently Online**: ${basicData.summary?.currentlyCheckedIn || 0} people are currently working
+
+For more detailed insights, please try asking again in a few minutes or visit the admin dashboard.`;
+          
+          return NextResponse.json({ response: fallbackResponse });
+        }
+      } catch (error) {
+        console.error('Even basic data fetch failed:', error);
+      }
       
-      if (!aiResponse.success) {
-        // If AI also fails, return the static fallback
-        const staticFallback = `I'm having trouble accessing the attendance data right now. Here are some things you can check:
+      // Final fallback if everything fails
+      const staticFallback = `I'm having trouble accessing the attendance data right now. Here are some things you can check:
 
 • **Team Status**: Visit the admin dashboard for current attendance
 • **Quick Stats**: Check today's headcount and remote/office distribution  
 • **Manual Review**: Use the snapshot view for detailed employee status
 
 Please try asking again in a few minutes, or use the dashboard for immediate insights.`;
-        
-        return NextResponse.json({ response: staticFallback });
-      }
       
-      return NextResponse.json({ response: aiResponse.data });
+      return NextResponse.json({ response: staticFallback });
     }
     
     // Try AI response with better error handling
@@ -188,55 +210,46 @@ Please try asking again in a few minutes, or use the dashboard for immediate ins
       return NextResponse.json({ response: fallbackResponse });
     }
 
-    // Validate AI response content
+    // Basic response validation (relaxed)
     const responseContent = aiResponse.data || '';
     
-    // Check if response looks like an error or corrupted data
-    const errorIndicators = [
-      'Error:', 'Exception:', 'stack trace', 'undefined', 'null',
-      'function', 'system', 'lib', 'from', 'at at', '))":'
+    // Only reject responses that are clearly corrupted or empty
+    const isTooShort = responseContent.trim().length < 5;
+    const isTooLong = responseContent.length > 3000;
+    
+    // Only check for obvious error patterns, not normal text
+    const obviousErrors = [
+      'stack trace', 'undefined', 'null', '))":'
     ];
     
-    const hasErrorIndicators = errorIndicators.some(indicator => 
-      responseContent.toLowerCase().includes(indicator.toLowerCase())
+    const hasObviousErrors = obviousErrors.some(error => 
+      responseContent.toLowerCase().includes(error.toLowerCase())
     );
     
-    // Check if response is too short or too long
-    const isTooShort = responseContent.trim().length < 10;
-    const isTooLong = responseContent.length > 2000;
-    
-    // Check if response contains suspicious patterns (more specific)
-    const suspiciousPatterns = [
-      /at\s+\w+\s+\(/, // Stack trace patterns with parentheses
-      /function\s+\w+\s*\(/, // Function definitions with parentheses
-      /from\s+['"]\w+/, // Import statements with quotes
-    ];
-    
-    const hasSuspiciousPatterns = suspiciousPatterns.some(pattern => 
-      pattern.test(responseContent)
-    );
-    
-    if (hasErrorIndicators || isTooShort || isTooLong || hasSuspiciousPatterns) {
-      console.error('AI response appears corrupted or contains errors:', {
-        content: responseContent.substring(0, 200),
-        hasErrorIndicators,
+    if (isTooShort || isTooLong || hasObviousErrors) {
+      console.error('AI response rejected for basic issues:', {
+        content: responseContent.substring(0, 100),
         isTooShort,
         isTooLong,
-        hasSuspiciousPatterns,
-        errorIndicators: errorIndicators.filter(indicator => 
-          responseContent.toLowerCase().includes(indicator.toLowerCase())
-        )
+        hasObviousErrors
       });
       
-      const safeFallbackResponse = `I'm having trouble processing that request right now. Here are some things you can check:
+      // Provide data-driven fallback instead of generic message
+      let fallbackResponse = `I'm having trouble processing that request right now. `;
+      
+      if (hasData) {
+        fallbackResponse += `Based on the available data, here's what I can tell you:
 
-• **Team Status**: Visit the admin dashboard for current attendance
-• **Quick Stats**: Check today's headcount and remote/office distribution  
+• **Team Status**: Check the admin dashboard for current attendance
+• **Quick Stats**: Review today's headcount and remote/office distribution  
 • **Manual Review**: Use the snapshot view for detailed employee status
 
 Please try asking again in a few minutes, or use the dashboard for immediate insights.`;
+      } else {
+        fallbackResponse += `Please try asking again in a few minutes, or use the dashboard for immediate insights.`;
+      }
       
-      return NextResponse.json({ response: safeFallbackResponse });
+      return NextResponse.json({ response: fallbackResponse });
     }
 
     // Clean the AI response to remove any reasoning or analysis

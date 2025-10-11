@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, Bot, User, BarChart3, Users, Calendar, TrendingUp, MapPin, Settings, Bookmark, LogOut } from 'lucide-react';
+import { Send, Bot, User, BarChart3, Users, Calendar, TrendingUp, MapPin, Settings, Bookmark, LogOut, AlertTriangle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from 'react-markdown';
 import SaveResponseModal from '@/components/save-response-modal';
@@ -22,6 +22,9 @@ export default function AdminChat() {
   const [showStyleDropdown, setShowStyleDropdown] = useState(false);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [selectedResponse, setSelectedResponse] = useState<string>('');
+  const [loadingStep, setLoadingStep] = useState<string>('');
+  const [lastError, setLastError] = useState<string>('');
+  const [retryCount, setRetryCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const hotClues = [
@@ -70,7 +73,7 @@ export default function AdminChat() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSend = async (message: string) => {
+  const handleSend = async (message: string, isRetry: boolean = false) => {
     if (!message.trim()) return;
 
     const userMessage: Message = {
@@ -80,16 +83,23 @@ export default function AdminChat() {
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
+    if (!isRetry) {
+      setMessages(prev => [...prev, userMessage]);
+      setInput('');
+    }
     setIsLoading(true);
+    setLastError('');
+    setLoadingStep('Analyzing your request...');
 
     try {
+      setLoadingStep('Fetching team data...');
       const response = await fetch('/api/admin-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message, responseStyle })
       });
+
+      setLoadingStep('Processing with AI...');
 
       if (response.ok) {
         const data = await response.json();
@@ -100,19 +110,35 @@ export default function AdminChat() {
           timestamp: new Date()
         };
         setMessages(prev => [...prev, assistantMessage]);
+        setRetryCount(0); // Reset retry count on success
       } else {
-        throw new Error('Failed to get response');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server error: ${response.status}`);
       }
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error occurred';
+      setLastError(errorMsg);
+      
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: `Sorry, I encountered an error: ${errorMsg}. Please try again or use the dashboard for immediate insights.`,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+      setLoadingStep('');
+    }
+  };
+
+  const handleRetry = () => {
+    if (messages.length > 0) {
+      const lastUserMessage = [...messages].reverse().find(msg => msg.role === 'user');
+      if (lastUserMessage) {
+        setRetryCount(prev => prev + 1);
+        handleSend(lastUserMessage.content, true);
+      }
     }
   };
 
@@ -286,6 +312,40 @@ export default function AdminChat() {
                       <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                       <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                    <span className="text-sm text-gray-600 ml-2">{loadingStep}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Error state with retry option */}
+            {lastError && !isLoading && (
+              <div className="flex justify-start">
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm max-w-[80%]">
+                  <div className="flex items-start space-x-3">
+                    <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <div className="text-sm text-red-800 font-medium mb-2">Request Failed</div>
+                      <div className="text-sm text-red-700 mb-3">{lastError}</div>
+                      <div className="flex space-x-2">
+                        <Button
+                          onClick={handleRetry}
+                          size="sm"
+                          className="bg-red-600 hover:bg-red-700 text-white"
+                          disabled={retryCount >= 3}
+                        >
+                          Try Again {retryCount > 0 && `(${retryCount}/3)`}
+                        </Button>
+                        <Button
+                          onClick={() => setLastError('')}
+                          variant="outline"
+                          size="sm"
+                          className="border-red-300 text-red-700 hover:bg-red-50"
+                        >
+                          Dismiss
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
