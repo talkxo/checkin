@@ -184,32 +184,22 @@ Please try asking again in a few minutes, or use the dashboard for immediate ins
       return NextResponse.json({ response: staticFallback });
     }
     
-    // Try AI response with better error handling
+    // Try AI response with 8-second timeout (same as employee assistant)
     let aiResponse;
     try {
-      console.log('About to call OpenRouter with messages:', [
-        { role: 'system', content: 'You are an INSYDE admin assistant. Provide brief, helpful responses about team attendance and status. Keep responses concise and actionable.' },
-        { role: 'user', content: prompt.substring(0, 500) + '...' }
+      const result = await Promise.race([
+        callOpenRouter([
+          { role: 'system', content: 'You are an INSYDE admin assistant. Provide brief, helpful responses about team attendance and status. Keep responses concise and actionable.' },
+          { role: 'user', content: prompt }
+        ], 0.3),
+        new Promise<{ success: boolean; data?: any; error?: string }>((_, reject) => 
+          setTimeout(() => reject(new Error('AI timeout')), 8000) // 8 second timeout
+        )
       ]);
-      
-      // Add timeout wrapper for the AI call
-      const aiCallPromise = callOpenRouter([
-        { role: 'system', content: 'You are an INSYDE admin assistant. Provide brief, helpful responses about team attendance and status. Keep responses concise and actionable.' },
-        { role: 'user', content: prompt }
-      ], 0.3);
-      
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('AI call timeout after 30 seconds')), 30000)
-      );
-      
-      aiResponse = await Promise.race([aiCallPromise, timeoutPromise]);
-      
-      console.log('OpenRouter call completed. Success:', aiResponse.success);
-      console.log('OpenRouter response data length:', aiResponse.data?.length || 0);
-      console.log('OpenRouter error:', aiResponse.error);
+      aiResponse = result as { success: boolean; data?: any; error?: string };
     } catch (aiError) {
-      console.error('AI call failed completely:', aiError);
-      aiResponse = { success: false, error: `AI service unavailable: ${aiError instanceof Error ? aiError.message : 'Unknown error'}` };
+      console.log('AI request failed or timed out');
+      aiResponse = { success: false, error: 'AI request failed' };
     }
 
     console.log('AI Response success:', aiResponse.success);
