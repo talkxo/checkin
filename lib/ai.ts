@@ -19,12 +19,12 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
 
   console.log('OpenRouter API Key available:', OPENROUTER_API_KEY.substring(0, 10) + '...');
 
-  // Use Kimi K2 as primary with fallbacks for better reliability
+  // Use only free models with fallbacks for better reliability
   const models = [
     'moonshotai/kimi-k2:free',           // Primary: Advanced reasoning, perfect for DB queries
-    'anthropic/claude-3-haiku:beta',     // Fallback 1: Fast and reliable
-    'openai/gpt-4o-mini',                // Fallback 2: Very consistent
-    'google/gemma-3n-e4b-it:free'       // Fallback 3: Original model
+    'google/gemma-3n-e4b-it:free',       // Fallback 1: Original reliable model
+    'meta-llama/llama-3.2-3b-instruct:free',  // Fallback 2: Fast and efficient
+    'microsoft/phi-3-mini-128k-instruct:free' // Fallback 3: Good for structured data
   ];
 
   const maxRetries = 2;
