@@ -145,6 +145,8 @@ Response Style: ${responseStyle}`;
 
     console.log('Calling OpenRouter with prompt:', prompt.substring(0, 200) + '...');
     console.log('Context data available:', contextData ? 'Yes' : 'No');
+    console.log('Context data length:', contextData.length);
+    console.log('Has data flag:', hasData);
     
     // If no context data is available, provide a helpful fallback
     if (!hasData) {
@@ -183,22 +185,57 @@ Please try asking again in a few minutes, or use the dashboard for immediate ins
     // Try AI response with better error handling
     let aiResponse;
     try {
+      console.log('About to call OpenRouter with messages:', [
+        { role: 'system', content: 'You are an INSYDE admin assistant. Provide brief, helpful responses about team attendance and status. Keep responses concise and actionable.' },
+        { role: 'user', content: prompt.substring(0, 500) + '...' }
+      ]);
+      
       aiResponse = await callOpenRouter([
         { role: 'system', content: 'You are an INSYDE admin assistant. Provide brief, helpful responses about team attendance and status. Keep responses concise and actionable.' },
         { role: 'user', content: prompt }
       ], 0.3);
+      
+      console.log('OpenRouter call completed. Success:', aiResponse.success);
+      console.log('OpenRouter response data length:', aiResponse.data?.length || 0);
     } catch (aiError) {
       console.error('AI call failed completely:', aiError);
       aiResponse = { success: false, error: 'AI service unavailable' };
     }
 
-    console.log('AI Response:', aiResponse);
-    console.log('AI Response Content:', aiResponse.data);
+    console.log('AI Response success:', aiResponse.success);
+    console.log('AI Response error:', aiResponse.error);
+    console.log('AI Response data preview:', aiResponse.data?.substring(0, 100) + '...');
 
     if (!aiResponse.success) {
       console.error('AI Error:', aiResponse.error);
       
-      // Provide a fallback response when all AI models fail
+      // Try to provide a data-driven response even when AI fails
+      if (hasData) {
+        try {
+          // Parse the context data to extract useful information
+          const dataLines = contextData.split('\n').filter(line => line.trim());
+          let dataSummary = '';
+          
+          dataLines.forEach(line => {
+            if (line.includes('Team Status:')) {
+              dataSummary += `\n**Current Team Status:**\n${line.replace('Team Status:', '').trim()}\n`;
+            } else if (line.includes('Currently Active:')) {
+              dataSummary += `\n**Currently Working:**\n${line.replace('Currently Active:', '').trim()}\n`;
+            } else if (line.includes('Today\'s Distribution:')) {
+              dataSummary += `\n**Today\'s Distribution:**\n${line.replace('Today\'s Distribution:', '').trim()}\n`;
+            }
+          });
+          
+          if (dataSummary) {
+            const dataDrivenResponse = `I'm having trouble processing your request with AI, but here's what I can tell you from the current data:${dataSummary}\n\nFor more detailed insights, please try asking again in a few minutes or visit the admin dashboard.`;
+            return NextResponse.json({ response: dataDrivenResponse });
+          }
+        } catch (parseError) {
+          console.error('Error parsing context data for fallback:', parseError);
+        }
+      }
+      
+      // Final fallback response
       const fallbackResponse = `I'm having trouble accessing the attendance data right now. Here are some things you can check:
 
 • **Team Status**: Visit the admin dashboard for current attendance
