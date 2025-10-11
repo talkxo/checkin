@@ -11,9 +11,11 @@ const RATE_LIMIT_WINDOW = 60000; // 1 minute
 export async function POST(req: NextRequest) {
   try {
     // Check if API key is configured
-    if (!process.env.OPENROUTER_API_KEY) {
+    if (!process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY.trim() === '') {
       console.error('OpenRouter API key not configured');
-      return NextResponse.json({ error: 'AI service not configured' }, { status: 500 });
+      return NextResponse.json({ 
+        response: 'AI service is not configured. Please contact the administrator to set up the OpenRouter API key. For now, you can use the admin dashboard to view attendance data directly.' 
+      });
     }
 
     // Simple rate limiting
