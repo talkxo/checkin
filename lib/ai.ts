@@ -65,7 +65,7 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.log(`Model ${model} failed: ${response.status} - ${errorText}`);
+          console.error(`❌ Model ${model} failed: ${response.status} - ${errorText}`);
           
           // If it's an authentication error, don't try other models
           if (response.status === 401) {
