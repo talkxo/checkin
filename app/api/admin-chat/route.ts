@@ -192,16 +192,24 @@ Please try asking again in a few minutes, or use the dashboard for immediate ins
         { role: 'user', content: prompt.substring(0, 500) + '...' }
       ]);
       
-      aiResponse = await callOpenRouter([
+      // Add timeout wrapper for the AI call
+      const aiCallPromise = callOpenRouter([
         { role: 'system', content: 'You are an INSYDE admin assistant. Provide brief, helpful responses about team attendance and status. Keep responses concise and actionable.' },
         { role: 'user', content: prompt }
       ], 0.3);
       
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('AI call timeout after 30 seconds')), 30000)
+      );
+      
+      aiResponse = await Promise.race([aiCallPromise, timeoutPromise]);
+      
       console.log('OpenRouter call completed. Success:', aiResponse.success);
       console.log('OpenRouter response data length:', aiResponse.data?.length || 0);
+      console.log('OpenRouter error:', aiResponse.error);
     } catch (aiError) {
       console.error('AI call failed completely:', aiError);
-      aiResponse = { success: false, error: 'AI service unavailable' };
+      aiResponse = { success: false, error: `AI service unavailable: ${aiError instanceof Error ? aiError.message : 'Unknown error'}` };
     }
 
     console.log('AI Response success:', aiResponse.success);
@@ -235,6 +243,19 @@ Please try asking again in a few minutes, or use the dashboard for immediate ins
         } catch (parseError) {
           console.error('Error parsing context data for fallback:', parseError);
         }
+      }
+      
+      // If we have data but couldn't parse it, try to provide basic info
+      if (hasData && contextData.length > 0) {
+        const basicResponse = `I'm having trouble processing your request with AI, but I can see there is attendance data available. Here's what I can tell you:
+
+• **Data Available**: Current team attendance information is accessible
+• **Recent Activity**: ${contextData.includes('recentActivity') ? 'Recent check-ins are available' : 'No recent activity data'}
+• **Team Status**: ${contextData.includes('currentlyCheckedIn') ? 'Some team members are currently working' : 'No current active sessions'}
+
+For detailed insights, please visit the admin dashboard or try asking again in a few minutes.`;
+        
+        return NextResponse.json({ response: basicResponse });
       }
       
       // Final fallback response
