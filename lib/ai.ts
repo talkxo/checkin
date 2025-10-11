@@ -19,9 +19,12 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
 
   console.log('OpenRouter API Key available:', OPENROUTER_API_KEY.substring(0, 10) + '...');
 
-  // Use only the specified model per requirement
+  // Use Kimi K2 as primary with fallbacks for better reliability
   const models = [
-    'google/gemma-3n-e4b-it:free'
+    'moonshotai/kimi-k2:free',           // Primary: Advanced reasoning, perfect for DB queries
+    'anthropic/claude-3-haiku:beta',     // Fallback 1: Fast and reliable
+    'openai/gpt-4o-mini',                // Fallback 2: Very consistent
+    'google/gemma-3n-e4b-it:free'       // Fallback 3: Original model
   ];
 
   const maxRetries = 2;
@@ -33,7 +36,7 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout per request
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for better reliability
 
         const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
           method: 'POST',
@@ -78,7 +81,8 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
         }
 
         const data = await response.json();
-        console.log(`Success with model: ${model}`);
+        console.log(`✅ Success with model: ${model}`);
+        console.log(`Response length: ${data.choices[0]?.message?.content?.length || 0} characters`);
         return {
           success: true,
           data: data.choices[0]?.message?.content || ''
