@@ -10,7 +10,11 @@ export async function GET(req: NextRequest) {
     
     const { searchParams } = new URL(req.url);
     const timeRange = searchParams.get('range') || 'week';
+    const customStartDate = searchParams.get('startDate');
+    const customEndDate = searchParams.get('endDate');
+    
     console.log('Time range requested:', timeRange);
+    console.log('Custom dates:', customStartDate, customEndDate);
 
     const now = nowIST();
     console.log('Current IST time:', now.toISOString());
@@ -19,19 +23,35 @@ export async function GET(req: NextRequest) {
     let startDate: Date;
     let endDate: Date = new Date(now);
 
-    // Calculate date range based on parameter
-    switch (timeRange) {
-      case 'week':
-        startDate = new Date(now);
-        startDate.setDate(now.getDate() - 7);
-        break;
-      case 'month':
-        startDate = new Date(now);
-        startDate.setMonth(now.getMonth() - 1);
-        break;
-      default:
-        startDate = new Date(now);
-        startDate.setDate(now.getDate() - 7);
+    // Handle custom date range
+    if (customStartDate && customEndDate) {
+      startDate = new Date(customStartDate);
+      endDate = new Date(customEndDate);
+      // Set end date to end of day
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      // Calculate date range based on parameter
+      switch (timeRange) {
+        case 'week':
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case 'month':
+          startDate = new Date(now);
+          startDate.setMonth(now.getMonth() - 1);
+          break;
+        case 'currentMonth':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+          break;
+        case 'previousMonth':
+          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+          break;
+        default:
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - 7);
+      }
     }
     
     console.log('Date range:', startDate.toISOString(), 'to', endDate.toISOString());
@@ -41,9 +61,12 @@ export async function GET(req: NextRequest) {
       .from('sessions')
       .select(`
         id,
+        employee_id,
         checkin_ts,
         checkout_ts,
         mode,
+        mood,
+        mood_comment,
         employees (
           id,
           full_name,
@@ -81,6 +104,7 @@ export async function GET(req: NextRequest) {
 
       return {
         id: session.id,
+        employee_id: session.employee_id,
         name: employeeName,
         slug: employeeSlug,
         date: checkinTime.toISOString().split('T')[0],
@@ -97,7 +121,9 @@ export async function GET(req: NextRequest) {
         totalHours: workedHours,
         mode: session.mode,
         status: checkoutTime ? 'Complete' : 'Active',
-        open: !checkoutTime
+        open: !checkoutTime,
+        mood: session.mood,
+        mood_comment: session.mood_comment
       };
     }) || [];
 

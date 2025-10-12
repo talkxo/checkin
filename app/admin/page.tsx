@@ -18,7 +18,7 @@ import {
   Legend,
   PointElement,
 } from 'chart.js';
-import { AlertTriangle, Clock, Users, TrendingUp, LogOut, Download, FileSpreadsheet, UserPlus, Edit, Trash2, Eye, Brain, Lightbulb, MessageSquare, BarChart3, Calendar } from 'lucide-react';
+import { AlertTriangle, Clock, Users, TrendingUp, LogOut, Download, FileSpreadsheet, UserPlus, Edit, Trash2, Eye, Brain, Lightbulb, MessageSquare, BarChart3, Calendar, ChevronDown, ChevronRight } from 'lucide-react';
 
 ChartJS.register(
   CategoryScale,
@@ -69,6 +69,50 @@ interface User {
   created_at: string;
 }
 
+interface AttendanceDateRange {
+  startDate: string;
+  endDate: string;
+  preset: string;
+}
+
+interface EmployeeSummary {
+  employee_id: string;
+  name: string;
+  slug: string;
+  daysPresent: number;
+  officeDays: number;
+  remoteDays: number;
+  totalHours: number;
+  officeHours: number;
+  remoteHours: number;
+  averageHoursPerDay: number;
+  attendanceRate: number;
+  sessions: Array<{
+    id: string;
+    date: string;
+    checkinTime: string;
+    checkoutTime: string;
+    hoursWorked: string;
+    mode: string;
+    status: string;
+    mood?: string;
+    moodComment?: string;
+  }>;
+}
+
+interface TeamSummary {
+  totalEmployees: number;
+  totalWorkingDays: number;
+  totalHours: number;
+  averageAttendanceRate: number;
+  officePercentage: number;
+  remotePercentage: number;
+  dateRange: {
+    startDate: string;
+    endDate: string;
+  };
+}
+
 export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [timeRange, setTimeRange] = useState<'week' | 'fortnight' | 'month' | '6months' | 'year'>('week');
@@ -85,6 +129,22 @@ export default function AdminPage() {
   const [isResetting, setIsResetting] = useState(false);
   const [resetResult, setResetResult] = useState<string | null>(null);
 
+  // Attendance tracker states
+  const [dateRange, setDateRange] = useState<AttendanceDateRange>({
+    startDate: '',
+    endDate: '',
+    preset: 'currentMonth'
+  });
+  const [attendanceData, setAttendanceData] = useState<EmployeeSummary[]>([]);
+  const [teamSummary, setTeamSummary] = useState<TeamSummary | null>(null);
+  const [expandedEmployees, setExpandedEmployees] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({
+    key: 'name',
+    direction: 'asc'
+  });
+  const [isLoadingAttendance, setIsLoadingAttendance] = useState(false);
+
   // Load data on component mount (authentication is handled by layout)
   useEffect(() => {
     loadStats();
@@ -93,6 +153,21 @@ export default function AdminPage() {
     loadTodayData();
     loadAllUsers();
   }, [timeRange]);
+
+  // Initialize attendance tracker with current month
+  useEffect(() => {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+    setDateRange({ startDate, endDate, preset: 'currentMonth' });
+  }, []);
+
+  // Load attendance data when date range changes
+  useEffect(() => {
+    if (dateRange.startDate && dateRange.endDate) {
+      loadAttendanceData();
+    }
+  }, [dateRange]);
 
   const loadStats = async () => {
     try {
@@ -164,6 +239,111 @@ export default function AdminPage() {
     }
   };
 
+  // Attendance tracker functions
+  const loadAttendanceData = async () => {
+    if (!dateRange.startDate || !dateRange.endDate) return;
+    
+    setIsLoadingAttendance(true);
+    try {
+      const response = await fetch(
+        `/api/admin/attendance-report?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setAttendanceData(data.employeeSummaries || []);
+        setTeamSummary(data.teamSummary || null);
+      }
+    } catch (error) {
+      console.error('Error loading attendance data:', error);
+    } finally {
+      setIsLoadingAttendance(false);
+    }
+  };
+
+  const handleDateRangeChange = (preset: string) => {
+    const now = new Date();
+    let startDate = '';
+    let endDate = '';
+
+    switch (preset) {
+      case 'currentMonth':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+        break;
+      case 'previousMonth':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+        break;
+      case 'last7Days':
+        const last7 = new Date(now);
+        last7.setDate(now.getDate() - 7);
+        startDate = last7.toISOString().split('T')[0];
+        endDate = now.toISOString().split('T')[0];
+        break;
+      case 'last30Days':
+        const last30 = new Date(now);
+        last30.setDate(now.getDate() - 30);
+        startDate = last30.toISOString().split('T')[0];
+        endDate = now.toISOString().split('T')[0];
+        break;
+      case 'custom':
+        // Keep existing custom dates
+        return;
+    }
+
+    setDateRange({ startDate, endDate, preset });
+  };
+
+  const handleCustomDateChange = (field: 'startDate' | 'endDate', value: string) => {
+    setDateRange(prev => ({
+      ...prev,
+      [field]: value,
+      preset: 'custom'
+    }));
+  };
+
+  const toggleEmployeeExpansion = (employeeId: string) => {
+    const newExpanded = new Set(expandedEmployees);
+    if (newExpanded.has(employeeId)) {
+      newExpanded.delete(employeeId);
+    } else {
+      newExpanded.add(employeeId);
+    }
+    setExpandedEmployees(newExpanded);
+  };
+
+  const handleSort = (key: string) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const getFilteredAndSortedData = () => {
+    let filtered = attendanceData.filter(emp => 
+      emp.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    filtered.sort((a, b) => {
+      const aVal = a[sortConfig.key as keyof EmployeeSummary];
+      const bVal = b[sortConfig.key as keyof EmployeeSummary];
+      
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return sortConfig.direction === 'asc' 
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      }
+      
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+      
+      return 0;
+    });
+
+    return filtered;
+  };
+
   const handleExportCSV = async () => {
     try {
       const response = await fetch('/api/admin/today-export');
@@ -191,6 +371,85 @@ export default function AdminPage() {
   const handleExportGoogleSheets = async () => {
     // This function is temporarily disabled
     alert('Google Sheets export is temporarily disabled. Please use CSV export instead.');
+  };
+
+  // Attendance tracker export functions
+  const exportTeamSummary = () => {
+    if (!teamSummary || !attendanceData.length) return;
+
+    const headers = [
+      'Employee Name',
+      'Days Present',
+      'Office Days',
+      'Remote Days',
+      'Total Hours',
+      'Office Hours',
+      'Remote Hours',
+      'Average Hours/Day',
+      'Attendance Rate %'
+    ];
+
+    const csvContent = [
+      headers.join(','),
+      ...attendanceData.map(emp => [
+        `"${emp.name}"`,
+        emp.daysPresent,
+        emp.officeDays,
+        emp.remoteDays,
+        emp.totalHours,
+        emp.officeHours,
+        emp.remoteHours,
+        emp.averageHoursPerDay,
+        emp.attendanceRate
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `team-attendance-${dateRange.startDate}-to-${dateRange.endDate}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
+  const exportEmployeeDetail = (employee: EmployeeSummary) => {
+    const headers = [
+      'Date',
+      'Check-in Time',
+      'Check-out Time',
+      'Hours Worked',
+      'Mode',
+      'Status',
+      'Mood',
+      'Mood Comment'
+    ];
+
+    const csvContent = [
+      headers.join(','),
+      ...employee.sessions.map(session => [
+        session.date,
+        `"${session.checkinTime}"`,
+        `"${session.checkoutTime}"`,
+        `"${session.hoursWorked}"`,
+        session.mode,
+        session.status,
+        session.mood || '',
+        `"${session.moodComment || ''}"`
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${employee.name.replace(/\s+/g, '-')}-attendance-${dateRange.startDate}-to-${dateRange.endDate}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
   };
 
   // Session reset functions
@@ -620,247 +879,300 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Dashboard Tab Content */}
+        {/* Dashboard Tab Content - Attendance Tracker */}
         {activeTab === 'dashboard' && (
           <>
-            {/* Today's Attendance Summary */}
-            <Card>
-              <CardHeader className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-5" />
-                  Today's Attendance
-                </CardTitle>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={handleExportCSV}
-                    disabled={todayData.length === 0}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Export CSV
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleExportGoogleSheets}
-                    disabled={true}
-                    title="Google Sheets export temporarily disabled"
-                  >
-                    <FileSpreadsheet className="w-4 h-4 mr-2" />
-                    Export Google Sheets
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>First In</TableHead>
-                      <TableHead>Last Out</TableHead>
-                      <TableHead>Total Hours</TableHead>
-                      <TableHead>Mode</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Sessions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {todayData.map((emp, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{emp.name}</TableCell>
-                        <TableCell>{emp.firstIn}</TableCell>
-                        <TableCell>{emp.lastOut}</TableCell>
-                        <TableCell>{emp.totalHours}</TableCell>
-                        <TableCell>{emp.mode}</TableCell>
-                        <TableCell>
-                          <Badge variant={emp.status === 'Active' ? 'default' : emp.status === 'Complete' ? 'secondary' : 'outline'}>
-                            {emp.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{emp.sessions}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-
-            {/* Time Range Selector */}
+            {/* Date Range Selector */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-5" />
-                  Time Range
+                  <Calendar className="w-5 h-5" />
+                  Attendance Tracker
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex gap-2 flex-wrap">
-                  {[
-                    { key: 'week', label: 'Week' },
-                    { key: 'fortnight', label: 'Fortnight' },
-                    { key: 'month', label: 'Month' },
-                    { key: '6months', label: '6 Months' },
-                    { key: 'year', label: 'Year' }
-                  ].map((range) => (
-                    <Button
-                      key={range.key}
-                      variant={timeRange === range.key ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setTimeRange(range.key as any)}
-                    >
-                      {range.label}
-                    </Button>
-                  ))}
+                <div className="space-y-4">
+                  {/* Preset Options */}
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Quick Select</label>
+                    <div className="flex gap-2 flex-wrap">
+                      {[
+                        { key: 'currentMonth', label: 'Current Month' },
+                        { key: 'previousMonth', label: 'Previous Month' },
+                        { key: 'last7Days', label: 'Last 7 Days' },
+                        { key: 'last30Days', label: 'Last 30 Days' }
+                      ].map((preset) => (
+                        <Button
+                          key={preset.key}
+                          variant={dateRange.preset === preset.key ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => handleDateRangeChange(preset.key)}
+                        >
+                          {preset.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Custom Date Range */}
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Custom Range</label>
+                    <div className="flex gap-4 items-center">
+                      <div>
+                        <label className="text-xs text-gray-500">Start Date</label>
+                        <Input
+                          type="date"
+                          value={dateRange.startDate}
+                          onChange={(e) => handleCustomDateChange('startDate', e.target.value)}
+                          className="w-40"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">End Date</label>
+                        <Input
+                          type="date"
+                          value={dateRange.endDate}
+                          onChange={(e) => handleCustomDateChange('endDate', e.target.value)}
+                          className="w-40"
+                        />
+                      </div>
+                      <Button
+                        onClick={loadAttendanceData}
+                        disabled={!dateRange.startDate || !dateRange.endDate || isLoadingAttendance}
+                        className="mt-6"
+                      >
+                        {isLoadingAttendance ? (
+                          <>
+                            <Clock className="w-4 h-4 mr-2 animate-spin" />
+                            Loading...
+                          </>
+                        ) : (
+                          'Apply'
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Selected Date Range Display */}
+                  {dateRange.startDate && dateRange.endDate && (
+                    <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                      <strong>Selected Period:</strong> {dateRange.startDate} to {dateRange.endDate}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Stats Cards */}
-            {stats && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Total Employees</p>
-                        <p className="text-2xl font-bold text-gray-900">{stats.totalEmployees}</p>
-                      </div>
-                      <Users className="w-8 h-8 text-purple-600" />
+            {/* Team Summary */}
+            {teamSummary && (
+              <Card>
+                <CardHeader className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5" />
+                    Team Summary
+                  </CardTitle>
+                  <Button
+                    variant="outline"
+                    onClick={exportTeamSummary}
+                    disabled={!attendanceData.length}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export Team Summary
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-purple-600">{teamSummary.totalEmployees}</p>
+                      <p className="text-sm text-gray-600">Employees</p>
                     </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Active Today</p>
-                        <p className="text-2xl font-bold text-green-600">{stats.activeToday}</p>
-                      </div>
-                      <TrendingUp className="w-8 h-8 text-green-600" />
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-blue-600">{teamSummary.totalWorkingDays}</p>
+                      <p className="text-sm text-gray-600">Working Days</p>
                     </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Office</p>
-                        <p className="text-2xl font-bold text-purple-600">{stats.officeCount}</p>
-                      </div>
-                      <Badge variant="default">Office</Badge>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-green-600">{teamSummary.totalHours.toFixed(1)}h</p>
+                      <p className="text-sm text-gray-600">Total Hours</p>
                     </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Remote</p>
-                        <p className="text-2xl font-bold text-purple-600">{stats.remoteCount}</p>
-                      </div>
-                      <Badge variant="secondary">Remote</Badge>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-orange-600">{teamSummary.averageAttendanceRate.toFixed(1)}%</p>
+                      <p className="text-sm text-gray-600">Avg Attendance</p>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
+                  </div>
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="text-center p-3 bg-blue-50 rounded-lg">
+                      <p className="text-lg font-semibold text-blue-700">{teamSummary.officePercentage.toFixed(1)}%</p>
+                      <p className="text-sm text-blue-600">Office Work</p>
+                    </div>
+                    <div className="text-center p-3 bg-green-50 rounded-lg">
+                      <p className="text-lg font-semibold text-green-700">{teamSummary.remotePercentage.toFixed(1)}%</p>
+                      <p className="text-sm text-green-600">Remote Work</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
-            {/* Charts */}
-            {chartData && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Office vs Remote Days</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Bar
-                      data={chartData.officeVsRemote}
-                      options={{
-                        responsive: true,
-                        plugins: {
-                          legend: {
-                            position: 'top' as const,
-                          },
-                        },
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Hours Spent by Users</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Line
-                      data={chartData.timeSpent}
-                      options={{
-                        responsive: true,
-                        plugins: {
-                          legend: {
-                            position: 'top' as const,
-                          },
-                        },
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* User Statistics Table */}
-            {userStats.length > 0 && (
+            {/* Employee Attendance Table */}
+            {attendanceData.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Individual User Statistics</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="w-5 h-5" />
+                      Employee Attendance
+                    </CardTitle>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Search employees..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-64"
+                      />
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Total Hours</TableHead>
-                        <TableHead>Office Hours</TableHead>
-                        <TableHead>Remote Hours</TableHead>
-                        <TableHead>Office Days</TableHead>
-                        <TableHead>Remote Days</TableHead>
-                        <TableHead>Total Days</TableHead>
-                        <TableHead>Avg Hours/Day</TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => handleSort('name')}>
+                          Name {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => handleSort('daysPresent')}>
+                          Days Present {sortConfig.key === 'daysPresent' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => handleSort('officeDays')}>
+                          Office Days {sortConfig.key === 'officeDays' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => handleSort('remoteDays')}>
+                          Remote Days {sortConfig.key === 'remoteDays' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => handleSort('totalHours')}>
+                          Total Hours {sortConfig.key === 'totalHours' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => handleSort('averageHoursPerDay')}>
+                          Avg Hours/Day {sortConfig.key === 'averageHoursPerDay' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                        </TableHead>
+                        <TableHead className="cursor-pointer" onClick={() => handleSort('attendanceRate')}>
+                          Attendance % {sortConfig.key === 'attendanceRate' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                        </TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {userStats.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-medium">{user.full_name}</TableCell>
-                          <TableCell>
-                            <Badge variant="default">{user.totalHours}h</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="default">{user.officeHours}h</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{user.remoteHours}h</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{user.officeDays || 0} days</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{user.remoteDays || 0} days</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{user.daysPresent} days</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {user.daysPresent > 0 ? (user.totalHours / user.daysPresent).toFixed(1) : 0}h
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
+                      {getFilteredAndSortedData().map((employee) => (
+                        <>
+                          <TableRow 
+                            key={employee.employee_id}
+                            className="cursor-pointer hover:bg-gray-50"
+                            onClick={() => toggleEmployeeExpansion(employee.employee_id)}
+                          >
+                            <TableCell className="font-medium flex items-center gap-2">
+                              {expandedEmployees.has(employee.employee_id) ? (
+                                <ChevronDown className="w-4 h-4" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4" />
+                              )} {employee.name}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="default">{employee.daysPresent}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="default">{employee.officeDays}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">{employee.remoteDays}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{employee.totalHours.toFixed(1)}h</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{employee.averageHoursPerDay.toFixed(1)}h</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={employee.attendanceRate >= 80 ? 'default' : employee.attendanceRate >= 60 ? 'secondary' : 'destructive'}>
+                                {employee.attendanceRate.toFixed(1)}%
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  exportEmployeeDetail(employee);
+                                }}
+                              >
+                                <Download className="w-4 h-4 mr-1" />
+                                Export
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                          
+                          {/* Expanded Row - Daily Breakdown */}
+                          {expandedEmployees.has(employee.employee_id) && (
+                            <TableRow>
+                              <TableCell colSpan={8} className="p-0">
+                                <div className="bg-gray-50 p-4">
+                                  <h4 className="font-medium text-gray-900 mb-3">Daily Sessions for {employee.name}</h4>
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Check-in</TableHead>
+                                        <TableHead>Check-out</TableHead>
+                                        <TableHead>Hours</TableHead>
+                                        <TableHead>Mode</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Mood</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {employee.sessions.map((session) => (
+                                        <TableRow key={session.id}>
+                                          <TableCell>{session.date}</TableCell>
+                                          <TableCell>{session.checkinTime}</TableCell>
+                                          <TableCell>{session.checkoutTime}</TableCell>
+                                          <TableCell>{session.hoursWorked}</TableCell>
+                                          <TableCell>
+                                            <Badge variant={session.mode === 'office' ? 'default' : 'secondary'}>
+                                              {session.mode}
+                                            </Badge>
+                                          </TableCell>
+                                          <TableCell>
+                                            <Badge variant={session.status === 'Complete' ? 'default' : 'secondary'}>
+                                              {session.status}
+                                            </Badge>
+                                          </TableCell>
+                                          <TableCell>
+                                            {session.mood && (
+                                              <Badge variant="outline">{session.mood}</Badge>
+                                            )}
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </>
                       ))}
                     </TableBody>
                   </Table>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* No Data State */}
+            {!isLoadingAttendance && attendanceData.length === 0 && dateRange.startDate && dateRange.endDate && (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Attendance Data</h3>
+                  <p className="text-gray-600">No attendance records found for the selected date range.</p>
                 </CardContent>
               </Card>
             )}
