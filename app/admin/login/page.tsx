@@ -132,7 +132,7 @@ function AdminLoginContent() {
           </form>
           
           <div className="mt-4 text-xs text-gray-500 text-center">
-            <p>Forgot the credentials? Contact dev at TalkXO.
+            <p>Forgot the credentials? Contact dev at TalkXO.</p>
           </div>
         </CardContent>
       </Card>
