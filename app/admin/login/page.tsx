@@ -132,9 +132,7 @@ function AdminLoginContent() {
           </form>
           
           <div className="mt-4 text-xs text-gray-500 text-center">
-            <p>Default credentials:</p>
-            <p>Username: <code>admin</code></p>
-            <p>Password: <code>admin123</code></p>
+            <p>Forgot the credentials? Contact dev at TalkXO.
           </div>
         </CardContent>
       </Card>
