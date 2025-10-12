@@ -1261,216 +1261,419 @@ export default function AdminPage() {
         {/* AI Insights Tab Content */}
         {activeTab === 'ai' && (
           <div className="space-y-6">
-            {/* AI Features Overview */}
+            {/* Welcome Section */}
+            <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-purple-700">
+                  <Brain className="w-6 h-6" />
+                  AI-Powered HR Insights
+                </CardTitle>
+                <p className="text-gray-600">
+                  Get intelligent insights about your team's engagement, well-being, and productivity patterns
+                </p>
+              </CardHeader>
+            </Card>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => { setAiTimeRange('today'); setSelectedAiFeature('insights'); }}>
+                <CardContent className="p-6 text-center">
+                  <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mx-auto mb-3">
+                    <Clock className="w-6 h-6 text-green-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Daily Check-in</h3>
+                  <p className="text-sm text-gray-600 mb-4">Quick insights for today's team status</p>
+                  <Button size="sm" className="w-full">
+                    Analyze Today
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => { setAiTimeRange('week'); setSelectedAiFeature('insights'); }}>
+                <CardContent className="p-6 text-center">
+                  <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mx-auto mb-3">
+                    <TrendingUp className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Weekly Review</h3>
+                  <p className="text-sm text-gray-600 mb-4">Comprehensive weekly team analysis</p>
+                  <Button size="sm" variant="outline" className="w-full">
+                    Review This Week
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => { setAiTimeRange('month'); setSelectedAiFeature('report'); }}>
+                <CardContent className="p-6 text-center">
+                  <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-full mx-auto mb-3">
+                    <BarChart3 className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Monthly Report</h3>
+                  <p className="text-sm text-gray-600 mb-4">Executive summary and recommendations</p>
+                  <Button size="sm" variant="outline" className="w-full">
+                    Generate Report
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Analysis Configuration */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Brain className="w-5 h-5" />
-                  AI-Powered HR Insights & Employee Engagement Analysis
+                  <Lightbulb className="w-5 h-5" />
+                  Configure Analysis
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-6">
                 {/* Time Range Selection */}
-                <div className="mb-6">
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">
-                    Analysis Time Range
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-3 block">
+                    Select Time Range
                   </label>
                   <div className="flex gap-2 flex-wrap">
                     {[
-                      { key: 'today', label: 'Today' },
-                      { key: 'week', label: 'This Week' },
-                      { key: 'month', label: 'This Month' }
+                      { key: 'today', label: 'Today', icon: Clock, description: 'Current day insights' },
+                      { key: 'week', label: 'This Week', icon: TrendingUp, description: 'Weekly patterns' },
+                      { key: 'month', label: 'This Month', icon: BarChart3, description: 'Monthly trends' }
                     ].map((range) => (
-                      <Button
+                      <div
                         key={range.key}
-                        variant={aiTimeRange === range.key ? 'default' : 'outline'}
-                        size="sm"
+                        className={`flex-1 min-w-[120px] p-4 border rounded-lg cursor-pointer transition-all ${
+                          aiTimeRange === range.key 
+                            ? 'border-purple-500 bg-purple-50' 
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
                         onClick={() => setAiTimeRange(range.key as any)}
                       >
-                        {range.label}
-                      </Button>
+                        <div className="flex items-center gap-2 mb-2">
+                          <range.icon className="w-4 h-4" />
+                          <span className="font-medium">{range.label}</span>
+                        </div>
+                        <p className="text-xs text-gray-600">{range.description}</p>
+                      </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Combined AI Analysis */}
-                <div className="p-6 border rounded-lg bg-gradient-to-r from-purple-50 to-purple-50">
-                  <div className="text-center mb-6">
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                                              <Brain className="w-6 h-6 text-purple-600" />
-                      <h3 className="text-xl font-semibold text-gray-900">HR-Focused AI Analysis</h3>
-                    </div>
-                    <p className="text-sm text-gray-600 max-w-2xl mx-auto">
-                      Get comprehensive employee engagement insights, well-being analysis, and actionable HR recommendations. 
-                      Our AI analyzes patterns from an empathetic, employee-centric perspective.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div className="text-center">
-                      <div className="flex items-center justify-center gap-2 mb-2">
+                {/* Analysis Type Selection */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-3 block">
+                    Choose Analysis Type
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div
+                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                        selectedAiFeature === 'insights' 
+                          ? 'border-yellow-500 bg-yellow-50' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => setSelectedAiFeature('insights')}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
                         <Lightbulb className="w-5 h-5 text-yellow-600" />
-                        <h4 className="font-semibold">Employee Engagement Insights</h4>
+                        <span className="font-medium">Engagement Insights</span>
                       </div>
                       <p className="text-xs text-gray-600">
-                        Work-life balance, team dynamics, well-being indicators, and engagement patterns
+                        Work-life balance, team dynamics, and well-being patterns
                       </p>
                     </div>
 
-                    <div className="text-center">
-                      <div className="flex items-center justify-center gap-2 mb-2">
+                    <div
+                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                        selectedAiFeature === 'report' 
+                          ? 'border-purple-500 bg-purple-50' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => setSelectedAiFeature('report')}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
                         <BarChart3 className="w-5 h-5 text-purple-600" />
-                        <h4 className="font-semibold">Professional HR Reports</h4>
+                        <span className="font-medium">Executive Report</span>
                       </div>
                       <p className="text-xs text-gray-600">
-                        Executive summaries, actionable recommendations, and empathy-driven insights
+                        Professional summary with actionable recommendations
+                      </p>
+                    </div>
+
+                    <div
+                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                        selectedAiFeature === 'sentiment' 
+                          ? 'border-green-500 bg-green-50' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => setSelectedAiFeature('sentiment')}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <MessageSquare className="w-5 h-5 text-green-600" />
+                        <span className="font-medium">Mood Analysis</span>
+                      </div>
+                      <p className="text-xs text-gray-600">
+                        Employee sentiment and well-being indicators
                       </p>
                     </div>
                   </div>
+                </div>
 
-                  <div className="flex gap-3 justify-center flex-wrap">
-                    <Button
-                      onClick={generateAiInsights}
-                      disabled={isAiLoading}
-                      size="lg"
-                      className="flex items-center gap-2"
-                    >
-                      {isAiLoading && selectedAiFeature === 'insights' ? (
-                        <>
-                          <Clock className="w-4 h-4 animate-spin" />
-                          Analyzing...
-                        </>
-                      ) : (
-                        <>
-                          <Lightbulb className="w-4 h-4" />
-                          Generate Insights
-                        </>
-                      )}
-                    </Button>
-
-                    <Button
-                      onClick={generateAiReport}
-                      disabled={isAiLoading}
-                      size="lg"
-                      variant="outline"
-                      className="flex items-center gap-2"
-                    >
-                      {isAiLoading && selectedAiFeature === 'report' ? (
-                        <>
-                          <Clock className="w-4 h-4 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <BarChart3 className="w-4 h-4" />
-                          Generate Report
-                        </>
-                      )}
-                    </Button>
-
-                    <Button
-                      onClick={generateSentimentAnalysis}
-                      disabled={isAiLoading}
-                      size="lg"
-                      variant="outline"
-                      className="flex items-center gap-2"
-                    >
-                      {isAiLoading && selectedAiFeature === 'sentiment' ? (
-                        <>
-                          <Clock className="w-4 h-4 animate-spin" />
-                          Analyzing...
-                        </>
-                      ) : (
-                        <>
-                          <MessageSquare className="w-4 h-4" />
-                          Sentiment Analysis
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                {/* Generate Button */}
+                <div className="flex justify-center">
+                  <Button
+                    onClick={() => {
+                      if (selectedAiFeature === 'insights') generateAiInsights();
+                      else if (selectedAiFeature === 'report') generateAiReport();
+                      else if (selectedAiFeature === 'sentiment') generateSentimentAnalysis();
+                    }}
+                    disabled={isAiLoading || !selectedAiFeature}
+                    size="lg"
+                    className="px-8"
+                  >
+                    {isAiLoading ? (
+                      <>
+                        <Clock className="w-4 h-4 mr-2 animate-spin" />
+                        {selectedAiFeature === 'insights' && 'Analyzing Engagement...'}
+                        {selectedAiFeature === 'report' && 'Generating Report...'}
+                        {selectedAiFeature === 'sentiment' && 'Analyzing Mood...'}
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="w-4 h-4 mr-2" />
+                        Generate {selectedAiFeature === 'insights' ? 'Insights' : selectedAiFeature === 'report' ? 'Report' : 'Analysis'}
+                      </>
+                    )}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
 
-            {/* AI Insights Display */}
-            {aiInsights && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Lightbulb className="w-5 h-5 text-yellow-600" />
-                    AI Attendance Insights
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="prose prose-sm max-w-none">
-                    <div className="whitespace-pre-wrap text-gray-700">{aiInsights}</div>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* AI Results Display */}
+            {(aiInsights || aiReport || sentimentAnalysis) && (
+              <div className="space-y-6">
+                {/* Results Header */}
+                <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-green-700">
+                      <Brain className="w-5 h-5" />
+                      AI Analysis Complete
+                    </CardTitle>
+                    <p className="text-gray-600">
+                      Your AI-powered insights are ready. Review the analysis below and take action on the recommendations.
+                    </p>
+                  </CardHeader>
+                </Card>
+
+                {/* AI Insights Display */}
+                {aiInsights && (
+                  <Card className="border-yellow-200">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2 text-yellow-700">
+                          <Lightbulb className="w-5 h-5" />
+                          Employee Engagement Insights
+                        </CardTitle>
+                        <Badge variant="outline" className="text-yellow-600">
+                          {aiTimeRange === 'today' ? 'Today' : aiTimeRange === 'week' ? 'This Week' : 'This Month'}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                        <div className="prose prose-sm max-w-none">
+                          <div className="whitespace-pre-wrap text-gray-700">{aiInsights}</div>
+                        </div>
+                      </div>
+                      <div className="mt-4 flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(aiInsights)}>
+                          Copy Insights
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => {
+                          const blob = new Blob([aiInsights], { type: 'text/plain' });
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `engagement-insights-${aiTimeRange}-${new Date().toISOString().split('T')[0]}.txt`;
+                          a.click();
+                          window.URL.revokeObjectURL(url);
+                        }}>
+                          Export
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* AI Report Display */}
+                {aiReport && (
+                  <Card className="border-purple-200">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2 text-purple-700">
+                          <BarChart3 className="w-5 h-5" />
+                          Executive Report
+                        </CardTitle>
+                        <Badge variant="outline" className="text-purple-600">
+                          {aiTimeRange === 'today' ? 'Today' : aiTimeRange === 'week' ? 'This Week' : 'This Month'}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                        <div className="prose prose-sm max-w-none">
+                          <div className="whitespace-pre-wrap text-gray-700">{aiReport}</div>
+                        </div>
+                      </div>
+                      <div className="mt-4 flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(aiReport)}>
+                          Copy Report
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => {
+                          const blob = new Blob([aiReport], { type: 'text/plain' });
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `executive-report-${aiTimeRange}-${new Date().toISOString().split('T')[0]}.txt`;
+                          a.click();
+                          window.URL.revokeObjectURL(url);
+                        }}>
+                          Export
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Sentiment Analysis Display */}
+                {sentimentAnalysis && (
+                  <Card className="border-green-200">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2 text-green-700">
+                          <MessageSquare className="w-5 h-5" />
+                          Mood & Well-being Analysis
+                        </CardTitle>
+                        <Badge variant="outline" className="text-green-600">
+                          {aiTimeRange === 'today' ? 'Today' : aiTimeRange === 'week' ? 'This Week' : 'This Month'}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <div className="prose prose-sm max-w-none">
+                          <div className="whitespace-pre-wrap text-gray-700">{sentimentAnalysis}</div>
+                        </div>
+                      </div>
+                      <div className="mt-4 flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(sentimentAnalysis)}>
+                          Copy Analysis
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => {
+                          const blob = new Blob([sentimentAnalysis], { type: 'text/plain' });
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `mood-analysis-${aiTimeRange}-${new Date().toISOString().split('T')[0]}.txt`;
+                          a.click();
+                          window.URL.revokeObjectURL(url);
+                        }}>
+                          Export
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Action Items */}
+                <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-blue-700">
+                      <Lightbulb className="w-5 h-5" />
+                      Next Steps
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <p className="text-sm text-gray-600">
+                        Based on your AI analysis, consider these actions:
+                      </p>
+                      <ul className="space-y-2 text-sm text-gray-700">
+                        <li className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          Review individual employee patterns and reach out for support if needed
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          Share insights with your team during one-on-ones or team meetings
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          Consider policy adjustments based on well-being recommendations
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          Schedule follow-up analysis to track improvements over time
+                        </li>
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             )}
 
-            {/* AI Report Display */}
-            {aiReport && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                                            <BarChart3 className="w-5 h-5 text-purple-600" />
-                    AI-Generated Report
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="prose prose-sm max-w-none">
-                    <div className="whitespace-pre-wrap text-gray-700">{aiReport}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Sentiment Analysis Display */}
-            {sentimentAnalysis && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="w-5 h-5 text-green-600" />
-                    Sentiment Analysis & Mood Insights
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="prose prose-sm max-w-none">
-                    <div className="whitespace-pre-wrap text-gray-700">{sentimentAnalysis}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* AI Features Info */}
-            <Card>
+            {/* Help & Tips */}
+            <Card className="bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200">
               <CardHeader>
-                                  <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="w-5 h-5" />
-                    HR-Focused AI Features Powered by Kimi K2
-                  </CardTitle>
+                <CardTitle className="flex items-center gap-2 text-gray-700">
+                  <MessageSquare className="w-5 h-5" />
+                  How to Use AI Insights
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3 text-sm text-gray-600">
-                  <p>
-                    <strong>Employee Engagement Analysis:</strong> Analyzes work-life balance, team dynamics, well-being indicators, and engagement patterns from an empathetic perspective.
-                  </p>
-                  <p>
-                    <strong>Professional HR Reports:</strong> Generates comprehensive reports with executive summaries, actionable recommendations, and empathy-driven insights.
-                  </p>
-                  <p>
-                    <strong>Historical Analysis:</strong> Provides insights across different time ranges (Today, This Week, This Month) for better trend analysis.
-                  </p>
-                  <p>
-                    <strong>Empathy-Driven Insights:</strong> Focuses on individual employee stories, personal circumstances, and supportive intervention opportunities.
-                  </p>
-                  <p>
-                    <strong>Sentiment Analysis:</strong> Analyzes employee mood patterns, stress indicators, and well-being trends for proactive support and engagement.
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Powered by Moonshot AI's Kimi K2 model via OpenRouter API
-                  </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-gray-900">Quick Start Guide</h4>
+                    <div className="space-y-3 text-sm text-gray-600">
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-xs font-semibold text-blue-600">1</div>
+                        <div>
+                          <p className="font-medium">Choose a quick action</p>
+                          <p className="text-xs">Click "Daily Check-in", "Weekly Review", or "Monthly Report" for common use cases</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-xs font-semibold text-blue-600">2</div>
+                        <div>
+                          <p className="font-medium">Or customize your analysis</p>
+                          <p className="text-xs">Select time range and analysis type for specific insights</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-xs font-semibold text-blue-600">3</div>
+                        <div>
+                          <p className="font-medium">Review and act</p>
+                          <p className="text-xs">Export insights, copy to clipboard, or share with your team</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-gray-900">AI Features</h4>
+                    <div className="space-y-3 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <Lightbulb className="w-4 h-4 text-yellow-600" />
+                        <span><strong>Engagement Insights:</strong> Work-life balance and team dynamics</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4 text-purple-600" />
+                        <span><strong>Executive Reports:</strong> Professional summaries and recommendations</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4 text-green-600" />
+                        <span><strong>Mood Analysis:</strong> Employee well-being and sentiment patterns</span>
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-3">
+                      Powered by Moonshot AI's Kimi K2 model via OpenRouter API
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
