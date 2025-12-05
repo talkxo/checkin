@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Complex Punctuality Scoring System (out of 42 = 3 points per day for 14 days)
+    // Complex Deep Score System (out of 42 = 3 points per day for 14 days)
     // Scoring includes multiple parameters:
     // 1. Check-in timeliness (base score)
     // 2. Hours worked (bonus for full day work)
@@ -210,7 +210,7 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    // Calculate total punctuality score
+    // Calculate total deep score
     let punctualityScore = 0;
     sortedDays.forEach(day => {
       punctualityScore += day.totalScore;
@@ -284,7 +284,7 @@ export async function GET(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error in punctuality stats API:', error);
+    console.error('Error in deep score stats API:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

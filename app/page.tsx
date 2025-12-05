@@ -257,7 +257,7 @@ export default function HomePage(){
           fetchMySummaryYesterday(slug, true).catch(err => console.error('Error fetching yesterday summary:', err));
           fetchLeaveBalance(slug).catch(err => console.error('Error fetching leave balance:', err));
           fetchMonthlyStats(slug).catch(err => console.error('Error fetching monthly stats:', err));
-          fetchPunctualityStats(slug).catch(err => console.error('Error fetching punctuality stats:', err));
+          fetchPunctualityStats(slug).catch(err => console.error('Error fetching deep score stats:', err));
         } catch (e) {
           console.error('Error parsing session data:', e);
           localStorage.removeItem('currentSession');
@@ -292,7 +292,7 @@ export default function HomePage(){
           fetchMySummaryYesterday(savedSlug, true).catch(err => console.error('Error fetching yesterday summary:', err));
           fetchLeaveBalance(savedSlug).catch(err => console.error('Error fetching leave balance:', err));
           fetchMonthlyStats(savedSlug).catch(err => console.error('Error fetching monthly stats:', err));
-          fetchPunctualityStats(savedSlug).catch(err => console.error('Error fetching punctuality stats:', err));
+          fetchPunctualityStats(savedSlug).catch(err => console.error('Error fetching deep score stats:', err));
         } else {
           // No slug available, use full name
           fetchMySummary(savedName, false).catch(err => console.error('Error fetching summary:', err));
@@ -559,11 +559,11 @@ export default function HomePage(){
         const data = await r.json();
         setPunctualityStats(data);
       } else {
-        console.warn('Punctuality stats API error:', r.status);
+        console.warn('Deep score stats API error:', r.status);
         setPunctualityStats(null);
       }
     } catch (e) {
-      console.error('Error fetching punctuality stats:', e);
+      console.error('Error fetching deep score stats:', e);
       setPunctualityStats(null);
     }
   };
@@ -1271,7 +1271,7 @@ export default function HomePage(){
                     </div>
 
                     <div className="grid grid-cols-3 gap-3">
-                      {/* Punctuality Score Card */}
+                      {/* Deep Score Card */}
                       <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -1284,7 +1284,7 @@ export default function HomePage(){
                             : '--'}
                           secondaryText={punctualityStats?.maxScore ? `/${punctualityStats.maxScore}` : undefined}
                           status="na"
-                          message="Punctuality Score"
+                          message="Deep Score"
                         />
                       </motion.div>
 
