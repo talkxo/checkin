@@ -289,7 +289,10 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="bg-card dark:bg-card rounded-2xl elevation-lg p-8 text-center fade-in border border-border/50 dark:border-border">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-foreground dark:text-foreground">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -297,7 +300,7 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
   return (
     <div className="space-y-6">
       {/* Tab Navigation */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+      <div className="flex gap-1 bg-muted/50 dark:bg-muted/30 p-1 rounded-lg border border-border/50 dark:border-border">
         <Button
           variant={activeTab === 'requests' ? 'default' : 'ghost'}
           size="sm"
@@ -327,9 +330,9 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
       </div>
 
       {error && (
-        <Card>
+        <Card className="border-destructive/50 dark:border-destructive/50 bg-destructive/10 dark:bg-destructive/10">
           <CardContent className="p-4">
-            <div className="flex items-center space-x-2 text-red-600">
+            <div className="flex items-center space-x-2 text-destructive dark:text-destructive">
               <AlertCircle className="w-5 h-5" />
               <span>{error}</span>
             </div>
@@ -338,9 +341,9 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
       )}
 
       {success && (
-        <Card>
+        <Card className="border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
           <CardContent className="p-4">
-            <div className="flex items-center space-x-2 text-green-600">
+            <div className="flex items-center space-x-2 text-green-600 dark:text-green-400">
               <CheckCircle className="w-5 h-5" />
               <span>{success}</span>
             </div>
@@ -350,10 +353,10 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
 
       {/* Leave Requests Tab Content */}
       {activeTab === 'requests' && (
-        <Card>
+        <Card className="bg-card dark:bg-card border border-border/50 dark:border-border elevation-md">
           <CardHeader>
-            <CardTitle>Leave Requests</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>Leave Requests</CardTitle>
+            <CardDescription className="text-muted-foreground dark:text-muted-foreground">
               Review and manage employee leave requests
             </CardDescription>
           </CardHeader>
@@ -398,7 +401,7 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
                     <div>
                       <div className="font-medium">{request.employees.full_name}</div>
                       {request.employees.email && (
-                        <div className="text-sm text-gray-500">{request.employees.email}</div>
+                        <div className="text-sm text-muted-foreground dark:text-muted-foreground">{request.employees.email}</div>
                       )}
                     </div>
                   </TableCell>
@@ -409,11 +412,11 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
                   <TableCell>{request.total_days} days</TableCell>
                   <TableCell>
                     {request.reason ? (
-                      <span className="text-sm text-gray-600" title={request.reason}>
+                      <span className="text-sm text-muted-foreground dark:text-muted-foreground" title={request.reason}>
                         {request.reason.length > 30 ? `${request.reason.substring(0, 30)}...` : request.reason}
                       </span>
                     ) : (
-                      <span className="text-gray-400">No reason provided</span>
+                      <span className="text-muted-foreground dark:text-muted-foreground">No reason provided</span>
                     )}
                   </TableCell>
                   <TableCell>{getStatusBadge(request.status)}</TableCell>
@@ -448,7 +451,7 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
           </Table>
 
           {leaveRequests.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground dark:text-muted-foreground">
               No leave requests found for the selected filter.
             </div>
           )}
@@ -458,10 +461,10 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
 
       {/* Employee Leave Balances Tab Content */}
       {activeTab === 'employees' && (
-        <Card>
+        <Card className="bg-card dark:bg-card border border-border/50 dark:border-border elevation-md">
           <CardHeader>
-            <CardTitle>Employee Leave Balances</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>Employee Leave Balances</CardTitle>
+            <CardDescription className="text-muted-foreground dark:text-muted-foreground">
               View and edit employee leave balances for {new Date().getFullYear()}
             </CardDescription>
           </CardHeader>
@@ -497,36 +500,36 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
                     <TableRow key={employeeData.employee.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{employeeData.employee.full_name}</div>
-                          <div className="text-sm text-gray-500">{employeeData.employee.slug}</div>
+                          <div className="font-medium text-foreground dark:text-foreground">{employeeData.employee.full_name}</div>
+                          <div className="text-sm text-muted-foreground dark:text-muted-foreground">{employeeData.employee.slug}</div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <div className="font-medium">{privilegeLeave?.available_leaves || 0}</div>
-                          <div className="text-gray-500">
+                          <div className="font-medium text-foreground dark:text-foreground">{privilegeLeave?.available_leaves || 0}</div>
+                          <div className="text-muted-foreground dark:text-muted-foreground">
                             {privilegeLeave?.used_leaves || 0} used • {privilegeLeave?.pending_leaves || 0} pending
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <div className="font-medium">{sickLeave?.available_leaves || 0}</div>
-                          <div className="text-gray-500">
+                          <div className="font-medium text-foreground dark:text-foreground">{sickLeave?.available_leaves || 0}</div>
+                          <div className="text-muted-foreground dark:text-muted-foreground">
                             {sickLeave?.used_leaves || 0} used • {sickLeave?.pending_leaves || 0} pending
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <div className="font-medium">{bonusLeave?.available_leaves || 0}</div>
-                          <div className="text-gray-500">
+                          <div className="font-medium text-foreground dark:text-foreground">{bonusLeave?.available_leaves || 0}</div>
+                          <div className="text-muted-foreground dark:text-muted-foreground">
                             {bonusLeave?.used_leaves || 0} used • {bonusLeave?.pending_leaves || 0} pending
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-semibold text-purple-600">{totalAvailable} days</div>
+                        <div className="font-semibold text-primary dark:text-primary">{totalAvailable} days</div>
                       </TableCell>
                       <TableCell>
                         <Button
@@ -545,7 +548,7 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
             </Table>
 
             {employeeLeaveBalances.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground dark:text-muted-foreground">
                 No employee leave balances found.
               </div>
             )}
@@ -555,19 +558,19 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
 
       {/* Employee Leave Edit Dialog */}
       <Dialog open={showEmployeeLeaveDialog} onOpenChange={setShowEmployeeLeaveDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl bg-card dark:bg-card border border-border/50 dark:border-border">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-yellow-600" />
+            <DialogTitle className="flex items-center gap-2 text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>
+              <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
               Edit Leave Balance - {selectedEmployee?.employee?.full_name}
             </DialogTitle>
             <DialogDescription>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                  <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-yellow-800">Warning: Direct System Edit</p>
-                    <p className="text-sm text-yellow-700">
+                    <p className="font-semibold text-yellow-800 dark:text-yellow-200">Warning: Direct System Edit</p>
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300">
                       This action directly modifies the leave balance in the system. 
                       This is a hard edit that bypasses normal leave request workflows. 
                       Please ensure you have proper authorization and documentation for this change.
@@ -581,16 +584,16 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
           {selectedEmployee && (
             <div className="space-y-4">
               {selectedEmployee.leaveBalance.map((balance: any) => (
-                <div key={balance.leave_type_name} className="border rounded-lg p-4">
-                  <h4 className="font-semibold mb-3">{balance.leave_type_name}</h4>
+                <div key={balance.leave_type_name} className="border border-border/50 dark:border-border rounded-lg p-4 bg-muted/30 dark:bg-muted/20">
+                  <h4 className="font-semibold mb-3 text-foreground dark:text-foreground">{balance.leave_type_name}</h4>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <Label htmlFor={`total_${balance.leave_type_name}`}>Total Entitlement</Label>
+                      <Label htmlFor={`total_${balance.leave_type_name}`} className="text-foreground dark:text-foreground">Total Entitlement</Label>
                       <input
                         id={`total_${balance.leave_type_name}`}
                         type="number"
                         min="0"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        className="w-full px-3 py-2 border border-input dark:border-input rounded-md text-sm bg-background dark:bg-background text-foreground dark:text-foreground"
                         value={editingBalances[balance.leave_type_name]?.total_entitlement || 0}
                         onChange={(e) => setEditingBalances({
                           ...editingBalances,
@@ -602,12 +605,12 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
                       />
                     </div>
                     <div>
-                      <Label htmlFor={`used_${balance.leave_type_name}`}>Used Leaves</Label>
+                      <Label htmlFor={`used_${balance.leave_type_name}`} className="text-foreground dark:text-foreground">Used Leaves</Label>
                       <input
                         id={`used_${balance.leave_type_name}`}
                         type="number"
                         min="0"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        className="w-full px-3 py-2 border border-input dark:border-input rounded-md text-sm bg-background dark:bg-background text-foreground dark:text-foreground"
                         value={editingBalances[balance.leave_type_name]?.used_leaves || 0}
                         onChange={(e) => setEditingBalances({
                           ...editingBalances,
@@ -619,12 +622,12 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
                       />
                     </div>
                     <div>
-                      <Label htmlFor={`pending_${balance.leave_type_name}`}>Pending Leaves</Label>
+                      <Label htmlFor={`pending_${balance.leave_type_name}`} className="text-foreground dark:text-foreground">Pending Leaves</Label>
                       <input
                         id={`pending_${balance.leave_type_name}`}
                         type="number"
                         min="0"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        className="w-full px-3 py-2 border border-input dark:border-input rounded-md text-sm bg-background dark:bg-background text-foreground dark:text-foreground"
                         value={editingBalances[balance.leave_type_name]?.pending_leaves || 0}
                         onChange={(e) => setEditingBalances({
                           ...editingBalances,
@@ -636,7 +639,7 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
                       />
                     </div>
                   </div>
-                  <div className="mt-2 text-sm text-gray-600">
+                  <div className="mt-2 text-sm text-muted-foreground dark:text-muted-foreground">
                     Available: {Math.max(0, (editingBalances[balance.leave_type_name]?.total_entitlement || 0) - 
                                           (editingBalances[balance.leave_type_name]?.used_leaves || 0) - 
                                           (editingBalances[balance.leave_type_name]?.pending_leaves || 0))} days

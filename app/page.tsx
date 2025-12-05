@@ -1,8 +1,17 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
-import { LogOut } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { LogOut, Calendar, Bell } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import AssistantChat from '@/components/assistant-chat';
+import PinLogin from '@/components/pin-login';
+import PinChangeModal from '@/components/pin-change-modal';
+import StatusBadge from '@/components/status-badge';
+import OverviewCard from '@/components/overview-card';
+import RecentActivity from '@/components/recent-activity';
+import AttendanceHistory from '@/components/attendance-history';
+import DarkModeToggle from '@/components/dark-mode-toggle';
 
 // Helper function to format IST times consistently
 const formatISTTime = (timestamp: string) => {
@@ -53,6 +62,15 @@ export default function HomePage(){
   const [me, setMe] = useState<any>(null);
   const [meYesterday, setMeYesterday] = useState<any>(null);
   const [hasOpen, setHasOpen] = useState(false);
+  const [leaveBalance, setLeaveBalance] = useState<any>(null);
+  const [monthlyStats, setMonthlyStats] = useState<{ daysOnTime: number; totalHours: number } | null>(null);
+  const [punctualityStats, setPunctualityStats] = useState<{
+    punctualityScore: number;
+    maxScore: number;
+    noFillDays: number;
+    avgCheckinTime: string;
+    checkinStatus: 'early' | 'late' | 'on-time' | null;
+  } | null>(null);
   const [todaySummary, setTodaySummary] = useState<any[]>([]);
   const [yesterdaySummary, setYesterdaySummary] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,15 +79,29 @@ export default function HomePage(){
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showNameInput, setShowNameInput] = useState(true);
   const [location, setLocation] = useState<string>('');
+  const [isTodayAttendanceOpen, setIsTodayAttendanceOpen] = useState(false);
   const [isLocationLoading, setIsLocationLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState<'control' | 'snapshot' | 'assistant'>('control');
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [aiNotification, setAiNotification] = useState<string>('');
+  const [greetingMessage, setGreetingMessage] = useState<string>('Time to do what you do best');
   const [showMoodCheck, setShowMoodCheck] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string>('');
   const [moodComment, setMoodComment] = useState<string>('');
+  const [autoCheckoutWarning, setAutoCheckoutWarning] = useState(false);
+  const [showPinChange, setShowPinChange] = useState(false);
+  const [pendingEmployee, setPendingEmployee] = useState<any>(null);
+  
+  // Reminder state
+  const [remindersEnabled, setRemindersEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('remindersEnabled');
+      return stored !== null ? stored === 'true' : true; // Default: enabled
+    }
+    return true;
+  });
 
   // Hold button state
   const [isHolding, setIsHolding] = useState(false);
@@ -122,6 +154,36 @@ export default function HomePage(){
 
 
 
+  // Generate AI-powered greeting message
+  const generateGreetingMessage = async () => {
+    if (!name || !isLoggedIn) return;
+    
+    try {
+      const response = await fetch('/api/ai/notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userData: { full_name: name },
+          context: 'starting their workday and needs a short, funny, yet motivational greeting message (max 10 words, be creative and playful)'
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.notification) {
+          // Extract just the greeting part (first sentence or first 10 words)
+          const message = data.notification.split('.')[0].trim();
+          if (message.length > 0 && message.length < 100) {
+            setGreetingMessage(message);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('AI greeting error (non-blocking):', error);
+      // Keep default message on error
+    }
+  };
+
   // Generate AI-powered smart notification
   const generateSmartNotification = async (context: string) => {
     if (!me) return;
@@ -153,75 +215,99 @@ export default function HomePage(){
   };
 
   useEffect(()=>{
-    const saved = (typeof window!== 'undefined' ? (localStorage.getItem('mode') as any) : null) || 'office';
-    setMode(saved);
+    if (typeof window === 'undefined') {
+      setIsLoading(false);
+      return;
+    }
     
-    // Check for existing session
-    const session = localStorage.getItem('currentSession');
-    const savedName = localStorage.getItem('userName');
-    
-    if (session && savedName) {
-      try {
-        const sessionData = JSON.parse(session);
-        setCurrentSession(sessionData);
-        console.log('Setting name from session:', savedName);
+    try {
+      const saved = (localStorage.getItem('mode') as any) || 'office';
+      setMode(saved);
+      
+      // Check for existing session
+      const session = localStorage.getItem('currentSession');
+      const savedName = localStorage.getItem('userName');
+      
+      if (session && savedName) {
+        try {
+          const sessionData = JSON.parse(session);
+          
+          // Validate session data structure
+          if (!sessionData || !sessionData.employee || !sessionData.employee.slug) {
+            throw new Error('Invalid session data structure');
+          }
+          
+          setCurrentSession(sessionData);
+          console.log('Setting name from session:', savedName);
+          setName(savedName);
+          setIsLoggedIn(true);
+          setShowNameInput(false);
+          
+          // Ensure UI leaves loading state immediately
+          setIsLoading(false);
+          
+          // Check if session is still open (non-blocking)
+          checkSessionStatus(sessionData.employee.slug).catch(err => {
+            console.error('Error checking session status:', err);
+          });
+          
+          // Fetch personal logs consistently on restore (non-blocking)
+          const slug = sessionData.employee.slug;
+          fetchMySummary(slug, true).catch(err => console.error('Error fetching summary:', err));
+          fetchMySummaryYesterday(slug, true).catch(err => console.error('Error fetching yesterday summary:', err));
+          fetchLeaveBalance(slug).catch(err => console.error('Error fetching leave balance:', err));
+          fetchMonthlyStats(slug).catch(err => console.error('Error fetching monthly stats:', err));
+          fetchPunctualityStats(slug).catch(err => console.error('Error fetching punctuality stats:', err));
+        } catch (e) {
+          console.error('Error parsing session data:', e);
+          localStorage.removeItem('currentSession');
+          localStorage.removeItem('userName');
+          setIsLoading(false);
+        }
+      } else if (savedName) {
+        // User is logged in but no active session
+        console.log('=== SESSION RESTORE DEBUG ===');
+        console.log('Restored savedName from localStorage:', savedName);
+        
+        // Try to get the slug from localStorage
+        const savedSlug = typeof window !== 'undefined' ? localStorage.getItem('userSlug') : null;
+        console.log('Restored savedSlug from localStorage:', savedSlug);
+        
         setName(savedName);
         setIsLoggedIn(true);
         setShowNameInput(false);
-        // Check if session is still open
-        checkSessionStatus(sessionData.employee.slug);
-        // Ensure UI leaves loading state when restoring from a valid session
+        
+        // Ensure UI leaves loading state immediately
         setIsLoading(false);
-        // Fetch personal logs consistently on restore
-        fetchMySummary(sessionData.employee.slug, true);
-        fetchMySummaryYesterday(sessionData.employee.slug, true);
-        // Fetch summaries for Today and Yesterday
-        if (sessionData?.employee?.slug) {
-          fetchMySummary(sessionData.employee.slug, true);
-          fetchMySummaryYesterday(sessionData.employee.slug, true);
+        
+        // If we have a slug, try to reconstruct the selectedEmployee object and check session
+        if (savedSlug) {
+          setSelectedEmployee({
+            full_name: savedName,
+            slug: savedSlug
+          });
+          // Check if there's an open session (non-blocking)
+          checkSessionStatus(savedSlug).catch(err => console.error('Error checking session status:', err));
+          fetchMySummary(savedSlug, true).catch(err => console.error('Error fetching summary:', err));
+          fetchMySummaryYesterday(savedSlug, true).catch(err => console.error('Error fetching yesterday summary:', err));
+          fetchLeaveBalance(savedSlug).catch(err => console.error('Error fetching leave balance:', err));
+          fetchMonthlyStats(savedSlug).catch(err => console.error('Error fetching monthly stats:', err));
+          fetchPunctualityStats(savedSlug).catch(err => console.error('Error fetching punctuality stats:', err));
+        } else {
+          // No slug available, use full name
+          fetchMySummary(savedName, false).catch(err => console.error('Error fetching summary:', err));
+          fetchMySummaryYesterday(savedName, false).catch(err => console.error('Error fetching yesterday summary:', err));
         }
-      } catch (e) {
-        localStorage.removeItem('currentSession');
-        localStorage.removeItem('userName');
+      } else {
         setIsLoading(false);
       }
-    } else if (savedName) {
-      // User is logged in but no active session
-      console.log('=== SESSION RESTORE DEBUG ===');
-      console.log('Restored savedName from localStorage:', savedName);
       
-      // Try to get the slug from localStorage
-      const savedSlug = localStorage.getItem('userSlug');
-      console.log('Restored savedSlug from localStorage:', savedSlug);
-      
-      setName(savedName);
-      setIsLoggedIn(true);
-      setShowNameInput(false);
-      
-      // If we have a slug, try to reconstruct the selectedEmployee object and check session
-      if (savedSlug) {
-        setSelectedEmployee({
-          full_name: savedName,
-          slug: savedSlug
-        });
-        // Check if there's an open session
-        checkSessionStatus(savedSlug);
-        fetchMySummary(savedSlug, true);
-        fetchMySummaryYesterday(savedSlug, true);
-        fetchMySummaryYesterday(savedSlug, true);
-      } else {
-        // No slug available, use full name
-        fetchMySummary(savedName, false);
-        fetchMySummaryYesterday(savedName, false);
-        fetchMySummaryYesterday(savedName, false);
-      }
-      setIsLoading(false);
-    } else {
+      // Get location on app load (non-blocking)
+      getCurrentLocation();
+    } catch (error) {
+      console.error('Error in initialization useEffect:', error);
       setIsLoading(false);
     }
-    
-    // Get location on app load
-    getCurrentLocation();
   },[]);
 
   // Get current location and determine mode
@@ -415,6 +501,70 @@ export default function HomePage(){
       setMeYesterday(data);
     } catch (e) {
       console.error('Error fetching my summary (yesterday):', e);
+    }
+  };
+
+  const fetchLeaveBalance = async (slug: string) => {
+    if (!slug) {
+      console.warn('fetchLeaveBalance: No slug provided');
+      return;
+    }
+    try {
+      console.log('Fetching leave balance for slug:', slug);
+      const r = await fetch(`/api/leave/balance?slug=${slug}`);
+      if (r.ok) {
+        const data = await r.json();
+        console.log('Leave balance data:', data);
+        setLeaveBalance(data);
+      } else {
+        const errorData = await r.json().catch(() => ({ error: 'Unknown error' }));
+        console.warn('Leave balance API error:', r.status, errorData);
+        // Set to null so UI shows "--" instead of "Loading..."
+        setLeaveBalance(null);
+      }
+    } catch (e) {
+      console.error('Error fetching leave balance:', e);
+      setLeaveBalance(null);
+    }
+  };
+
+  const fetchMonthlyStats = async (slug: string) => {
+    if (!slug) {
+      console.warn('fetchMonthlyStats: No slug provided');
+      return;
+    }
+    try {
+      const r = await fetch(`/api/monthly/stats?slug=${slug}`);
+      if (r.ok) {
+        const data = await r.json();
+        setMonthlyStats(data);
+      } else {
+        console.warn('Monthly stats API error:', r.status);
+        setMonthlyStats(null);
+      }
+    } catch (e) {
+      console.error('Error fetching monthly stats:', e);
+      setMonthlyStats(null);
+    }
+  };
+
+  const fetchPunctualityStats = async (slug: string) => {
+    if (!slug) {
+      console.warn('fetchPunctualityStats: No slug provided');
+      return;
+    }
+    try {
+      const r = await fetch(`/api/stats/punctuality?slug=${slug}`);
+      if (r.ok) {
+        const data = await r.json();
+        setPunctualityStats(data);
+      } else {
+        console.warn('Punctuality stats API error:', r.status);
+        setPunctualityStats(null);
+      }
+    } catch (e) {
+      console.error('Error fetching punctuality stats:', e);
+      setPunctualityStats(null);
     }
   };
 
@@ -623,10 +773,60 @@ export default function HomePage(){
     searchEmployees(value);
   };
 
+  const handlePinLoginSuccess = async (employee: any, pinChangeRequired?: boolean) => {
+    console.log('=== PIN LOGIN SUCCESS ===');
+    console.log('Employee data:', employee);
+    console.log('PIN change required:', pinChangeRequired);
+    
+    // If PIN change is required, show modal instead of logging in
+    if (pinChangeRequired) {
+      setPendingEmployee(employee);
+      setShowPinChange(true);
+      return;
+    }
+    
+    // Complete login
+    completeLogin(employee);
+  };
+
+  const completeLogin = (employee: any) => {
+    // Set employee data
+    setSelectedEmployee(employee);
+    setName(employee.full_name);
+    
+    // Store in localStorage
+    localStorage.setItem('userName', employee.full_name);
+    localStorage.setItem('userSlug', employee.slug);
+    
+    // Update state
+    setIsLoggedIn(true);
+    setShowNameInput(false);
+    
+    // Fetch user data
+    fetchMySummary(employee.slug, true);
+    fetchMySummaryYesterday(employee.slug, true);
+    fetchLeaveBalance(employee.slug);
+    fetchMonthlyStats(employee.slug);
+    fetchPunctualityStats(employee.slug);
+    
+    // Check for existing session
+    checkSessionStatus(employee.slug);
+  };
+
+  const handlePinChanged = () => {
+    // PIN changed successfully, complete login
+    if (pendingEmployee) {
+      setShowPinChange(false);
+      completeLogin(pendingEmployee);
+      setPendingEmployee(null);
+    }
+  };
+
   const handleLogout = () => {
     // Clear all session data
     localStorage.removeItem('currentSession');
     localStorage.removeItem('userName');
+    localStorage.removeItem('userSlug');
     setCurrentSession(null);
     setHasOpen(false);
     setElapsedTime(0);
@@ -641,190 +841,292 @@ export default function HomePage(){
   useEffect(()=>{ if(typeof window!== 'undefined') localStorage.setItem('mode', mode); },[mode]);
   useEffect(()=>{ fetchTodaySummary(); fetchYesterdaySummary(); },[]);
 
-  // Format current time and date in IST
-  const timeString = currentTime.toLocaleTimeString('en-GB', { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    timeZone: 'Asia/Kolkata'
-  });
+  // Check-in and Check-out Reminder Notifications
+  useEffect(() => {
+    if (!remindersEnabled) return;
+
+    const checkReminderTimes = () => {
+      const now = new Date();
+      const istTime = now.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Kolkata'
+      });
+      
+      const [currentHour, currentMinute] = istTime.split(':').map(Number);
+      const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' });
+      
+      // Check-in reminder at 10:00 AM
+      if (currentHour === 10 && currentMinute === 0) {
+        const lastCheckinReminderDate = localStorage.getItem('lastCheckinReminderDate');
+        
+        if (lastCheckinReminderDate !== today && !hasOpen) {
+          // Request notification permission
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('Time to Check In!', {
+              body: "Don't forget to check in for the day!",
+              icon: '/insyde-logo.png',
+              tag: 'checkin-reminder'
+            });
+          } else if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission().then(permission => {
+              if (permission === 'granted') {
+                new Notification('Time to Check In!', {
+                  body: "Don't forget to check in for the day!",
+                  icon: '/insyde-logo.png',
+                  tag: 'checkin-reminder'
+                });
+              }
+            });
+          }
+          
+          localStorage.setItem('lastCheckinReminderDate', today);
+        }
+      }
+      
+      // Check-out reminder at 6:30 PM (18:30)
+      if (currentHour === 18 && currentMinute === 30) {
+        if (!hasOpen || !currentSession) return;
+        
+        const lastCheckoutReminderDate = localStorage.getItem('lastCheckoutReminderDate');
+        
+        if (lastCheckoutReminderDate !== today) {
+          const checkinTime = formatISTTimeShort(currentSession.session.checkin_ts);
+          
+          // Request notification permission
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('Time to Check Out!', {
+              body: `You've been working since ${checkinTime}. Don't forget to check out!`,
+              icon: '/insyde-logo.png',
+              tag: 'checkout-reminder'
+            });
+          } else if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission().then(permission => {
+              if (permission === 'granted') {
+                new Notification('Time to Check Out!', {
+                  body: `You've been working since ${checkinTime}. Don't forget to check out!`,
+                  icon: '/insyde-logo.png',
+                  tag: 'checkout-reminder'
+                });
+              }
+            });
+          }
+          
+          localStorage.setItem('lastCheckoutReminderDate', today);
+        }
+      }
+    };
+
+    // Check every minute
+    const interval = setInterval(checkReminderTimes, 60000);
+    checkReminderTimes(); // Check immediately
+
+    return () => clearInterval(interval);
+  }, [remindersEnabled, hasOpen, currentSession]);
+
+  // Auto-Checkout After 12 Hours
+  useEffect(() => {
+    if (!hasOpen || !currentSession?.session?.checkin_ts) {
+      setAutoCheckoutWarning(false);
+      return;
+    }
+
+    const checkAutoCheckout = () => {
+      const checkinTime = new Date(currentSession.session.checkin_ts).getTime();
+      const now = Date.now();
+      const hoursElapsed = (now - checkinTime) / (1000 * 60 * 60);
+      
+      // Get auto-checkout hours from localStorage (default: 12)
+      const autoCheckoutHours = Number(localStorage.getItem('autoCheckoutHours')) || 12;
+      const warningThreshold = autoCheckoutHours - (10 / 60); // 10 minutes before
+
+      if (hoursElapsed >= autoCheckoutHours) {
+        // Auto-checkout
+        checkout();
+        
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('Auto-Checkout', {
+            body: `You've been automatically checked out after ${autoCheckoutHours} hours.`,
+            icon: '/insyde-logo.png',
+            tag: 'auto-checkout'
+          });
+        }
+      } else if (hoursElapsed >= warningThreshold && !autoCheckoutWarning) {
+        // Show warning 10 minutes before
+        setAutoCheckoutWarning(true);
+        
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('Auto-Checkout Warning', {
+            body: `You'll be automatically checked out in 10 minutes.`,
+            icon: '/insyde-logo.png',
+            tag: 'auto-checkout-warning'
+          });
+        }
+      }
+    };
+
+    // Check every 15 minutes
+    const interval = setInterval(checkAutoCheckout, 15 * 60 * 1000);
+    checkAutoCheckout(); // Check immediately
+
+    return () => clearInterval(interval);
+  }, [hasOpen, currentSession, autoCheckoutWarning]);
+
+  // Format current date in IST
   const dateString = currentTime.toLocaleDateString('en-US', { 
     weekday: 'long', 
     month: 'long', 
     day: 'numeric',
     timeZone: 'Asia/Kolkata'
   });
+  
+  // Format date for Overview section (e.g., "Wed, Jul 22 2024")
+  const overviewDateString = currentTime.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'Asia/Kolkata'
+  });
+
+  // Get user's first name for greeting
+  const firstName = name ? name.split(' ')[0] : 'there';
+  
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 flex items-center justify-center p-8">
-        <div className="bg-white rounded-2xl shadow-lg p-8 text-center fade-in">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen bg-background dark:bg-background flex items-center justify-center p-8">
+        <div className="bg-card dark:bg-card rounded-2xl elevation-lg p-8 text-center fade-in">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-foreground dark:text-foreground">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 flex items-center justify-center p-8">
-      <div className="w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto">
-        {/* INSYDE Logo */}
-        <div className="text-center mb-8 slide-up">
-          <h1 className="font-cal-sans text-4xl md:text-5xl font-semibold text-purple-600 tracking-tight">
-            insyde
-          </h1>
-        </div>
-        
+    <div className="min-h-screen bg-background dark:bg-background">
+      <div className="max-w-md mx-auto px-4 py-6 sm:px-6">
         {showNameInput ? (
-          // Name Input Screen
-          <div className="bg-white rounded-2xl shadow-lg p-8 slide-up">
-            
-            <div className="space-y-6">
-              <div>
-                <input
-                  type="text"
-                  className={`w-full px-4 py-4 text-center text-lg border-2 rounded-lg transition-colors duration-200 focus:outline-none focus:border-purple-500 ${selectedEmployee ? 'border-purple-500 bg-purple-50' : 'border-gray-300'}`}
-                  placeholder="Enter your name"
-                  value={name}
-                  onChange={(e) => {
-                    handleNameChange(e.target.value);
-                  }}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      handleNameSubmit();
-                    }
-                  }}
-                  autoFocus
-                />
-                {selectedEmployee && (
-                  <p className="text-sm text-green-600 mt-3 text-center flex items-center justify-center">
-                    <i className="fas fa-check-circle mr-2"></i>
-                    Valid employee selected
-                  </p>
-                )}
-              </div>
-              
-              {suggestions.length > 0 && (
-                <div className="relative">
-                  <div className="absolute z-10 w-full bg-white rounded-md shadow-lg border border-gray-200 max-h-48 overflow-y-auto">
-                    {suggestions.map((emp) => (
-                      <button
-                        key={emp.id}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors text-sm"
-                        onClick={() => handleEmployeeSelect(emp)}
-                      >
-                        {emp.full_name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-
+          // PIN Login Screen
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="w-full max-w-sm">
+              <PinLogin onLoginSuccess={handlePinLoginSuccess} />
             </div>
           </div>
         ) : (
-          // Main App with Tabs
-          <div className="bg-white rounded-2xl shadow-lg slide-up">
-            {/* Welcome Header */}
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">Hi, {name ? name.split(' ')[0] : 'there'}! 👋</h2>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open('/leave', '_blank')}
-                  className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400"
+          // Main App - Mobile First Design
+          <div className="space-y-6">
+            {/* Header with Icons */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-8 h-8 flex items-center justify-center">
+                <img 
+                  src="https://pqkph3lzaffmetri.public.blob.vercel-storage.com/1764957051530-Inside-Icon.png" 
+                  alt="insyde" 
+                  className="w-8 h-8 object-contain"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    const newState = !remindersEnabled;
+                    setRemindersEnabled(newState);
+                    localStorage.setItem('remindersEnabled', String(newState));
+                  }}
+                  className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  aria-label={remindersEnabled ? 'Disable reminders' : 'Enable reminders'}
+                  title={remindersEnabled ? 'Reminders ON (10AM & 6:30PM)' : 'Reminders OFF'}
                 >
-                  <i className="fas fa-calendar-alt mr-1"></i>
-                  Manage Leaves
-                </Button>
+                  <Bell className={`w-5 h-5 transition-colors ${remindersEnabled ? 'text-foreground' : 'text-foreground/40'}`} />
+                </button>
               </div>
             </div>
 
-            {/* Tab Navigation */}
-            <div className="flex border-b border-gray-200">
+            {/* Greeting Section */}
+            <div className="mb-6">
+              <h1 className="text-3xl font-bold text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>
+                What's up, {firstName}!
+              </h1>
+            </div>
+
+            {/* Tab Navigation - Mobile Style */}
+            <div className="flex gap-1 border-b border-border/50 dark:border-border mb-6 overflow-x-auto">
               <button
-                className={`notion-tab ${activeTab === 'control' ? 'notion-tab-active' : 'notion-tab-inactive'}`}
+                className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px] whitespace-nowrap ${
+                  activeTab === 'control'
+                    ? 'border-primary text-foreground dark:text-foreground'
+                    : 'border-transparent text-muted-foreground dark:text-muted-foreground hover:text-foreground'
+                }`}
                 onClick={() => setActiveTab('control')}
               >
-                <i className="fas fa-user mr-2"></i>
                 My Control
               </button>
               <button
-                className={`notion-tab ${activeTab === 'snapshot' ? 'notion-tab-active' : 'notion-tab-inactive'}`}
+                className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px] whitespace-nowrap ${
+                  activeTab === 'snapshot'
+                    ? 'border-primary text-foreground dark:text-foreground'
+                    : 'border-transparent text-muted-foreground dark:text-muted-foreground hover:text-foreground'
+                }`}
                 onClick={() => setActiveTab('snapshot')}
               >
-                <i className="fas fa-chart-bar mr-2"></i>
                 Snapshot
               </button>
               <button
-                className={`notion-tab ${activeTab === 'assistant' ? 'notion-tab-active' : 'notion-tab-inactive'}`}
+                className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px] whitespace-nowrap ${
+                  activeTab === 'assistant'
+                    ? 'border-primary text-foreground dark:text-foreground'
+                    : 'border-transparent text-muted-foreground dark:text-muted-foreground hover:text-foreground'
+                }`}
                 onClick={() => setActiveTab('assistant')}
               >
-                <i className="fas fa-robot mr-2"></i>
                 Assistant
               </button>
             </div>
 
             {/* Tab Content */}
-            <div className="p-6">
-              {activeTab === 'control' ? (
-                // User Control Tab
-                <div className="space-y-6">
-                  {/* User Profile Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-16 h-10 bg-purple-600 rounded-md flex items-center justify-center text-white font-mono text-sm">
-                        {currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">
-                          {hasOpen && currentSession?.session?.checkin_ts ? (
-                            <>
-                              Checked in at {formatISTTimeShort(currentSession.session.checkin_ts)} • {formatTime(elapsedTime)}
-                              <span className="block text-xs text-gray-400">{dateString}</span>
-                            </>
-                          ) : (
-                            <>
-                              Ready to check in
-                              <span className="block text-xs text-gray-400">{dateString}</span>
-                            </>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Location Tag */}
-                  <div className="text-center">
-                    {isLocationLoading ? (
-                      <span className="notion-badge notion-badge-outline">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-2"></div>
-                        Detecting location...
-                      </span>
-                    ) : (
-                      <span className="notion-badge notion-badge-outline">
-                        <i className={`fas ${mode === 'office' ? 'fa-building' : 'fa-home'} mr-2`}></i>
-                        {location}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Large Action Button */}
-                  <div className="text-center">
+            <div className="min-h-[400px]">
+              <AnimatePresence mode="wait">
+                {activeTab === 'control' ? (
+                  // User Control Tab
+                  <motion.div
+                    key="control"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-6"
+                  >
+                  {/* Location Button and Check In Button */}
+                  <div>
                     <div className="space-y-4">
-                      {/* Full-width Hold Button */}
-                      <div className="w-full px-4">
+                      {/* Location Button and Check In Button Side by Side */}
+                      <div className="w-full flex gap-3 items-center">
+                        {/* Square Location Button */}
                         <button
-                          className={`w-full h-16 rounded-lg flex items-center justify-center cursor-pointer transition-all duration-300 shadow-lg hover:shadow-xl select-none relative overflow-hidden ${
-                            isHolding ? 'scale-105' : 'hover:scale-102'
+                          className="h-16 w-16 rounded-lg border border-border/50 dark:border-border bg-background dark:bg-background flex items-center justify-center cursor-pointer transition-all duration-200 hover:bg-muted dark:hover:bg-muted flex-shrink-0 elevation-sm button-press"
+                          disabled={isLocationLoading}
+                        >
+                          {isLocationLoading ? (
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                          ) : (
+                            <i className={`fas ${mode === 'office' ? 'fa-building' : 'fa-home'} text-lg text-muted-foreground dark:text-muted-foreground`}></i>
+                          )}
+                        </button>
+                        
+                        {/* Full-width Hold Button */}
+                        <button
+                          className={`flex-1 h-16 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300 select-none relative overflow-hidden button-press elevation-lg ${
+                            isHolding ? 'scale-[0.98]' : 'hover:scale-[1.01]'
                           }`}
                           style={{
                             background: holdProgress > 0 
-                              ? `linear-gradient(90deg, ${hasOpen ? '#dc2626' : '#16a34a'} ${holdProgress}%, ${hasOpen ? '#b91c1c' : '#15803d'} ${holdProgress}%)`
-                              : `linear-gradient(135deg, ${hasOpen ? '#dc2626' : '#16a34a'}, ${hasOpen ? '#b91c1c' : '#15803d'})`,
-                            boxShadow: holdProgress > 0 ? `0 0 20px rgba(${hasOpen ? '220, 38, 38' : '22, 163, 74'}, 0.4)` : '0 10px 25px rgba(0,0,0,0.1)'
+                              ? `linear-gradient(90deg, ${hasOpen ? '#dc2626' : '#90EE90'} ${holdProgress}%, ${hasOpen ? '#b91c1c' : '#7ED957'} ${holdProgress}%)`
+                              : `linear-gradient(135deg, ${hasOpen ? '#dc2626' : '#90EE90'}, ${hasOpen ? '#b91c1c' : '#7ED957'})`,
+                            boxShadow: holdProgress > 0 
+                              ? `0 0 20px rgba(${hasOpen ? '220, 38, 38' : '144, 238, 144'}, 0.5)` 
+                              : hasOpen 
+                                ? '0 10px 25px rgba(220, 38, 38, 0.3)' 
+                                : '0 10px 25px rgba(144, 238, 144, 0.3)'
                           }}
                           onMouseDown={handleHoldStart}
                           onMouseUp={handleHoldEnd}
@@ -835,16 +1137,18 @@ export default function HomePage(){
                           <div className="text-white text-center select-none flex items-center space-x-3">
                             <i className={`fas ${hasOpen ? 'fa-sign-out-alt' : 'fa-sign-in-alt'} text-2xl`}></i>
                             <span className="font-semibold text-lg">
-                              {hasOpen ? 'Check Out' : 'Check In'}
+                              {hasOpen 
+                                ? 'Check Out' 
+                                : `Check In at ${currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`}
                             </span>
                           </div>
                         </button>
-                        {holdProgress > 0 && (
-                          <p className="text-sm text-gray-600 text-center mt-2">
-                            Hold to confirm ({Math.round(holdProgress)}%)
-                          </p>
-                        )}
                       </div>
+                      {holdProgress > 0 && (
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground text-center mt-2">
+                          Hold to confirm ({Math.round(holdProgress)}%)
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -867,8 +1171,8 @@ export default function HomePage(){
                               onClick={() => setSelectedMood(mood.value)}
                               className={`p-3 rounded-lg border-2 transition-all flex items-center justify-center ${
                                 selectedMood === mood.value
-                                  ? 'border-purple-500 bg-purple-50 scale-110'
-                                  : 'border-gray-200 hover:border-purple-300 hover:scale-105'
+                                  ? 'border-primary bg-primary/10 scale-110'
+                                  : 'border-border hover:border-primary/50 hover:scale-105'
                               }`}
                             >
                               <div className="text-2xl">{mood.emoji}</div>
@@ -882,7 +1186,7 @@ export default function HomePage(){
                               placeholder="Any highlights or challenges today? (optional)"
                               value={moodComment}
                               onChange={(e) => setMoodComment(e.target.value)}
-                              className="w-full p-3 border border-gray-300 rounded-md text-sm resize-none"
+                              className="w-full p-3 border border-input rounded-md text-sm resize-none bg-background"
                               rows={3}
                             />
                           </div>
@@ -895,14 +1199,14 @@ export default function HomePage(){
                               setSelectedMood('');
                               setMoodComment('');
                             }}
-                            className="flex-1 py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                            className="flex-1 py-2 px-4 border border-input rounded-md text-foreground hover:bg-muted"
                           >
                             Cancel
                           </button>
                           <button
                             onClick={handleMoodSubmit}
                             disabled={!selectedMood || isSubmitting}
-                            className="flex-1 py-2 px-4 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 transition-colors duration-200"
+                            className="flex-1 py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 transition-colors duration-200"
                           >
                             {isSubmitting ? 'Checking out...' : 'Check Out'}
                           </button>
@@ -911,96 +1215,198 @@ export default function HomePage(){
                     </div>
                   )}
 
+                  {/* Auto-Checkout Warning */}
+                  {autoCheckoutWarning && (
+                    <div className="text-left mb-4">
+                      <div className="text-sm text-white bg-red-600 rounded-md p-3 relative">
+                        <div className="font-medium mb-1 flex justify-between items-center">
+                          <span>⚠️ Auto-Checkout Warning</span>
+                          <button 
+                            onClick={() => setAutoCheckoutWarning(false)}
+                            className="text-white hover:text-gray-200 text-xs"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <div>You'll be automatically checked out in 10 minutes.</div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* AI Output Display */}
                   {(aiNotification || msg) && (
                     <div className="text-left">
-                      <div className="text-sm text-black bg-gray-100 rounded-md p-3 min-h-[60px] relative">
+                      <div className="text-sm bg-card dark:bg-card border border-border/50 dark:border-border rounded-xl p-4 min-h-[60px] relative elevation-md">
                         {aiNotification ? (
                           <div>
-                            <div className="font-medium mb-1 text-gray-800 flex justify-between items-center">
+                            <div className="font-medium mb-1 text-foreground dark:text-foreground flex justify-between items-center">
                               <span>✨</span>
                               <button 
                                 onClick={() => setAiNotification('')}
-                                className="text-gray-500 hover:text-gray-700 text-xs"
+                                className="text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground text-xs transition-colors"
                               >
                                 ✕
                               </button>
                             </div>
-                            <div className="text-gray-900">{aiNotification}</div>
+                            <div className="text-foreground dark:text-foreground">{aiNotification}</div>
                           </div>
                         ) : (
-                          <div className="text-gray-900">{msg}</div>
+                          <div className="text-foreground dark:text-foreground">{msg}</div>
                         )}
                       </div>
                     </div>
                   )}
 
-                  {/* Divider below action area */}
-                  <div className="my-4 h-px bg-purple-200" />
+                  {/* Divider below action area - Minimal */}
+                  <div className="my-8 h-px bg-border" />
 
-                  {/* Personal Log: Today & Yesterday */}
-                  {(me || meYesterday) && (
-                    <div className="mt-4 space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 font-medium">Today</span>
-                        <div className="flex gap-2">
-                          <span className="notion-badge notion-badge-info">In: {formatDisplayTime(me?.lastIn)}</span>
-                          <span className="notion-badge notion-badge-outline">Out: {formatDisplayTime(me?.lastOut)}</span>
-                          {typeof me?.workedMinutes === 'number' && (
-                            <span className="notion-badge notion-badge-success">Worked: {me.workedMinutes}m</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 font-medium">Yesterday</span>
-                        <div className="flex gap-2">
-                          <span className="notion-badge notion-badge-info">In: {formatDisplayTime(meYesterday?.lastIn)}</span>
-                          <span className="notion-badge notion-badge-outline">Out: {formatDisplayTime(meYesterday?.lastOut)}</span>
-                          {typeof meYesterday?.workedMinutes === 'number' && (
-                            <span className="notion-badge notion-badge-success">Worked: {meYesterday.workedMinutes}m</span>
-                          )}
-                        </div>
+                  {/* Overview Section */}
+                  <div className="mt-8">
+                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50 dark:border-border">
+                      <h3 className="text-lg font-semibold text-foreground dark:text-foreground">Overview</h3>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground dark:text-muted-foreground">
+                        <Calendar className="w-4 h-4" />
+                        <span>{overviewDateString}</span>
                       </div>
                     </div>
-                  )}
-                </div>
-              ) : activeTab === 'assistant' ? (
-                // Assistant Tab
-                <AssistantChat 
-                  isVisible={true} 
-                  userSlug={selectedEmployee?.slug}
-                />
-              ) : (
-                // Snapshot Tab
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Today's Attendance</h3>
-                  {todaySummary.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500">No check-ins yet.</p>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      {/* Punctuality Score Card */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                      >
+                        <OverviewCard
+                          type="checkin"
+                          time={punctualityStats?.punctualityScore !== undefined 
+                            ? punctualityStats.punctualityScore.toFixed(2)
+                            : '--'}
+                          secondaryText={punctualityStats?.maxScore ? `/${punctualityStats.maxScore}` : undefined}
+                          status="na"
+                          message="Punctuality Score"
+                        />
+                      </motion.div>
+
+                      {/* No-Fill Days Card */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.15 }}
+                      >
+                        <OverviewCard
+                          type="break"
+                          time={punctualityStats?.noFillDays !== undefined 
+                            ? `${punctualityStats.noFillDays}`
+                            : '--'}
+                          status="na"
+                          message="No-Fill Days"
+                        />
+                      </motion.div>
+
+                      {/* Average Time Card */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <OverviewCard
+                          type="overtime"
+                          time={punctualityStats?.avgCheckinTime || '--'}
+                          status={punctualityStats?.checkinStatus || 'na'}
+                          message="Average Time"
+                        />
+                      </motion.div>
                     </div>
-                  ) : (
-                    <div className="overflow-x-auto">
+
+                    {/* Attendance History Section - Monthly Calendar View */}
+                    <div className="mt-6">
+                      <AttendanceHistory
+                        userSlug={selectedEmployee?.slug || (typeof window !== 'undefined' ? localStorage.getItem('userSlug') : null) || undefined}
+                        onDateSelect={(date) => {
+                          // Optional: handle date selection
+                          console.log('Date selected:', date);
+                        }}
+                      />
+                    </div>
+                  </div>
+                  </motion.div>
+                ) : activeTab === 'assistant' ? (
+                  // Assistant Tab
+                  <motion.div
+                    key="assistant"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <AssistantChat 
+                      isVisible={true} 
+                      userSlug={selectedEmployee?.slug}
+                    />
+                  </motion.div>
+                ) : (
+                  // Snapshot Tab
+                  <motion.div
+                    key="snapshot"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-6"
+                  >
+                  {/* Recent Activity Section */}
+                  <div>
+                    <RecentActivity userSlug={selectedEmployee?.slug || (typeof window !== 'undefined' ? localStorage.getItem('userSlug') : null) || undefined} />
+                  </div>
+
+                  {/* Today's Attendance - Notion Style Accordion */}
+                  <div className="notion-card-hover p-0">
+                    <button
+                      onClick={() => setIsTodayAttendanceOpen(!isTodayAttendanceOpen)}
+                      className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+                    >
+                      <h3 className="text-lg font-semibold text-gray-900">Today's Attendance</h3>
+                      <svg
+                        className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
+                          isTodayAttendanceOpen ? 'transform rotate-180' : ''
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    {isTodayAttendanceOpen && (
+                      <div className="px-4 pb-4 border-t border-gray-200">
+                        {todaySummary.length === 0 ? (
+                          <div className="text-center py-8">
+                            <p className="text-gray-500">No check-ins yet.</p>
+                          </div>
+                        ) : (
+                          <div className="overflow-x-auto mt-4">
                       <table className="w-full min-w-[600px]">
                         <thead>
-                          <tr className="bg-gray-50">
-                            <th className="px-3 py-2 text-left text-sm font-medium text-gray-700">Name</th>
-                            <th className="px-3 py-2 text-left text-sm font-medium text-gray-700">In</th>
-                            <th className="px-3 py-2 text-left text-sm font-medium text-gray-700">Out</th>
-                            <th className="px-3 py-2 text-left text-sm font-medium text-gray-700">Hours</th>
-                            <th className="px-3 py-2 text-left text-sm font-medium text-gray-700">Status</th>
+                          <tr className="border-b border-border">
+                            <th className="px-3 py-2 text-left text-sm font-medium text-muted-foreground">Name</th>
+                            <th className="px-3 py-2 text-left text-sm font-medium text-muted-foreground">In</th>
+                            <th className="px-3 py-2 text-left text-sm font-medium text-muted-foreground">Out</th>
+                            <th className="px-3 py-2 text-left text-sm font-medium text-muted-foreground">Hours</th>
+                            <th className="px-3 py-2 text-left text-sm font-medium text-muted-foreground">Status</th>
                           </tr>
                         </thead>
                         <tbody>
                           {todaySummary.map((emp: any) => (
-                            <tr key={emp.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                              <td className="px-3 py-2 font-medium text-gray-900 text-sm">{emp.full_name}</td>
+                            <tr key={emp.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                              <td className="px-3 py-2 font-medium text-foreground text-sm">{emp.full_name}</td>
                               <td className="px-3 py-2">
                                 {emp.lastIn ? (
                                   <span className="notion-badge notion-badge-success text-xs">
                                     {emp.lastIn}
                                   </span>
                                 ) : (
-                                  <span className="text-gray-400">—</span>
+                                  <span className="text-muted-foreground">—</span>
                                 )}
                               </td>
                               <td className="px-3 py-2">
@@ -1009,7 +1415,7 @@ export default function HomePage(){
                                     {emp.lastOut}
                                   </span>
                                 ) : (
-                                  <span className="text-gray-400">—</span>
+                                  <span className="text-muted-foreground">—</span>
                                 )}
                               </td>
                               <td className="px-3 py-2">
@@ -1034,35 +1440,54 @@ export default function HomePage(){
                               </td>
                             </tr>
                           ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Removed Yesterday's Attendance from Snapshot as requested */}
-                </div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
+
+            {/* Footer Actions */}
+            {isLoggedIn && (
+              <div className="mt-8 pt-6 border-t border-border/50 dark:border-border flex items-center justify-between">
+                <Link 
+                  href="/leave"
+                  className="text-sm text-muted-foreground dark:text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Manage Leaves
+                </Link>
+                <div className="flex items-center gap-3">
+                  <DarkModeToggle />
+                  <Button 
+                    variant="ghost"
+                    onClick={handleLogout}
+                    className="text-muted-foreground dark:text-muted-foreground hover:text-foreground"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
-
-        {/* Logout Button */}
-        {isLoggedIn && (
-          <div className="mt-6 text-center slide-up">
-            <Button 
-              variant="outline"
-              onClick={handleLogout}
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
-          </div>
-        )}
-
-
-
-
       </div>
+
+      {/* PIN Change Modal */}
+      {showPinChange && pendingEmployee && (
+        <PinChangeModal
+          employeeId={pendingEmployee.id}
+          employeeName={pendingEmployee.full_name}
+          onPinChanged={handlePinChanged}
+        />
+      )}
     </div>
   );
 }

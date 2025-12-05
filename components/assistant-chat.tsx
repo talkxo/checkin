@@ -189,64 +189,42 @@ export default function AssistantChat({ isVisible, userSlug }: AssistantChatProp
   }
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg border border-gray-200">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50 rounded-t-lg">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
-            <i className="fas fa-robot text-white text-sm"></i>
-          </div>
-          <div>
-            <h3 className="font-semibold text-gray-900">INSYDE Assistant</h3>
-            <p className="text-xs text-gray-600">Ask me about company policies and more</p>
-          </div>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={clearChat}
-          className="text-gray-600 hover:text-gray-800"
-        >
-          <i className="fas fa-trash mr-1 text-xs"></i>
-          Clear
-        </Button>
-      </div>
-
-      {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[400px]">
+    <div className="flex flex-col h-full bg-background rounded-lg border border-border w-full">
+      {/* Messages Container - shadcn/ui style */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-[400px]">
         {messages.map((message) => (
           <div
             key={message.id}
             className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[85%] rounded-lg p-3 ${
+              className={`max-w-[85%] rounded-lg p-4 ${
                 message.role === 'user'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-900'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted dark:bg-muted text-foreground dark:text-foreground'
               }`}
             >
-              <div className="flex items-start space-x-2">
+              <div className="flex items-start gap-3">
                 {message.role === 'assistant' && (
-                  <div className="w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <i className="fas fa-robot text-white text-xs"></i>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i className="fas fa-robot text-xs"></i>
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm whitespace-pre-wrap leading-relaxed">
+                  <div className="text-sm whitespace-pre-wrap leading-relaxed text-foreground dark:text-foreground">
                     {message.role === 'assistant' ? (
-                      <div className="prose prose-sm max-w-none">
+                      <div className="prose prose-sm max-w-none dark:prose-invert">
                         {message.content.split('\n').map((line, index) => {
                           // Handle bold text
                           if (line.includes('**')) {
                             const parts = line.split('**');
                             return (
-                              <div key={index} className="mb-1">
+                              <div key={index} className="mb-1 text-foreground dark:text-foreground">
                                 {parts.map((part, partIndex) => 
                                   partIndex % 2 === 1 ? (
-                                    <strong key={partIndex} className="font-semibold">{part}</strong>
+                                    <strong key={partIndex} className="font-semibold text-foreground dark:text-foreground">{part}</strong>
                                   ) : (
-                                    <span key={partIndex}>{part}</span>
+                                    <span key={partIndex} className="text-foreground dark:text-foreground">{part}</span>
                                   )
                                 )}
                               </div>
@@ -256,8 +234,8 @@ export default function AssistantChat({ isVisible, userSlug }: AssistantChatProp
                           if (line.trim().startsWith('•')) {
                             return (
                               <div key={index} className="flex items-start mb-1">
-                                <span className="text-gray-500 mr-2 mt-1">•</span>
-                                <span>{line.substring(1).trim()}</span>
+                                <span className="text-foreground dark:text-foreground mr-2 mt-1">•</span>
+                                <span className="text-foreground dark:text-foreground">{line.substring(1).trim()}</span>
                               </div>
                             );
                           }
@@ -266,20 +244,20 @@ export default function AssistantChat({ isVisible, userSlug }: AssistantChatProp
                             return <div key={index} className="mb-2"></div>;
                           }
                           // Regular text
-                          return <div key={index} className="mb-1">{line}</div>;
+                          return <div key={index} className="mb-1 text-foreground dark:text-foreground">{line}</div>;
                         })}
                       </div>
                     ) : (
-                      <span>{message.content}</span>
+                      <span className="text-foreground dark:text-foreground">{message.content}</span>
                     )}
                   </div>
                   {message.sources && message.sources.length > 0 && (
-                    <div className="mt-3 pt-2 border-t border-gray-200">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs text-gray-500 font-medium">Sources:</span>
+                    <div className="mt-3 pt-3 border-t border-border/50">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground font-medium">Sources:</span>
                         <div className="flex flex-wrap gap-1">
                           {message.sources.map((source, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs px-2 py-0.5">
+                            <Badge key={index} variant="secondary" className="text-xs">
                               {source}
                             </Badge>
                           ))}
@@ -288,7 +266,7 @@ export default function AssistantChat({ isVisible, userSlug }: AssistantChatProp
                     </div>
                   )}
                   <div className={`text-xs mt-2 ${
-                    message.role === 'user' ? 'text-purple-200' : 'text-gray-500'
+                    message.role === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground dark:text-muted-foreground'
                   }`}>
                     {formatTime(message.timestamp)}
                   </div>
@@ -300,15 +278,15 @@ export default function AssistantChat({ isVisible, userSlug }: AssistantChatProp
         
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg p-3 max-w-[85%]">
-              <div className="flex items-center space-x-2">
-                <div className="w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center">
-                  <i className="fas fa-robot text-white text-xs"></i>
+            <div className="bg-muted rounded-lg p-4 max-w-[85%]">
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                  <i className="fas fa-robot text-xs"></i>
                 </div>
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
               </div>
             </div>
@@ -318,9 +296,9 @@ export default function AssistantChat({ isVisible, userSlug }: AssistantChatProp
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Container */}
-      <div className="border-t border-gray-200 p-4 bg-gray-50 rounded-b-lg">
-        <div className="flex space-x-2 mb-3">
+      {/* Input Container - shadcn/ui style */}
+      <div className="border-t border-border p-4 bg-muted/30">
+        <div className="flex gap-2 mb-3">
           <div className="flex-1 relative">
             <Input
               ref={inputRef}
@@ -333,10 +311,10 @@ export default function AssistantChat({ isVisible, userSlug }: AssistantChatProp
             />
             <button
               onClick={isListening ? stopListening : startListening}
-              className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 rounded-full transition-colors ${
+              className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 rounded-md transition-colors ${
                 isListening 
-                  ? 'bg-red-500 text-white hover:bg-red-600' 
-                  : 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'
+                  ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
               }`}
               disabled={isLoading}
             >
@@ -346,10 +324,9 @@ export default function AssistantChat({ isVisible, userSlug }: AssistantChatProp
           <Button
             onClick={sendMessage}
             disabled={!inputValue.trim() || isLoading}
-            className="bg-purple-600 hover:bg-purple-700 px-4"
+            size="icon"
           >
-            <i className="fas fa-paper-plane mr-1"></i>
-            Send
+            <i className="fas fa-paper-plane"></i>
           </Button>
         </div>
         

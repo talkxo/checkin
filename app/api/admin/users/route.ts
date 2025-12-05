@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const { data, error } = await supabaseAdmin
       .from('employees')
-      .select('id, full_name, email, slug, active, created_at')
+      .select('id, full_name, email, slug, active, created_at, pin_hash, pin_change_required')
       .order('full_name');
 
     if (error) {

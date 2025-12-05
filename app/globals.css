@@ -10,56 +10,56 @@
 
 @layer base {
   :root {
+    /* shadcn/ui Default Theme - https://ui.shadcn.com/themes */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    /* Set primary to brand purple (#6a63b6) */
-    --primary: 244 36% 55%;
+    --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 244 36% 55%;
+    --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    /* Enhanced Dark Theme - Matching Mobile Design */
+    --background: 222.2 15% 8%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 222.2 15% 12%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 222.2 15% 12%;
     --popover-foreground: 210 40% 98%;
-    /* Dark mode primary as brand purple as well */
-    --primary: 244 36% 55%;
-    --primary-foreground: 222.2 84% 4.9%;
+    --primary: 25 95% 53%;
+    --primary-foreground: 210 40% 98%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62.8% 50%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 244 36% 55%;
+    --border: 217.2 32.6% 20%;
+    --input: 217.2 32.6% 20%;
+    --ring: 25 95% 53%;
   }
 
   html {
     font-family: 'Source Sans Pro', system-ui, sans-serif;
-    background-color: #ffffff;
-    color: #374151;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     height: 100%;
     line-height: 1.5;
     -webkit-text-size-adjust: 100%;
@@ -70,12 +70,36 @@
   }
   
   body {
-    background-color: #ffffff;
-    color: #374151;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     height: 100%;
     margin: 0;
     padding: 0;
+  }
+
+  /* Notion-style minimal design */
+  .notion-container {
+    @apply w-full mx-auto px-6 sm:px-8 lg:px-12 max-w-6xl;
+  }
+
+  /* Notion-style minimal cards - clean and simple */
+  .notion-card {
+    @apply bg-card text-card-foreground rounded-lg border border-border/50 p-6 transition-colors;
+  }
+
+  .notion-card-hover {
+    @apply notion-card hover:border-border hover:bg-muted/30;
+  }
+
+  /* Notion-style section spacing */
+  .notion-section {
+    @apply space-y-8;
+  }
+
+  /* Notion-style minimal buttons */
+  .notion-button {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
   }
 
   * {
@@ -89,13 +113,55 @@
     font-family: 'Cal Sans', system-ui, sans-serif;
   }
 
+  /* Elevation System - Multi-layer shadows for depth */
+  .elevation-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  .elevation-md {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  .elevation-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  .elevation-xl {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  .dark .elevation-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  .dark .elevation-md {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  }
+
+  .dark .elevation-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  }
+
+  .dark .elevation-xl {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Colored shadows for interactive elements */
+  .shadow-primary {
+    box-shadow: 0 4px 14px 0 rgba(251, 146, 60, 0.3);
+  }
+
+  .dark .shadow-primary {
+    box-shadow: 0 4px 14px 0 rgba(251, 146, 60, 0.4);
+  }
+
   /* Notion-inspired clean styles */
   .notion-card {
-    @apply bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200;
+    @apply bg-white dark:bg-card border border-gray-200 dark:border-border rounded-lg shadow-sm dark:shadow-none hover:shadow-md dark:hover:shadow-lg transition-shadow duration-200;
   }
 
   .notion-button-primary {
-    @apply inline-flex items-center justify-center gap-x-2 bg-purple-600 text-white text-sm font-medium rounded-md px-4 py-2 hover:bg-purple-700 disabled:opacity-50 disabled:pointer-events-none transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-x-2 bg-primary text-primary-foreground text-sm font-medium rounded-md px-4 py-2 hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
   }
 
   .notion-button-secondary {
@@ -103,7 +169,7 @@
   }
 
   .notion-button-success {
-    @apply inline-flex items-center justify-center gap-x-2 bg-purple-600 text-white text-sm font-medium rounded-md px-4 py-2 hover:bg-purple-700 disabled:opacity-50 disabled:pointer-events-none transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-x-2 bg-primary text-primary-foreground text-sm font-medium rounded-md px-4 py-2 hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
   }
 
   .notion-button-danger {
@@ -111,7 +177,7 @@
   }
 
   .notion-input {
-    @apply w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500 focus:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none transition-colors duration-200;
+    @apply w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none transition-colors duration-200;
   }
 
   .notion-badge {
@@ -119,7 +185,7 @@
   }
 
   .notion-badge-primary {
-    @apply bg-purple-100 text-purple-800;
+    @apply bg-primary/10 text-primary;
   }
 
   .notion-badge-success {
@@ -142,111 +208,9 @@
     @apply bg-white border border-gray-300 text-gray-700;
   }
 
-  /* Override shadcn/ui blue colors with purple theme */
-  .bg-primary {
-    @apply bg-purple-600 !important;
-  }
-  
-  .text-primary {
-    @apply text-purple-600 !important;
-  }
-  
-  .border-primary {
-    @apply border-purple-600 !important;
-  }
-  
-  .hover\:bg-primary:hover {
-    @apply bg-purple-700 !important;
-  }
-  
-  .focus\:ring-primary:focus {
-    @apply ring-purple-500 !important;
-  }
-  
-  /* Override button variants */
-  .bg-blue-600 {
-    @apply bg-purple-600 !important;
-  }
-  
-  .bg-blue-700 {
-    @apply bg-purple-700 !important;
-  }
-  
-  .hover\:bg-blue-700:hover {
-    @apply hover:bg-purple-700 !important;
-  }
-  
-  .focus\:ring-blue-500:focus {
-    @apply focus:ring-purple-500 !important;
-  }
+  /* Use theme variables - no overrides needed */
 
-  /* Brand purple overrides - comprehensive coverage */
-  /* Increase specificity with :where(html) to ensure overrides win in production */
-  /* Primary brand: #6a63b6; Hover/Darker: #5a54a4; Focus ring (~500): #7b74c2 */
-  
-  /* Text colors */
-  :where(html) .text-purple-600 { color: #6a63b6 !important; }
-  :where(html) .text-purple-400 { color: #7b74c2 !important; }
-  :where(html) .text-purple-700 { color: #5a54a4 !important; }
-  :where(html) .text-purple-800 { color: #4a447a !important; }
-  :where(html) .text-purple-900 { color: #3a3658 !important; }
-  :where(html) .text-purple-200 { color: #d1cde8 !important; }
-  
-  /* Background colors */
-  :where(html) .bg-purple-600 { background-color: #6a63b6 !important; }
-  :where(html) .bg-purple-700 { background-color: #5a54a4 !important; }
-  :where(html) .bg-purple-500 { background-color: #7b74c2 !important; }
-  :where(html) .bg-purple-400 { background-color: #8a84d0 !important; }
-  :where(html) .bg-purple-100 { background-color: #e8e7f7 !important; }
-  :where(html) .bg-purple-50 { background-color: #f3f2fb !important; }
-  :where(html) .bg-purple-200 { background-color: #d1cde8 !important; }
-  :where(html) .bg-purple-300 { background-color: #b8b3e0 !important; }
-  :where(html) .bg-purple-800 { background-color: #4a447a !important; }
-  :where(html) .bg-purple-900 { background-color: #3a3658 !important; }
-  
-  /* Border colors */
-  :where(html) .border-purple-600 { border-color: #6a63b6 !important; }
-  :where(html) .border-purple-500 { border-color: #7b74c2 !important; }
-  :where(html) .border-purple-400 { border-color: #8a84d0 !important; }
-  :where(html) .border-purple-300 { border-color: #b8b3e0 !important; }
-  :where(html) .border-purple-200 { border-color: #d1cde8 !important; }
-  :where(html) .border-purple-700 { border-color: #5a54a4 !important; }
-  
-  /* Hover states */
-  :where(html) .hover\:bg-purple-700:hover { background-color: #5a54a4 !important; }
-  .hover\:bg-purple-100:hover { background-color: #e8e7f7 !important; }
-  .hover\:bg-purple-50:hover { background-color: #f3f2fb !important; }
-  .hover\:text-purple-600:hover { color: #6a63b6 !important; }
-  .hover\:border-purple-300:hover { border-color: #b8b3e0 !important; }
-  .hover\:border-purple-400:hover { border-color: #8a84d0 !important; }
-  
-  /* Focus states */
-  :where(html) .focus\:ring-purple-500:focus { --tw-ring-color: #7b74c2 !important; }
-  :where(html) .focus\:border-purple-500:focus { border-color: #7b74c2 !important; }
-  
-  /* Gradient backgrounds */
-  :where(html) .from-purple-50 { --tw-gradient-from: #f3f2fb !important; }
-  :where(html) .to-purple-50 { --tw-gradient-to: #f3f2fb !important; }
-  :where(html) .from-purple-100 { --tw-gradient-from: #e8e7f7 !important; }
-  :where(html) .to-purple-100 { --tw-gradient-to: #e8e7f7 !important; }
-  :where(html) .from-purple-500 { --tw-gradient-from: #7b74c2 !important; }
-  :where(html) .to-purple-500 { --tw-gradient-to: #7b74c2 !important; }
-  :where(html) .from-purple-600 { --tw-gradient-from: #6a63b6 !important; }
-  :where(html) .to-purple-600 { --tw-gradient-to: #6a63b6 !important; }
-  
-  /* Dark mode variants */
-  .dark .text-purple-400 { color: #8a84d0 !important; }
-  .dark .bg-purple-900\/30 { background-color: rgba(58, 54, 88, 0.3) !important; }
-  .dark .bg-purple-900\/20 { background-color: rgba(58, 54, 88, 0.2) !important; }
-  .dark .border-purple-700 { border-color: #5a54a4 !important; }
-  .dark .from-purple-900\/20 { --tw-gradient-from: rgba(58, 54, 88, 0.2) !important; }
-  .dark .to-purple-800\/20 { --tw-gradient-to: rgba(74, 68, 122, 0.2) !important; }
-
-  /* Keep primary helpers aligned to brand */
-  .text-primary { color: #6a63b6 !important; }
-  .border-primary { border-color: #6a63b6 !important; }
-  .hover\:bg-primary:hover { background-color: #5a54a4 !important; }
-  .focus\:ring-primary:focus { --tw-ring-color: #7b74c2 !important; }
+  /* Removed purple color overrides - using default theme variables */
 
   /* Tab styles */
   .notion-tab {
@@ -254,18 +218,15 @@
   }
 
   .notion-tab-active {
-    color: #6a63b6 !important;
-    border-color: #6a63b6 !important;
-    background-color: #f3f2fb !important;
+    @apply text-foreground border-foreground;
   }
 
   .notion-tab-inactive {
-    @apply text-gray-500 border-transparent;
+    @apply text-muted-foreground border-transparent;
   }
 
   .notion-tab-inactive:hover {
-    color: #5a54a4 !important;
-    background-color: #f3f2fb !important;
+    @apply text-foreground bg-muted/50;
   }
 
   /* Custom animations */
@@ -275,6 +236,26 @@
 
   .slide-up {
     animation: slideUp 0.3s ease-out;
+  }
+
+  .card-entrance {
+    animation: cardEntrance 0.4s ease-out;
+  }
+
+  .stagger-1 {
+    animation-delay: 0.05s;
+  }
+
+  .stagger-2 {
+    animation-delay: 0.1s;
+  }
+
+  .stagger-3 {
+    animation-delay: 0.15s;
+  }
+
+  .stagger-4 {
+    animation-delay: 0.2s;
   }
 
   @keyframes fadeIn {
@@ -291,6 +272,67 @@
       opacity: 1; 
       transform: translateY(0); 
     }
+  }
+
+  @keyframes cardEntrance {
+    from { 
+      opacity: 0; 
+      transform: translateY(20px) scale(0.95); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0) scale(1); 
+    }
+  }
+
+  /* Button press animation */
+  .button-press {
+    transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+  }
+
+  .button-press:active {
+    transform: scale(0.98);
+  }
+
+  /* Card hover effects */
+  .card-hover {
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  }
+
+  .card-hover:hover {
+    transform: scale(1.02);
+  }
+
+  /* Status badge color utilities */
+  .status-badge-on-time {
+    @apply bg-primary;
+  }
+
+  .status-badge-early {
+    @apply bg-green-500;
+  }
+
+  .status-badge-slightly-late {
+    @apply bg-orange-500;
+  }
+
+  .status-badge-late {
+    @apply bg-red-500;
+  }
+
+  .status-badge-absent,
+  .status-badge-leave {
+    @apply bg-gray-500;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
 

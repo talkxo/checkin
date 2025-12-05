@@ -142,7 +142,7 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
       case 'rejected':
         return <Badge variant="secondary" className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 border-red-200 dark:border-red-700"><XCircle className="w-3 h-3 mr-1" />Rejected</Badge>;
       case 'cancelled':
-        return <Badge variant="outline" className="border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300"><AlertCircle className="w-3 h-3 mr-1" />Cancelled</Badge>;
+        return <Badge variant="outline" className="border-border dark:border-border text-muted-foreground dark:text-muted-foreground"><AlertCircle className="w-3 h-3 mr-1" />Cancelled</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -165,9 +165,9 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 text-center fade-in">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Loading your leave information...</p>
+        <div className="bg-card dark:bg-card rounded-2xl elevation-lg p-8 text-center fade-in border border-border/50 dark:border-border">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-foreground dark:text-foreground">Loading your leave information...</p>
         </div>
       </div>
     );
@@ -176,9 +176,9 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
   if (error) {
     return (
       <div className="max-w-2xl mx-auto">
-        <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+        <Card className="border-destructive/50 dark:border-destructive/50 bg-destructive/10 dark:bg-destructive/10">
           <CardContent className="p-6">
-            <div className="flex items-center space-x-3 text-red-600 dark:text-red-400">
+            <div className="flex items-center space-x-3 text-destructive dark:text-destructive">
               <AlertCircle className="w-6 h-6" />
               <div>
                 <h3 className="font-semibold">Error Loading Leave Data</h3>
@@ -194,13 +194,13 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
   if (!leaveData) {
     return (
       <div className="max-w-2xl mx-auto">
-        <Card className="dark:bg-gray-800 dark:border-gray-700">
+        <Card className="bg-card dark:bg-card border border-border/50 dark:border-border">
           <CardContent className="p-8 text-center">
-            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Calendar className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+            <div className="w-16 h-16 bg-muted dark:bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+              <Calendar className="w-8 h-8 text-muted-foreground dark:text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Leave Data Available</h3>
-            <p className="text-gray-600 dark:text-gray-300">Your leave information could not be loaded. Please try again later.</p>
+            <h3 className="text-lg font-semibold text-foreground dark:text-foreground mb-2">No Leave Data Available</h3>
+            <p className="text-muted-foreground dark:text-muted-foreground">Your leave information could not be loaded. Please try again later.</p>
           </CardContent>
         </Card>
       </div>
@@ -210,41 +210,41 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 slide-up border border-gray-200 dark:border-gray-700">
+      <div className="bg-card dark:bg-card rounded-2xl elevation-md p-6 slide-up border border-border/50 dark:border-border">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Manage Leaves</h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-1">
+            <h1 className="text-2xl font-bold text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>Manage Leaves</h1>
+            <p className="text-muted-foreground dark:text-muted-foreground mt-1">
               Hi, {leaveData.employee.full_name.split(' ')[0]}! 👋
             </p>
           </div>
           <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
             <DialogTrigger asChild>
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 md:px-6 md:py-3 flex items-center justify-center min-w-[48px] md:min-w-[140px]">
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-3 rounded-xl elevation-md hover:elevation-lg transition-all duration-200 md:px-6 md:py-3 flex items-center justify-center min-w-[48px] md:min-w-[140px]">
                 <Plus className="w-5 h-5 md:w-5 md:h-5" />
                 <span className="hidden md:inline ml-2">Request Leave</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] rounded-2xl dark:bg-gray-800 dark:border-gray-700">
+            <DialogContent className="sm:max-w-[500px] rounded-2xl bg-card dark:bg-card border border-border/50 dark:border-border">
               <DialogHeader>
-                <DialogTitle className="text-xl font-semibold dark:text-white">Request Leave</DialogTitle>
-                <DialogDescription className="text-gray-600 dark:text-gray-300">
+                <DialogTitle className="text-xl font-semibold text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>Request Leave</DialogTitle>
+                <DialogDescription className="text-muted-foreground dark:text-muted-foreground">
                   Submit a new leave request. Make sure you have sufficient balance.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-6 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="leaveType" className="text-sm font-medium text-gray-700 dark:text-gray-300">Leave Type</Label>
+                  <Label htmlFor="leaveType" className="text-sm font-medium text-foreground dark:text-foreground">Leave Type</Label>
                   <Select
                     value={requestForm.leaveTypeId}
                     onValueChange={(value) => setRequestForm({ ...requestForm, leaveTypeId: value })}
                   >
-                    <SelectTrigger className="border-gray-300 dark:border-gray-600 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-700 dark:text-white">
+                    <SelectTrigger className="border-input dark:border-input focus:border-primary focus:ring-primary">
                       <SelectValue placeholder="Select leave type" />
                     </SelectTrigger>
-                    <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
+                    <SelectContent>
                       {leaveTypes.map((type) => (
-                        <SelectItem key={type.id} value={type.id} className="dark:text-white dark:hover:bg-gray-600">
+                        <SelectItem key={type.id} value={type.id}>
                           {type.name}
                         </SelectItem>
                       ))}
@@ -253,31 +253,31 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="startDate" className="text-sm font-medium text-gray-700 dark:text-gray-300">Start Date</Label>
+                    <Label htmlFor="startDate" className="text-sm font-medium text-foreground dark:text-foreground">Start Date</Label>
                     <Input
                       id="startDate"
                       type="date"
-                      className="border-gray-300 dark:border-gray-600 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                      className="border-input dark:border-input focus:border-primary focus:ring-primary"
                       value={requestForm.startDate}
                       onChange={(e) => setRequestForm({ ...requestForm, startDate: e.target.value })}
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="endDate" className="text-sm font-medium text-gray-700 dark:text-gray-300">End Date</Label>
+                    <Label htmlFor="endDate" className="text-sm font-medium text-foreground dark:text-foreground">End Date</Label>
                     <Input
                       id="endDate"
                       type="date"
-                      className="border-gray-300 dark:border-gray-600 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                      className="border-input dark:border-input focus:border-primary focus:ring-primary"
                       value={requestForm.endDate}
                       onChange={(e) => setRequestForm({ ...requestForm, endDate: e.target.value })}
                     />
                   </div>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="reason" className="text-sm font-medium text-gray-700 dark:text-gray-300">Reason (Optional)</Label>
+                  <Label htmlFor="reason" className="text-sm font-medium text-foreground dark:text-foreground">Reason (Optional)</Label>
                   <Textarea
                     id="reason"
-                    className="border-gray-300 dark:border-gray-600 focus:border-purple-500 focus:ring-purple-500 min-h-[100px] resize-none dark:bg-gray-700 dark:text-white"
+                    className="border-input dark:border-input focus:border-primary focus:ring-primary min-h-[100px] resize-none"
                     value={requestForm.reason}
                     onChange={(e) => setRequestForm({ ...requestForm, reason: e.target.value })}
                     placeholder="Brief reason for leave..."
@@ -285,7 +285,7 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
                 </div>
               </div>
               {error && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-red-600 dark:text-red-400 text-sm">{error}</div>
+                <div className="bg-destructive/10 dark:bg-destructive/10 border border-destructive/50 dark:border-destructive/50 rounded-lg p-3 text-destructive dark:text-destructive text-sm">{error}</div>
               )}
               {success && (
                 <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-green-600 dark:text-green-400 text-sm">{success}</div>
@@ -294,12 +294,12 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
                 <Button 
                   variant="outline"
                   onClick={() => setShowRequestDialog(false)}
-                  className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="border-border dark:border-border text-foreground dark:text-foreground hover:bg-muted dark:hover:bg-muted"
                 >
                   Cancel
                 </Button>
                 <Button 
-                  className="bg-purple-600 hover:bg-purple-700"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
                   onClick={submitLeaveRequest} 
                   disabled={isSubmitting || !requestForm.leaveTypeId || !requestForm.startDate || !requestForm.endDate}
                 >
@@ -312,37 +312,37 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
       </div>
 
       {/* Leave Balance Overview */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 slide-up border border-gray-200 dark:border-gray-700">
+      <div className="bg-card dark:bg-card rounded-2xl elevation-md p-6 slide-up border border-border/50 dark:border-border">
         <div className="flex items-center space-x-3 mb-4">
-          <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-            <TrendingUp className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+          <div className="w-8 h-8 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center">
+            <TrendingUp className="w-4 h-4 text-primary dark:text-primary" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Leave Balance Overview</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-300">Your current leave balance for {leaveData.year}</p>
+            <h2 className="text-xl font-bold text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>Leave Balance Overview</h2>
+            <p className="text-sm text-muted-foreground dark:text-muted-foreground">Your current leave balance for {leaveData.year}</p>
           </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {leaveData.leaveBalance.map((balance) => (
-            <div key={balance.leave_type_name} className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-700 dark:to-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl p-4 hover:shadow-md transition-all duration-200">
+            <div key={balance.leave_type_name} className="bg-muted/30 dark:bg-muted/20 border border-border/50 dark:border-border rounded-xl p-4 hover:elevation-md transition-all duration-200">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                <span className="text-sm font-medium text-foreground dark:text-foreground">
                   {balance.leave_type_name}
                 </span>
-                <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-                  <CalendarDays className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                <div className="w-6 h-6 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center">
+                  <CalendarDays className="w-3 h-3 text-primary dark:text-primary" />
                 </div>
               </div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              <div className="text-2xl font-bold text-foreground dark:text-foreground mb-2">
                 {balance.available_leaves}
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+              <div className="text-xs text-muted-foreground dark:text-muted-foreground mb-3">
                 {balance.used_leaves} used • {balance.pending_leaves} pending
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-muted dark:bg-muted rounded-full h-2 overflow-hidden">
                 <div
-                  className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full transition-all duration-500"
+                  className="bg-primary h-2 rounded-full transition-all duration-500"
                   style={{
                     width: `${balance.total_entitlement > 0 ? (balance.available_leaves / balance.total_entitlement) * 100 : 0}%`
                   }}
@@ -352,18 +352,18 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
           ))}
         </div>
         
-        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-          <div className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-4">
+        <div className="mt-4 pt-4 border-t border-border/50 dark:border-border">
+          <div className="flex items-center justify-between bg-muted/50 dark:bg-muted/30 rounded-xl p-4">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-                <Calendar className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <Calendar className="w-4 h-4 text-primary-foreground" />
               </div>
               <div>
-                <span className="text-base font-semibold text-gray-900 dark:text-white">Total Available</span>
-                <p className="text-xs text-gray-600 dark:text-gray-300">All leave types combined</p>
+                <span className="text-base font-semibold text-foreground dark:text-foreground">Total Available</span>
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground">All leave types combined</p>
               </div>
             </div>
-            <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+            <span className="text-2xl font-bold text-primary dark:text-primary">
               {getTotalAvailableLeaves()} days
             </span>
           </div>
@@ -372,40 +372,40 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
 
       {/* Bonus Leave Accrual History */}
       {leaveData.accrualHistory.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 slide-up border border-gray-200 dark:border-gray-700">
+        <div className="bg-card dark:bg-card rounded-2xl elevation-md p-6 slide-up border border-border/50 dark:border-border">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Bonus Leave Accrual History</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Track your bonus leaves earned from extra office attendance</p>
+              <h2 className="text-xl font-bold text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>Bonus Leave Accrual History</h2>
+              <p className="text-sm text-muted-foreground dark:text-muted-foreground">Track your bonus leaves earned from extra office attendance</p>
             </div>
           </div>
           
-          <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-600">
+          <div className="overflow-hidden rounded-xl border border-border/50 dark:border-border">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-50 dark:bg-gray-700">
-                  <TableHead className="font-semibold text-gray-700 dark:text-gray-200">Month</TableHead>
-                  <TableHead className="font-semibold text-gray-700 dark:text-gray-200">Extra Office Days</TableHead>
-                  <TableHead className="font-semibold text-gray-700 dark:text-gray-200">Bonus Leaves Earned</TableHead>
-                  <TableHead className="font-semibold text-gray-700 dark:text-gray-200">Calculation Date</TableHead>
+                <TableRow className="bg-muted/50 dark:bg-muted/30">
+                  <TableHead className="font-semibold text-foreground dark:text-foreground">Month</TableHead>
+                  <TableHead className="font-semibold text-foreground dark:text-foreground">Extra Office Days</TableHead>
+                  <TableHead className="font-semibold text-foreground dark:text-foreground">Bonus Leaves Earned</TableHead>
+                  <TableHead className="font-semibold text-foreground dark:text-foreground">Calculation Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {leaveData.accrualHistory.map((accrual) => (
-                  <TableRow key={accrual.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    <TableCell className="font-medium text-gray-900 dark:text-white">
+                  <TableRow key={accrual.id} className="hover:bg-muted/30 dark:hover:bg-muted/20 transition-colors">
+                    <TableCell className="font-medium text-foreground dark:text-foreground">
                       {new Date(2024, accrual.month - 1).toLocaleDateString('en-IN', { month: 'long' })}
                     </TableCell>
-                    <TableCell className="text-gray-700 dark:text-gray-300">{accrual.extra_office_days} days</TableCell>
+                    <TableCell className="text-muted-foreground dark:text-muted-foreground">{accrual.extra_office_days} days</TableCell>
                     <TableCell>
                       <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-green-200 dark:border-green-700">
                         {accrual.accrued_leaves} leaves
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-gray-700 dark:text-gray-300">{formatDate(accrual.calculation_date)}</TableCell>
+                    <TableCell className="text-muted-foreground dark:text-muted-foreground">{formatDate(accrual.calculation_date)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -416,40 +416,40 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
 
       {/* Recent Leave Requests */}
       {leaveData.pendingRequests.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 slide-up border border-gray-200 dark:border-gray-700">
+        <div className="bg-card dark:bg-card rounded-2xl elevation-md p-6 slide-up border border-border/50 dark:border-border">
           <div className="flex items-center space-x-3 mb-4">
-            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-              <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <div className="w-8 h-8 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center">
+              <FileText className="w-4 h-4 text-primary dark:text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Recent Leave Requests</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Your recent leave requests and their status</p>
+              <h2 className="text-xl font-bold text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>Recent Leave Requests</h2>
+              <p className="text-sm text-muted-foreground dark:text-muted-foreground">Your recent leave requests and their status</p>
             </div>
           </div>
           
-          <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-600">
+          <div className="overflow-hidden rounded-xl border border-border/50 dark:border-border">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-50 dark:bg-gray-700">
-                  <TableHead className="font-semibold text-gray-700 dark:text-gray-200">Leave Type</TableHead>
-                  <TableHead className="font-semibold text-gray-700 dark:text-gray-200">Date Range</TableHead>
-                  <TableHead className="font-semibold text-gray-700 dark:text-gray-200">Days</TableHead>
-                  <TableHead className="font-semibold text-gray-700 dark:text-gray-200">Status</TableHead>
-                  <TableHead className="font-semibold text-gray-700 dark:text-gray-200">Submitted</TableHead>
+                <TableRow className="bg-muted/50 dark:bg-muted/30">
+                  <TableHead className="font-semibold text-foreground dark:text-foreground">Leave Type</TableHead>
+                  <TableHead className="font-semibold text-foreground dark:text-foreground">Date Range</TableHead>
+                  <TableHead className="font-semibold text-foreground dark:text-foreground">Days</TableHead>
+                  <TableHead className="font-semibold text-foreground dark:text-foreground">Status</TableHead>
+                  <TableHead className="font-semibold text-foreground dark:text-foreground">Submitted</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {leaveData.pendingRequests.map((request) => (
-                  <TableRow key={request.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    <TableCell className="font-medium text-gray-900 dark:text-white">
+                  <TableRow key={request.id} className="hover:bg-muted/30 dark:hover:bg-muted/20 transition-colors">
+                    <TableCell className="font-medium text-foreground dark:text-foreground">
                       {request.leave_types?.name || 'Unknown'}
                     </TableCell>
-                    <TableCell className="text-gray-700 dark:text-gray-300">
+                    <TableCell className="text-muted-foreground dark:text-muted-foreground">
                       {formatDate(request.start_date)} - {formatDate(request.end_date)}
                     </TableCell>
-                    <TableCell className="text-gray-700 dark:text-gray-300">{request.total_days} days</TableCell>
+                    <TableCell className="text-muted-foreground dark:text-muted-foreground">{request.total_days} days</TableCell>
                     <TableCell>{getStatusBadge(request.status)}</TableCell>
-                    <TableCell className="text-gray-700 dark:text-gray-300">{formatDate(request.created_at)}</TableCell>
+                    <TableCell className="text-muted-foreground dark:text-muted-foreground">{formatDate(request.created_at)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -460,58 +460,58 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
 
       {/* Info Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow duration-200 dark:bg-gray-800">
+        <Card className="border-border/50 dark:border-border hover:elevation-md transition-shadow duration-200 bg-card dark:bg-card">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3 mb-3">
-              <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-                <Info className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+              <div className="w-6 h-6 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center">
+                <Info className="w-3 h-3 text-primary dark:text-primary" />
               </div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">How Bonus Leaves Work</h3>
+              <h3 className="text-base font-semibold text-foreground dark:text-foreground">How Bonus Leaves Work</h3>
             </div>
-            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+            <div className="space-y-2 text-sm text-muted-foreground dark:text-muted-foreground">
               <div className="flex items-start space-x-2">
-                <div className="w-1.5 h-1.5 bg-purple-400 rounded-full mt-2 flex-shrink-0"></div>
+                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                 <p>For every 3 extra office days, you earn 1 bonus leave</p>
               </div>
               <div className="flex items-start space-x-2">
-                <div className="w-1.5 h-1.5 bg-purple-400 rounded-full mt-2 flex-shrink-0"></div>
+                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                 <p>Maximum 15 bonus leaves per calendar year</p>
               </div>
               <div className="flex items-start space-x-2">
-                <div className="w-1.5 h-1.5 bg-purple-400 rounded-full mt-2 flex-shrink-0"></div>
+                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                 <p>Only completed office sessions are counted</p>
               </div>
               <div className="flex items-start space-x-2">
-                <div className="w-1.5 h-1.5 bg-purple-400 rounded-full mt-2 flex-shrink-0"></div>
+                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                 <p>Accrual is calculated monthly</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow duration-200 dark:bg-gray-800">
+        <Card className="border-border/50 dark:border-border hover:elevation-md transition-shadow duration-200 bg-card dark:bg-card">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3 mb-3">
-              <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                <Calendar className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+              <div className="w-6 h-6 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center">
+                <Calendar className="w-3 h-3 text-primary dark:text-primary" />
               </div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Leave Request Process</h3>
+              <h3 className="text-base font-semibold text-foreground dark:text-foreground">Leave Request Process</h3>
             </div>
-            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+            <div className="space-y-2 text-sm text-muted-foreground dark:text-muted-foreground">
               <div className="flex items-start space-x-2">
-                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                 <p>Submit request with sufficient balance</p>
               </div>
               <div className="flex items-start space-x-2">
-                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                 <p>Requests are reviewed by management</p>
               </div>
               <div className="flex items-start space-x-2">
-                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                 <p>Approved leaves are deducted from balance</p>
               </div>
               <div className="flex items-start space-x-2">
-                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                 <p>Weekend days are automatically excluded</p>
               </div>
             </div>
