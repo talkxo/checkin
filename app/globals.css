@@ -67,6 +67,10 @@
     tab-size: 4;
     font-feature-settings: normal;
     font-variation-settings: normal;
+    /* CLS Prevention */
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
   }
   
   body {
@@ -76,6 +80,11 @@
     height: 100%;
     margin: 0;
     padding: 0;
+    /* CLS Prevention */
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+    position: relative;
   }
 
   /* Notion-style minimal design */

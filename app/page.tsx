@@ -683,6 +683,56 @@ export default function HomePage(){
     setIsSubmitting(false);
   };
 
+  // Core checkout function - reusable for both manual and auto checkout
+  const performCheckout = async (mood?: string, moodComment?: string, skipMoodUI: boolean = false): Promise<boolean> => {
+    if (!currentSession) return false;
+    
+    const slug = currentSession.employee.slug;
+    
+    try {
+      const r = await fetch('/api/checkout', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ 
+          slug,
+          mood,
+          moodComment
+        }) 
+      });
+      const j = await r.json();
+      
+      if (r.ok) {
+        // Update all related state atomically
+        localStorage.removeItem('currentSession');
+        setCurrentSession(null);
+        setHasOpen(false);
+        setElapsedTime(0);
+        if (!skipMoodUI) {
+          setShowMoodCheck(false);
+        }
+        setSelectedMood('');
+        setMoodComment('');
+        
+        // Refresh summaries (non-blocking)
+        fetchTodaySummary();
+        if (slug) {
+          fetchMySummary(slug, true).catch(err => console.error('Error fetching summary:', err));
+        }
+        
+        return true;
+      } else {
+        setMsg(j.error || 'Error');
+        // If checkout failed, recheck session status
+        checkSessionStatus(slug);
+        return false;
+      }
+    } catch (error) {
+      setMsg('Network error. Please try again.');
+      console.error('Checkout error:', error);
+      return false;
+    }
+  };
+
   const checkout = async () => {
     if (!currentSession) return;
     
@@ -694,41 +744,11 @@ export default function HomePage(){
     setIsSubmitting(true);
     setMsg('');
     
-    try {
-      const r = await fetch('/api/checkout', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ 
-          slug: currentSession.employee.slug,
-          mood: selectedMood,
-          moodComment: moodComment
-        }) 
-      });
-      const j = await r.json();
-      
-      if (r.ok) {
-        localStorage.removeItem('currentSession');
-        setCurrentSession(null);
-        setHasOpen(false);
-        setElapsedTime(0);
-        setShowMoodCheck(false);
-        setSelectedMood('');
-        setMoodComment('');
-        
-        // AI notification already initiated during hold
-        
-        fetchTodaySummary();
-        // Also refresh summary for last in/out immediately after checkout
-        if (currentSession?.employee?.slug) {
-          fetchMySummary(currentSession.employee.slug, true);
-        }
-      } else {
-        setMsg(j.error || 'Error');
-        // If checkout failed, recheck session status
-        checkSessionStatus(currentSession.employee.slug);
-      }
-    } catch (error) {
-      setMsg('Network error. Please try again.');
+    const success = await performCheckout(selectedMood, moodComment, false);
+    
+    if (!success) {
+      // Error already set by performCheckout
+      console.error('Checkout failed');
     }
     
     setIsSubmitting(false);
@@ -931,7 +951,7 @@ export default function HomePage(){
       return;
     }
 
-    const checkAutoCheckout = () => {
+    const checkAutoCheckout = async () => {
       const checkinTime = new Date(currentSession.session.checkin_ts).getTime();
       const now = Date.now();
       const hoursElapsed = (now - checkinTime) / (1000 * 60 * 60);
@@ -941,15 +961,22 @@ export default function HomePage(){
       const warningThreshold = autoCheckoutHours - (10 / 60); // 10 minutes before
 
       if (hoursElapsed >= autoCheckoutHours) {
-        // Auto-checkout
-        checkout();
-        
-        if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification('Auto-Checkout', {
-            body: `You've been automatically checked out after ${autoCheckoutHours} hours.`,
-            icon: '/insyde-logo.png',
-            tag: 'auto-checkout'
-          });
+        // Auto-checkout - perform checkout directly without mood UI
+        try {
+          const success = await performCheckout(undefined, undefined, true);
+          if (success) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification('Auto-Checkout', {
+                body: `You've been automatically checked out after ${autoCheckoutHours} hours.`,
+                icon: '/insyde-logo.png',
+                tag: 'auto-checkout'
+              });
+            }
+          } else {
+            console.error('Auto-checkout failed');
+          }
+        } catch (error) {
+          console.error('Auto-checkout error:', error);
         }
       } else if (hoursElapsed >= warningThreshold && !autoCheckoutWarning) {
         // Show warning 10 minutes before
@@ -1006,7 +1033,7 @@ export default function HomePage(){
 
   return (
     <div className="min-h-screen bg-background dark:bg-background">
-      <div className="max-w-md mx-auto px-4 py-6 sm:px-6">
+      <div className="max-w-md mx-auto px-4 py-6 sm:px-6 w-full">
         {showNameInput ? (
           // PIN Login Screen
           <div className="flex items-center justify-center min-h-[60vh]">
