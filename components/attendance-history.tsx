@@ -79,9 +79,8 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
     setError('');
 
     try {
-      // Format date as YYYY-MM-DD in IST
-      const istDate = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-      const dateStr = istDate.toISOString().split('T')[0];
+      // Format date as YYYY-MM-DD in IST to avoid timezone issues
+      const dateStr = date.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // en-CA gives YYYY-MM-DD format
 
       const response = await fetch(`/api/attendance/history?slug=${userSlug}&date=${dateStr}`);
       
@@ -212,8 +211,8 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
 
       // Fetch data for each day in the month
       const promises = monthDays.map(async (day) => {
-        const istDate = new Date(day.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-        const dateStr = istDate.toISOString().split('T')[0];
+        // Format date as YYYY-MM-DD in IST to avoid timezone issues
+        const dateStr = day.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // en-CA gives YYYY-MM-DD format
         
         try {
           const response = await fetch(`/api/attendance/history?slug=${userSlug}&date=${dateStr}`);
@@ -403,8 +402,9 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
                           );
                         }
                         
-                        const dayStr = day.toISOString().split('T')[0];
-                        const dayData = monthlyData.find(d => d.date === dayStr);
+                        // Format date as YYYY-MM-DD in IST to match API data
+                        const istDateStr = day.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // en-CA gives YYYY-MM-DD format
+                        const dayData = monthlyData.find(d => d.date === istDateStr);
                         const checkinStatus = dayData?.checkinStatus || 'none';
                         const status = dayData?.status || 'not_started';
                         const hours = dayData?.hours || 0;
