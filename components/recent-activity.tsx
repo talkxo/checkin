@@ -70,12 +70,12 @@ const RecentActivity: React.FC<RecentActivityProps> = ({
           const checkinTimeMinutes = checkinHour * 60 + checkinMinute;
           
           let status: 'on-time' | 'slightly-late' | 'late' = 'on-time';
-          if (checkinTimeMinutes < 600) {
-            status = 'on-time'; // Before 10:00
-          } else if (checkinTimeMinutes < 660) {
-            status = 'slightly-late'; // 10:00-11:00
+          if (checkinTimeMinutes < 615) {
+            status = 'on-time'; // Before 10:15 (early up to 9:45 counts on-time here)
+          } else if (checkinTimeMinutes < 645) {
+            status = 'slightly-late'; // 10:15-10:45
           } else {
-            status = 'late'; // 11:00 and after
+            status = 'late'; // 10:45 and after
           }
           
           // Get date string in IST for grouping

@@ -104,10 +104,10 @@ export async function GET(req: NextRequest) {
       if (!dayScores.has(dateKey) || dayScores.get(dateKey)!.checkinTime > checkinTimeMinutes) {
         // Base score based on check-in time
         let baseScore = 0;
-        if (checkinTimeMinutes < 600) {
-          baseScore = 3; // On-time (before 10 AM)
-        } else if (checkinTimeMinutes < 660) {
-          baseScore = 2; // Slightly late (10-11 AM)
+        if (checkinTimeMinutes < 615) {
+          baseScore = 3; // On-time (before 10:15 AM, includes early)
+        } else if (checkinTimeMinutes < 645) {
+          baseScore = 2; // Slightly late (10:15-10:45 AM)
         } else if (checkinTimeMinutes < 1020) {
           baseScore = 1; // Late but before 5 PM
         } else {

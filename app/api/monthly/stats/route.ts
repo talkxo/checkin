@@ -69,8 +69,8 @@ export async function GET(req: NextRequest) {
       if (!uniqueDays.has(dateKey)) {
         uniqueDays.add(dateKey);
         
-        // Count as "on time" if check-in is before 10 AM
-        if (checkinTimeMinutes < 600) {
+        // Count as "on time" if check-in is before 10:15 AM (includes early)
+        if (checkinTimeMinutes < 615) {
           daysOnTime++;
         }
       }

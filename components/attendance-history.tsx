@@ -231,17 +231,17 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
               const [checkinHour, checkinMinute] = data.checkinTime.split(':').map(Number);
               const checkinTimeMinutes = checkinHour * 60 + checkinMinute;
               
-              // Before 9:00 AM = early
-              // 9:00-10:00 AM = on-time
-              // 10:00-11:00 AM = slightly-late
-              // After 11:00 AM = late
-              if (checkinTimeMinutes < 540) { // Before 9:00
+              // Before 9:45 AM = early
+              // 9:45-10:15 AM = on-time
+              // 10:15-10:45 AM = slightly-late
+              // After 10:45 AM = late
+              if (checkinTimeMinutes < 585) { // Before 9:45
                 checkinStatus = 'early';
-              } else if (checkinTimeMinutes < 600) { // 9:00-10:00
+              } else if (checkinTimeMinutes < 615) { // 9:45-10:15
                 checkinStatus = 'on-time';
-              } else if (checkinTimeMinutes < 660) { // 10:00-11:00
+              } else if (checkinTimeMinutes < 645) { // 10:15-10:45
                 checkinStatus = 'slightly-late';
-              } else { // After 11:00
+              } else { // After 10:45
                 checkinStatus = 'late';
               }
             }
