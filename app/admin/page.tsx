@@ -1,11 +1,13 @@
 "use client";
 import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import AdminLeaveManagement from '@/components/admin-leave-management';
+import DarkModeToggle from '@/components/dark-mode-toggle';
 import { Bar, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -747,105 +749,123 @@ export default function AdminPage() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 p-4">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background dark:bg-background">
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
-            <h1 className="font-cal-sans text-3xl font-semibold text-purple-600 tracking-tight">
-              insyde
-            </h1>
+            <div className="w-8 h-8 flex items-center justify-center">
+              <img 
+                src="https://pqkph3lzaffmetri.public.blob.vercel-storage.com/1764957051530-Inside-Icon.png" 
+                alt="insyde" 
+                className="w-8 h-8 object-contain"
+              />
+            </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Admin Dashboard</h2>
-              <p className="text-gray-600">Attendance analytics and insights</p>
+              <h1 className="text-2xl font-bold text-foreground dark:text-foreground">Admin Dashboard</h1>
+              <p className="text-sm text-muted-foreground dark:text-muted-foreground">Attendance analytics and insights</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-3">
+            <DarkModeToggle />
             <Button
-              variant="outline"
+              variant="ghost"
+              size="sm"
               onClick={() => window.location.href = '/admin-chat'}
+              className="text-muted-foreground dark:text-muted-foreground hover:text-foreground"
             >
               <MessageSquare className="w-4 h-4 mr-2" />
               Chat Mode
             </Button>
             <Button
-              variant="outline"
+              variant="ghost"
+              size="sm"
               onClick={handleLogout}
+              className="text-muted-foreground dark:text-muted-foreground hover:text-foreground"
             >
+              <LogOut className="w-4 h-4 mr-2" />
               Logout
             </Button>
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-          <Button
-            variant={activeTab === 'dashboard' ? 'default' : 'ghost'}
-            size="sm"
+        <div className="flex gap-1 border-b border-border/50 dark:border-border mb-6 overflow-x-auto">
+          <button
+            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px] whitespace-nowrap ${
+              activeTab === 'dashboard'
+                ? 'border-primary text-foreground dark:text-foreground'
+                : 'border-transparent text-muted-foreground dark:text-muted-foreground hover:text-foreground'
+            }`}
             onClick={() => setActiveTab('dashboard')}
-            className="flex-1"
           >
-            <Eye className="w-4 h-4 mr-2" />
+            <Eye className="w-4 h-4 inline mr-2" />
             Dashboard
-          </Button>
-          <Button
-            variant={activeTab === 'users' ? 'default' : 'ghost'}
-            size="sm"
+          </button>
+          <button
+            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px] whitespace-nowrap ${
+              activeTab === 'users'
+                ? 'border-primary text-foreground dark:text-foreground'
+                : 'border-transparent text-muted-foreground dark:text-muted-foreground hover:text-foreground'
+            }`}
             onClick={() => setActiveTab('users')}
-            className="flex-1"
           >
-            <Users className="w-4 h-4 mr-2" />
+            <Users className="w-4 h-4 inline mr-2" />
             User Management
-          </Button>
-          <Button
-            variant={activeTab === 'ai' ? 'default' : 'ghost'}
-            size="sm"
+          </button>
+          <button
+            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px] whitespace-nowrap ${
+              activeTab === 'ai'
+                ? 'border-primary text-foreground dark:text-foreground'
+                : 'border-transparent text-muted-foreground dark:text-muted-foreground hover:text-foreground'
+            }`}
             onClick={() => setActiveTab('ai')}
-            className="flex-1"
           >
-            <Brain className="w-4 h-4 mr-2" />
+            <Brain className="w-4 h-4 inline mr-2" />
             AI Insights
-          </Button>
-          <Button
-            variant={activeTab === 'leave' ? 'default' : 'ghost'}
-            size="sm"
+          </button>
+          <button
+            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px] whitespace-nowrap ${
+              activeTab === 'leave'
+                ? 'border-primary text-foreground dark:text-foreground'
+                : 'border-transparent text-muted-foreground dark:text-muted-foreground hover:text-foreground'
+            }`}
             onClick={() => setActiveTab('leave')}
-            className="flex-1"
           >
-            <Calendar className="w-4 h-4 mr-2" />
+            <Calendar className="w-4 h-4 inline mr-2" />
             Leave Management
-          </Button>
+          </button>
         </div>
 
         {/* Reset Dialog */}
         {showResetDialog && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-md mx-4">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-red-600">
-                  <AlertTriangle className="w-5 h-5" />
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 max-w-md w-full elevation-xl">
+              <div className="mb-4 pb-3 border-b border-border/50 dark:border-border">
+                <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-destructive" />
                   Reset All Sessions
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                </h3>
+              </div>
+              <div className="space-y-4">
                 {resetResult ? (
                   <div className="text-center">
-                    <p className={resetResult.startsWith('Success') ? 'text-green-600' : 'text-red-600'}>
+                    <p className={resetResult.startsWith('Success') ? 'text-green-600 dark:text-green-400' : 'text-destructive'}>
                       {resetResult}
                     </p>
                   </div>
                 ) : (
                   <>
                     <div className="text-center space-y-2">
-                      <p className="text-gray-700">
+                      <p className="text-foreground dark:text-foreground">
                         This will check out all currently active sessions. This action cannot be undone.
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground dark:text-muted-foreground">
                         Are you sure you want to continue?
                       </p>
                     </div>
                     
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                       <Button
                         variant="destructive"
                         onClick={confirmReset}
@@ -874,27 +894,35 @@ export default function AdminPage() {
                     </div>
                   </>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Dashboard Tab Content - Attendance Tracker */}
-        {activeTab === 'dashboard' && (
-          <>
-            {/* Date Range Selector */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5" />
-                  Attendance Tracker
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Preset Options */}
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">Quick Select</label>
+        {/* Tab Content */}
+        <div className="min-h-[400px]">
+          <AnimatePresence mode="wait">
+            {activeTab === 'dashboard' && (
+              <motion.div
+                key="dashboard"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                {/* Date Range Selector */}
+                <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
+                  <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50 dark:border-border">
+                    <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
+                      <Calendar className="w-5 h-5" />
+                      Attendance Tracker
+                    </h3>
+                  </div>
+                  <div className="space-y-4">
+                    {/* Preset Options */}
+                    <div>
+                      <label className="text-sm font-medium text-foreground dark:text-foreground mb-2 block">Quick Select</label>
                     <div className="flex gap-2 flex-wrap">
                       {[
                         { key: 'currentMonth', label: 'Current Month' },
@@ -914,147 +942,144 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  {/* Custom Date Range */}
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">Custom Range</label>
-                    <div className="flex gap-4 items-center">
-                      <div>
-                        <label className="text-xs text-gray-500">Start Date</label>
-                        <Input
-                          type="date"
-                          value={dateRange.startDate}
-                          onChange={(e) => handleCustomDateChange('startDate', e.target.value)}
-                          className="w-40"
-                        />
+                    {/* Custom Date Range */}
+                    <div>
+                      <label className="text-sm font-medium text-foreground dark:text-foreground mb-2 block">Custom Range</label>
+                      <div className="flex gap-4 items-center flex-wrap">
+                        <div>
+                          <label className="text-xs text-muted-foreground dark:text-muted-foreground">Start Date</label>
+                          <Input
+                            type="date"
+                            value={dateRange.startDate}
+                            onChange={(e) => handleCustomDateChange('startDate', e.target.value)}
+                            className="w-40 bg-background dark:bg-background border-border dark:border-border"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground dark:text-muted-foreground">End Date</label>
+                          <Input
+                            type="date"
+                            value={dateRange.endDate}
+                            onChange={(e) => handleCustomDateChange('endDate', e.target.value)}
+                            className="w-40 bg-background dark:bg-background border-border dark:border-border"
+                          />
+                        </div>
+                        <Button
+                          onClick={loadAttendanceData}
+                          disabled={!dateRange.startDate || !dateRange.endDate || isLoadingAttendance}
+                          className="mt-6"
+                        >
+                          {isLoadingAttendance ? (
+                            <>
+                              <Clock className="w-4 h-4 mr-2 animate-spin" />
+                              Loading...
+                            </>
+                          ) : (
+                            'Apply'
+                          )}
+                        </Button>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">End Date</label>
-                        <Input
-                          type="date"
-                          value={dateRange.endDate}
-                          onChange={(e) => handleCustomDateChange('endDate', e.target.value)}
-                          className="w-40"
-                        />
+                    </div>
+
+                    {/* Selected Date Range Display */}
+                    {dateRange.startDate && dateRange.endDate && (
+                      <div className="text-sm text-muted-foreground dark:text-muted-foreground bg-muted dark:bg-muted p-3 rounded-lg">
+                        <strong className="text-foreground dark:text-foreground">Selected Period:</strong> {dateRange.startDate} to {dateRange.endDate}
                       </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Team Summary */}
+                {teamSummary && (
+                  <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
+                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50 dark:border-border">
+                      <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
+                        <BarChart3 className="w-5 h-5" />
+                        Team Summary
+                      </h3>
                       <Button
-                        onClick={loadAttendanceData}
-                        disabled={!dateRange.startDate || !dateRange.endDate || isLoadingAttendance}
-                        className="mt-6"
+                        variant="outline"
+                        size="sm"
+                        onClick={exportTeamSummary}
+                        disabled={!attendanceData.length}
+                        className="text-muted-foreground dark:text-muted-foreground hover:text-foreground"
                       >
-                        {isLoadingAttendance ? (
-                          <>
-                            <Clock className="w-4 h-4 mr-2 animate-spin" />
-                            Loading...
-                          </>
-                        ) : (
-                          'Apply'
-                        )}
+                        <Download className="w-4 h-4 mr-2" />
+                        Export Team Summary
                       </Button>
                     </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-primary">{teamSummary.totalEmployees}</p>
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground">Employees</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-primary">{teamSummary.totalWorkingDays}</p>
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground">Working Days</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-primary">{teamSummary.totalHours.toFixed(1)}h</p>
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground">Total Hours</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-primary">{teamSummary.averageAttendanceRate.toFixed(1)}%</p>
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground">Avg Attendance</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="text-center p-3 bg-muted dark:bg-muted rounded-lg">
+                        <p className="text-lg font-semibold text-foreground dark:text-foreground">{teamSummary.officePercentage.toFixed(1)}%</p>
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground">Office Work</p>
+                      </div>
+                      <div className="text-center p-3 bg-muted dark:bg-muted rounded-lg">
+                        <p className="text-lg font-semibold text-foreground dark:text-foreground">{teamSummary.remotePercentage.toFixed(1)}%</p>
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground">Remote Work</p>
+                      </div>
+                    </div>
                   </div>
+                )}
 
-                  {/* Selected Date Range Display */}
-                  {dateRange.startDate && dateRange.endDate && (
-                    <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                      <strong>Selected Period:</strong> {dateRange.startDate} to {dateRange.endDate}
+                {/* Employee Attendance Table */}
+                {attendanceData.length > 0 && (
+                  <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
+                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50 dark:border-border">
+                      <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
+                        <Users className="w-5 h-5" />
+                        Employee Attendance
+                      </h3>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Search employees..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-64 bg-background dark:bg-background border-border dark:border-border"
+                        />
+                      </div>
                     </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Team Summary */}
-            {teamSummary && (
-              <Card>
-                <CardHeader className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5" />
-                    Team Summary
-                  </CardTitle>
-                  <Button
-                    variant="outline"
-                    onClick={exportTeamSummary}
-                    disabled={!attendanceData.length}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Export Team Summary
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-purple-600">{teamSummary.totalEmployees}</p>
-                      <p className="text-sm text-gray-600">Employees</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-blue-600">{teamSummary.totalWorkingDays}</p>
-                      <p className="text-sm text-gray-600">Working Days</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-green-600">{teamSummary.totalHours.toFixed(1)}h</p>
-                      <p className="text-sm text-gray-600">Total Hours</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-orange-600">{teamSummary.averageAttendanceRate.toFixed(1)}%</p>
-                      <p className="text-sm text-gray-600">Avg Attendance</p>
-                    </div>
-                  </div>
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="text-center p-3 bg-blue-50 rounded-lg">
-                      <p className="text-lg font-semibold text-blue-700">{teamSummary.officePercentage.toFixed(1)}%</p>
-                      <p className="text-sm text-blue-600">Office Work</p>
-                    </div>
-                    <div className="text-center p-3 bg-green-50 rounded-lg">
-                      <p className="text-lg font-semibold text-green-700">{teamSummary.remotePercentage.toFixed(1)}%</p>
-                      <p className="text-sm text-green-600">Remote Work</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Employee Attendance Table */}
-            {attendanceData.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="w-5 h-5" />
-                      Employee Attendance
-                    </CardTitle>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Search employees..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-64"
-                      />
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
+                    <div>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="cursor-pointer" onClick={() => handleSort('name')}>
+                        <TableHead className="cursor-pointer text-foreground dark:text-foreground hover:text-primary transition-colors" onClick={() => handleSort('name')}>
                           Name {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                         </TableHead>
-                        <TableHead className="cursor-pointer" onClick={() => handleSort('daysPresent')}>
+                        <TableHead className="cursor-pointer text-foreground dark:text-foreground hover:text-primary transition-colors" onClick={() => handleSort('daysPresent')}>
                           Days Present {sortConfig.key === 'daysPresent' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                         </TableHead>
-                        <TableHead className="cursor-pointer" onClick={() => handleSort('officeDays')}>
+                        <TableHead className="cursor-pointer text-foreground dark:text-foreground hover:text-primary transition-colors" onClick={() => handleSort('officeDays')}>
                           Office Days {sortConfig.key === 'officeDays' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                         </TableHead>
-                        <TableHead className="cursor-pointer" onClick={() => handleSort('remoteDays')}>
+                        <TableHead className="cursor-pointer text-foreground dark:text-foreground hover:text-primary transition-colors" onClick={() => handleSort('remoteDays')}>
                           Remote Days {sortConfig.key === 'remoteDays' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                         </TableHead>
-                        <TableHead className="cursor-pointer" onClick={() => handleSort('totalHours')}>
+                        <TableHead className="cursor-pointer text-foreground dark:text-foreground hover:text-primary transition-colors" onClick={() => handleSort('totalHours')}>
                           Total Hours {sortConfig.key === 'totalHours' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                         </TableHead>
-                        <TableHead className="cursor-pointer" onClick={() => handleSort('averageHoursPerDay')}>
+                        <TableHead className="cursor-pointer text-foreground dark:text-foreground hover:text-primary transition-colors" onClick={() => handleSort('averageHoursPerDay')}>
                           Avg Hours/Day {sortConfig.key === 'averageHoursPerDay' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                         </TableHead>
-                        <TableHead className="cursor-pointer" onClick={() => handleSort('attendanceRate')}>
+                        <TableHead className="cursor-pointer text-foreground dark:text-foreground hover:text-primary transition-colors" onClick={() => handleSort('attendanceRate')}>
                           Attendance % {sortConfig.key === 'attendanceRate' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                         </TableHead>
                         <TableHead>Actions</TableHead>
@@ -1065,14 +1090,14 @@ export default function AdminPage() {
                         <>
                           <TableRow 
                             key={employee.employee_id}
-                            className="cursor-pointer hover:bg-gray-50"
+                            className="cursor-pointer hover:bg-muted/30 dark:hover:bg-muted/30 transition-colors"
                             onClick={() => toggleEmployeeExpansion(employee.employee_id)}
                           >
-                            <TableCell className="font-medium flex items-center gap-2">
+                            <TableCell className="font-medium flex items-center gap-2 text-foreground dark:text-foreground">
                               {expandedEmployees.has(employee.employee_id) ? (
-                                <ChevronDown className="w-4 h-4" />
+                                <ChevronDown className="w-4 h-4 text-muted-foreground dark:text-muted-foreground" />
                               ) : (
-                                <ChevronRight className="w-4 h-4" />
+                                <ChevronRight className="w-4 h-4 text-muted-foreground dark:text-muted-foreground" />
                               )} {employee.name}
                             </TableCell>
                             <TableCell>
@@ -1114,8 +1139,8 @@ export default function AdminPage() {
                           {expandedEmployees.has(employee.employee_id) && (
                             <TableRow>
                               <TableCell colSpan={8} className="p-0">
-                                <div className="bg-gray-50 p-4">
-                                  <h4 className="font-medium text-gray-900 mb-3">Daily Sessions for {employee.name}</h4>
+                                <div className="bg-muted dark:bg-muted p-4">
+                                  <h4 className="font-medium text-foreground dark:text-foreground mb-3">Daily Sessions for {employee.name}</h4>
                                   <Table>
                                     <TableHeader>
                                       <TableRow>
@@ -1160,52 +1185,58 @@ export default function AdminPage() {
                           )}
                         </>
                       ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+
+                {/* No Data State */}
+                {!isLoadingAttendance && attendanceData.length === 0 && dateRange.startDate && dateRange.endDate && (
+                  <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-12 elevation-md text-center">
+                    <Users className="w-12 h-12 text-muted-foreground dark:text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground dark:text-foreground mb-2">No Attendance Data</h3>
+                    <p className="text-muted-foreground dark:text-muted-foreground">No attendance records found for the selected date range.</p>
+                  </div>
+                )}
+              </motion.div>
             )}
 
-            {/* No Data State */}
-            {!isLoadingAttendance && attendanceData.length === 0 && dateRange.startDate && dateRange.endDate && (
-              <Card>
-                <CardContent className="text-center py-12">
-                  <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Attendance Data</h3>
-                  <p className="text-gray-600">No attendance records found for the selected date range.</p>
-                </CardContent>
-              </Card>
-            )}
-          </>
-        )}
-
-        {/* User Management Tab Content */}
-        {activeTab === 'users' && (
-          <Card>
-            <CardHeader className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                User Management
-              </CardTitle>
-              <div className="flex gap-2">
-                <Button
-                  variant="destructive"
-                  onClick={handleResetSessions}
-                  disabled={isResetting}
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Reset All Sessions
-                </Button>
-                <Button
-                  onClick={() => setShowAddUserDialog(true)}
-                  className="flex items-center gap-2"
-                >
-                  <UserPlus className="w-4 h-4" />
-                  Add User
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
+            {activeTab === 'users' && (
+              <motion.div
+                key="users"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
+                  <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50 dark:border-border">
+                    <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
+                      <Users className="w-5 h-5" />
+                      User Management
+                    </h3>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={handleResetSessions}
+                        disabled={isResetting}
+                      >
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Reset All Sessions
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => setShowAddUserDialog(true)}
+                        className="flex items-center gap-2"
+                      >
+                        <UserPlus className="w-4 h-4" />
+                        Add User
+                      </Button>
+                    </div>
+                  </div>
+                  <div>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -1220,9 +1251,9 @@ export default function AdminPage() {
                 <TableBody>
                   {allUsers.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.full_name}</TableCell>
-                      <TableCell>{user.email || 'N/A'}</TableCell>
-                      <TableCell className="font-mono text-sm">{user.slug}</TableCell>
+                      <TableCell className="font-medium text-foreground dark:text-foreground">{user.full_name}</TableCell>
+                      <TableCell className="text-foreground dark:text-foreground">{user.email || 'N/A'}</TableCell>
+                      <TableCell className="font-mono text-sm text-muted-foreground dark:text-muted-foreground">{user.slug}</TableCell>
                       <TableCell>
                         <Badge variant={user.active ? 'default' : 'secondary'}>
                           {user.active ? 'Active' : 'Inactive'}
@@ -1252,84 +1283,90 @@ export default function AdminPage() {
                       </TableCell>
                     </TableRow>
                   ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </motion.div>
+            )}
 
-        {/* AI Insights Tab Content */}
-        {activeTab === 'ai' && (
-          <div className="space-y-6">
-            {/* Welcome Section */}
-            <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-purple-700">
-                  <Brain className="w-6 h-6" />
-                  AI-Powered HR Insights
-                </CardTitle>
-                <p className="text-gray-600">
-                  Get intelligent insights about your team's engagement, well-being, and productivity patterns
-                </p>
-              </CardHeader>
-            </Card>
-
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => { setAiTimeRange('today'); setSelectedAiFeature('insights'); }}>
-                <CardContent className="p-6 text-center">
-                  <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mx-auto mb-3">
-                    <Clock className="w-6 h-6 text-green-600" />
+            {activeTab === 'ai' && (
+              <motion.div
+                key="ai"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                {/* Welcome Section */}
+                <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2 mb-2">
+                      <Brain className="w-6 h-6" />
+                      AI-Powered HR Insights
+                    </h3>
+                    <p className="text-muted-foreground dark:text-muted-foreground">
+                      Get intelligent insights about your team's engagement, well-being, and productivity patterns
+                    </p>
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Daily Check-in</h3>
-                  <p className="text-sm text-gray-600 mb-4">Quick insights for today's team status</p>
-                  <Button size="sm" className="w-full">
-                    Analyze Today
-                  </Button>
-                </CardContent>
-              </Card>
+                </div>
 
-              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => { setAiTimeRange('week'); setSelectedAiFeature('insights'); }}>
-                <CardContent className="p-6 text-center">
-                  <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mx-auto mb-3">
-                    <TrendingUp className="w-6 h-6 text-blue-600" />
+                {/* Quick Actions */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md card-hover cursor-pointer" onClick={() => { setAiTimeRange('today'); setSelectedAiFeature('insights'); }}>
+                    <div className="text-center">
+                      <div className="flex items-center justify-center w-12 h-12 bg-muted dark:bg-muted rounded-full mx-auto mb-3">
+                        <Clock className="w-6 h-6 text-primary" />
+                      </div>
+                      <h3 className="font-semibold text-foreground dark:text-foreground mb-2">Daily Check-in</h3>
+                      <p className="text-sm text-muted-foreground dark:text-muted-foreground mb-4">Quick insights for today's team status</p>
+                      <Button size="sm" className="w-full">
+                        Analyze Today
+                      </Button>
+                    </div>
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Weekly Review</h3>
-                  <p className="text-sm text-gray-600 mb-4">Comprehensive weekly team analysis</p>
-                  <Button size="sm" variant="outline" className="w-full">
-                    Review This Week
-                  </Button>
-                </CardContent>
-              </Card>
 
-              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => { setAiTimeRange('month'); setSelectedAiFeature('report'); }}>
-                <CardContent className="p-6 text-center">
-                  <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-full mx-auto mb-3">
-                    <BarChart3 className="w-6 h-6 text-purple-600" />
+                  <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md card-hover cursor-pointer" onClick={() => { setAiTimeRange('week'); setSelectedAiFeature('insights'); }}>
+                    <div className="text-center">
+                      <div className="flex items-center justify-center w-12 h-12 bg-muted dark:bg-muted rounded-full mx-auto mb-3">
+                        <TrendingUp className="w-6 h-6 text-primary" />
+                      </div>
+                      <h3 className="font-semibold text-foreground dark:text-foreground mb-2">Weekly Review</h3>
+                      <p className="text-sm text-muted-foreground dark:text-muted-foreground mb-4">Comprehensive weekly team analysis</p>
+                      <Button size="sm" variant="outline" className="w-full">
+                        Review This Week
+                      </Button>
+                    </div>
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Monthly Report</h3>
-                  <p className="text-sm text-gray-600 mb-4">Executive summary and recommendations</p>
-                  <Button size="sm" variant="outline" className="w-full">
-                    Generate Report
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
 
-            {/* Analysis Configuration */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lightbulb className="w-5 h-5" />
-                  Configure Analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Time Range Selection */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-3 block">
-                    Select Time Range
-                  </label>
+                  <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md card-hover cursor-pointer" onClick={() => { setAiTimeRange('month'); setSelectedAiFeature('report'); }}>
+                    <div className="text-center">
+                      <div className="flex items-center justify-center w-12 h-12 bg-muted dark:bg-muted rounded-full mx-auto mb-3">
+                        <BarChart3 className="w-6 h-6 text-primary" />
+                      </div>
+                      <h3 className="font-semibold text-foreground dark:text-foreground mb-2">Monthly Report</h3>
+                      <p className="text-sm text-muted-foreground dark:text-muted-foreground mb-4">Executive summary and recommendations</p>
+                      <Button size="sm" variant="outline" className="w-full">
+                        Generate Report
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Analysis Configuration */}
+                <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
+                  <div className="mb-4 pb-3 border-b border-border/50 dark:border-border">
+                    <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
+                      <Lightbulb className="w-5 h-5" />
+                      Configure Analysis
+                    </h3>
+                  </div>
+                  <div className="space-y-6">
+                    {/* Time Range Selection */}
+                    <div>
+                      <label className="text-sm font-medium text-foreground dark:text-foreground mb-3 block">
+                        Select Time Range
+                      </label>
                   <div className="flex gap-2 flex-wrap">
                     {[
                       { key: 'today', label: 'Today', icon: Clock, description: 'Current day insights' },
@@ -1355,360 +1392,353 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* Analysis Type Selection */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-3 block">
-                    Choose Analysis Type
-                  </label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div
-                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        selectedAiFeature === 'insights' 
-                          ? 'border-yellow-500 bg-yellow-50' 
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      onClick={() => setSelectedAiFeature('insights')}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <Lightbulb className="w-5 h-5 text-yellow-600" />
-                        <span className="font-medium">Engagement Insights</span>
+                    {/* Analysis Type Selection */}
+                    <div>
+                      <label className="text-sm font-medium text-foreground dark:text-foreground mb-3 block">
+                        Choose Analysis Type
+                      </label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div
+                          className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                            selectedAiFeature === 'insights' 
+                              ? 'border-primary bg-primary/10' 
+                              : 'border-border dark:border-border hover:border-primary/50'
+                          }`}
+                          onClick={() => setSelectedAiFeature('insights')}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <Lightbulb className="w-5 h-5 text-primary" />
+                            <span className="font-medium text-foreground dark:text-foreground">Engagement Insights</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+                            Work-life balance, team dynamics, and well-being patterns
+                          </p>
+                        </div>
+
+                        <div
+                          className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                            selectedAiFeature === 'report' 
+                              ? 'border-primary bg-primary/10' 
+                              : 'border-border dark:border-border hover:border-primary/50'
+                          }`}
+                          onClick={() => setSelectedAiFeature('report')}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <BarChart3 className="w-5 h-5 text-primary" />
+                            <span className="font-medium text-foreground dark:text-foreground">Executive Report</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+                            Professional summary with actionable recommendations
+                          </p>
+                        </div>
+
+                        <div
+                          className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                            selectedAiFeature === 'sentiment' 
+                              ? 'border-primary bg-primary/10' 
+                              : 'border-border dark:border-border hover:border-primary/50'
+                          }`}
+                          onClick={() => setSelectedAiFeature('sentiment')}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <MessageSquare className="w-5 h-5 text-primary" />
+                            <span className="font-medium text-foreground dark:text-foreground">Mood Analysis</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+                            Employee sentiment and well-being indicators
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-xs text-gray-600">
-                        Work-life balance, team dynamics, and well-being patterns
-                      </p>
                     </div>
 
-                    <div
-                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        selectedAiFeature === 'report' 
-                          ? 'border-purple-500 bg-purple-50' 
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      onClick={() => setSelectedAiFeature('report')}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <BarChart3 className="w-5 h-5 text-purple-600" />
-                        <span className="font-medium">Executive Report</span>
-                      </div>
-                      <p className="text-xs text-gray-600">
-                        Professional summary with actionable recommendations
-                      </p>
-                    </div>
-
-                    <div
-                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        selectedAiFeature === 'sentiment' 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      onClick={() => setSelectedAiFeature('sentiment')}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <MessageSquare className="w-5 h-5 text-green-600" />
-                        <span className="font-medium">Mood Analysis</span>
-                      </div>
-                      <p className="text-xs text-gray-600">
-                        Employee sentiment and well-being indicators
-                      </p>
+                    {/* Generate Button */}
+                    <div className="flex justify-center">
+                      <Button
+                        onClick={() => {
+                          if (selectedAiFeature === 'insights') generateAiInsights();
+                          else if (selectedAiFeature === 'report') generateAiReport();
+                          else if (selectedAiFeature === 'sentiment') generateSentimentAnalysis();
+                        }}
+                        disabled={isAiLoading || !selectedAiFeature}
+                        size="lg"
+                        className="px-8"
+                      >
+                        {isAiLoading ? (
+                          <>
+                            <Clock className="w-4 h-4 mr-2 animate-spin" />
+                            {selectedAiFeature === 'insights' && 'Analyzing Engagement...'}
+                            {selectedAiFeature === 'report' && 'Generating Report...'}
+                            {selectedAiFeature === 'sentiment' && 'Analyzing Mood...'}
+                          </>
+                        ) : (
+                          <>
+                            <Brain className="w-4 h-4 mr-2" />
+                            Generate {selectedAiFeature === 'insights' ? 'Insights' : selectedAiFeature === 'report' ? 'Report' : 'Analysis'}
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </div>
                 </div>
 
-                {/* Generate Button */}
-                <div className="flex justify-center">
-                  <Button
-                    onClick={() => {
-                      if (selectedAiFeature === 'insights') generateAiInsights();
-                      else if (selectedAiFeature === 'report') generateAiReport();
-                      else if (selectedAiFeature === 'sentiment') generateSentimentAnalysis();
-                    }}
-                    disabled={isAiLoading || !selectedAiFeature}
-                    size="lg"
-                    className="px-8"
-                  >
-                    {isAiLoading ? (
-                      <>
-                        <Clock className="w-4 h-4 mr-2 animate-spin" />
-                        {selectedAiFeature === 'insights' && 'Analyzing Engagement...'}
-                        {selectedAiFeature === 'report' && 'Generating Report...'}
-                        {selectedAiFeature === 'sentiment' && 'Analyzing Mood...'}
-                      </>
-                    ) : (
-                      <>
-                        <Brain className="w-4 h-4 mr-2" />
-                        Generate {selectedAiFeature === 'insights' ? 'Insights' : selectedAiFeature === 'report' ? 'Report' : 'Analysis'}
-                      </>
+                {/* AI Results Display */}
+                {(aiInsights || aiReport || sentimentAnalysis) && (
+                  <div className="space-y-6">
+                    {/* Results Header */}
+                    <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
+                      <div className="mb-2">
+                        <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2 mb-2">
+                          <Brain className="w-5 h-5" />
+                          AI Analysis Complete
+                        </h3>
+                        <p className="text-muted-foreground dark:text-muted-foreground">
+                          Your AI-powered insights are ready. Review the analysis below and take action on the recommendations.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* AI Insights Display */}
+                    {aiInsights && (
+                      <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
+                        <div className="mb-4 pb-3 border-b border-border/50 dark:border-border">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
+                              <Lightbulb className="w-5 h-5" />
+                              Employee Engagement Insights
+                            </h3>
+                            <Badge variant="outline" className="text-muted-foreground dark:text-muted-foreground">
+                              {aiTimeRange === 'today' ? 'Today' : aiTimeRange === 'week' ? 'This Week' : 'This Month'}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="bg-muted dark:bg-muted p-4 rounded-lg border border-border/50 dark:border-border">
+                          <div className="prose prose-sm max-w-none">
+                            <div className="whitespace-pre-wrap text-foreground dark:text-foreground">{aiInsights}</div>
+                          </div>
+                        </div>
+                        <div className="mt-4 flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(aiInsights)}>
+                            Copy Insights
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => {
+                            const blob = new Blob([aiInsights], { type: 'text/plain' });
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `engagement-insights-${aiTimeRange}-${new Date().toISOString().split('T')[0]}.txt`;
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                          }}>
+                            Export
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                    {/* AI Report Display */}
+                    {aiReport && (
+                      <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
+                        <div className="mb-4 pb-3 border-b border-border/50 dark:border-border">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
+                              <BarChart3 className="w-5 h-5" />
+                              Executive Report
+                            </h3>
+                            <Badge variant="outline" className="text-muted-foreground dark:text-muted-foreground">
+                              {aiTimeRange === 'today' ? 'Today' : aiTimeRange === 'week' ? 'This Week' : 'This Month'}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="bg-muted dark:bg-muted p-4 rounded-lg border border-border/50 dark:border-border">
+                          <div className="prose prose-sm max-w-none">
+                            <div className="whitespace-pre-wrap text-foreground dark:text-foreground">{aiReport}</div>
+                          </div>
+                        </div>
+                        <div className="mt-4 flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(aiReport)}>
+                            Copy Report
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => {
+                            const blob = new Blob([aiReport], { type: 'text/plain' });
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `executive-report-${aiTimeRange}-${new Date().toISOString().split('T')[0]}.txt`;
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                          }}>
+                            Export
+                          </Button>
+                        </div>
+                      </div>
                     )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* AI Results Display */}
-            {(aiInsights || aiReport || sentimentAnalysis) && (
-              <div className="space-y-6">
-                {/* Results Header */}
-                <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-green-700">
-                      <Brain className="w-5 h-5" />
-                      AI Analysis Complete
-                    </CardTitle>
-                    <p className="text-gray-600">
-                      Your AI-powered insights are ready. Review the analysis below and take action on the recommendations.
-                    </p>
-                  </CardHeader>
-                </Card>
+                    {/* Sentiment Analysis Display */}
+                    {sentimentAnalysis && (
+                      <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
+                        <div className="mb-4 pb-3 border-b border-border/50 dark:border-border">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
+                              <MessageSquare className="w-5 h-5" />
+                              Mood & Well-being Analysis
+                            </h3>
+                            <Badge variant="outline" className="text-muted-foreground dark:text-muted-foreground">
+                              {aiTimeRange === 'today' ? 'Today' : aiTimeRange === 'week' ? 'This Week' : 'This Month'}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="bg-muted dark:bg-muted p-4 rounded-lg border border-border/50 dark:border-border">
+                          <div className="prose prose-sm max-w-none">
+                            <div className="whitespace-pre-wrap text-foreground dark:text-foreground">{sentimentAnalysis}</div>
+                          </div>
+                        </div>
+                        <div className="mt-4 flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(sentimentAnalysis)}>
+                            Copy Analysis
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => {
+                            const blob = new Blob([sentimentAnalysis], { type: 'text/plain' });
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `mood-analysis-${aiTimeRange}-${new Date().toISOString().split('T')[0]}.txt`;
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                          }}>
+                            Export
+                          </Button>
+                        </div>
+                      </div>
+                    )}
 
-                {/* AI Insights Display */}
-                {aiInsights && (
-                  <Card className="border-yellow-200">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2 text-yellow-700">
+                    {/* Action Items */}
+                    <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
+                      <div className="mb-4 pb-3 border-b border-border/50 dark:border-border">
+                        <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
                           <Lightbulb className="w-5 h-5" />
-                          Employee Engagement Insights
-                        </CardTitle>
-                        <Badge variant="outline" className="text-yellow-600">
-                          {aiTimeRange === 'today' ? 'Today' : aiTimeRange === 'week' ? 'This Week' : 'This Month'}
-                        </Badge>
+                          Next Steps
+                        </h3>
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                        <div className="prose prose-sm max-w-none">
-                          <div className="whitespace-pre-wrap text-gray-700">{aiInsights}</div>
-                        </div>
-                      </div>
-                      <div className="mt-4 flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(aiInsights)}>
-                          Copy Insights
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => {
-                          const blob = new Blob([aiInsights], { type: 'text/plain' });
-                          const url = window.URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `engagement-insights-${aiTimeRange}-${new Date().toISOString().split('T')[0]}.txt`;
-                          a.click();
-                          window.URL.revokeObjectURL(url);
-                        }}>
-                          Export
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* AI Report Display */}
-                {aiReport && (
-                  <Card className="border-purple-200">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2 text-purple-700">
-                          <BarChart3 className="w-5 h-5" />
-                          Executive Report
-                        </CardTitle>
-                        <Badge variant="outline" className="text-purple-600">
-                          {aiTimeRange === 'today' ? 'Today' : aiTimeRange === 'week' ? 'This Week' : 'This Month'}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                        <div className="prose prose-sm max-w-none">
-                          <div className="whitespace-pre-wrap text-gray-700">{aiReport}</div>
-                        </div>
-                      </div>
-                      <div className="mt-4 flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(aiReport)}>
-                          Copy Report
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => {
-                          const blob = new Blob([aiReport], { type: 'text/plain' });
-                          const url = window.URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `executive-report-${aiTimeRange}-${new Date().toISOString().split('T')[0]}.txt`;
-                          a.click();
-                          window.URL.revokeObjectURL(url);
-                        }}>
-                          Export
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Sentiment Analysis Display */}
-                {sentimentAnalysis && (
-                  <Card className="border-green-200">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2 text-green-700">
-                          <MessageSquare className="w-5 h-5" />
-                          Mood & Well-being Analysis
-                        </CardTitle>
-                        <Badge variant="outline" className="text-green-600">
-                          {aiTimeRange === 'today' ? 'Today' : aiTimeRange === 'week' ? 'This Week' : 'This Month'}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                        <div className="prose prose-sm max-w-none">
-                          <div className="whitespace-pre-wrap text-gray-700">{sentimentAnalysis}</div>
-                        </div>
-                      </div>
-                      <div className="mt-4 flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(sentimentAnalysis)}>
-                          Copy Analysis
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => {
-                          const blob = new Blob([sentimentAnalysis], { type: 'text/plain' });
-                          const url = window.URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `mood-analysis-${aiTimeRange}-${new Date().toISOString().split('T')[0]}.txt`;
-                          a.click();
-                          window.URL.revokeObjectURL(url);
-                        }}>
-                          Export
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Action Items */}
-                <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-blue-700">
-                      <Lightbulb className="w-5 h-5" />
-                      Next Steps
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <p className="text-sm text-gray-600">
-                        Based on your AI analysis, consider these actions:
-                      </p>
-                      <ul className="space-y-2 text-sm text-gray-700">
-                        <li className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          Review individual employee patterns and reach out for support if needed
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          Share insights with your team during one-on-ones or team meetings
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          Consider policy adjustments based on well-being recommendations
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          Schedule follow-up analysis to track improvements over time
-                        </li>
-                      </ul>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* Help & Tips */}
-            <Card className="bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-gray-700">
-                  <MessageSquare className="w-5 h-5" />
-                  How to Use AI Insights
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <h4 className="font-semibold text-gray-900">Quick Start Guide</h4>
-                    <div className="space-y-3 text-sm text-gray-600">
-                      <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-xs font-semibold text-blue-600">1</div>
-                        <div>
-                          <p className="font-medium">Choose a quick action</p>
-                          <p className="text-xs">Click "Daily Check-in", "Weekly Review", or "Monthly Report" for common use cases</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-xs font-semibold text-blue-600">2</div>
-                        <div>
-                          <p className="font-medium">Or customize your analysis</p>
-                          <p className="text-xs">Select time range and analysis type for specific insights</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-xs font-semibold text-blue-600">3</div>
-                        <div>
-                          <p className="font-medium">Review and act</p>
-                          <p className="text-xs">Export insights, copy to clipboard, or share with your team</p>
-                        </div>
+                      <div className="space-y-3">
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground">
+                          Based on your AI analysis, consider these actions:
+                        </p>
+                        <ul className="space-y-2 text-sm text-foreground dark:text-foreground">
+                          <li className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-primary rounded-full"></div>
+                            Review individual employee patterns and reach out for support if needed
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-primary rounded-full"></div>
+                            Share insights with your team during one-on-ones or team meetings
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-primary rounded-full"></div>
+                            Consider policy adjustments based on well-being recommendations
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-primary rounded-full"></div>
+                            Schedule follow-up analysis to track improvements over time
+                          </li>
+                        </ul>
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="space-y-4">
-                    <h4 className="font-semibold text-gray-900">AI Features</h4>
-                    <div className="space-y-3 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <Lightbulb className="w-4 h-4 text-yellow-600" />
-                        <span><strong>Engagement Insights:</strong> Work-life balance and team dynamics</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <BarChart3 className="w-4 h-4 text-purple-600" />
-                        <span><strong>Executive Reports:</strong> Professional summaries and recommendations</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MessageSquare className="w-4 h-4 text-green-600" />
-                        <span><strong>Mood Analysis:</strong> Employee well-being and sentiment patterns</span>
+                )}
+
+                {/* Help & Tips */}
+                <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
+                  <div className="mb-4 pb-3 border-b border-border/50 dark:border-border">
+                    <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
+                      <MessageSquare className="w-5 h-5" />
+                      How to Use AI Insights
+                    </h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-foreground dark:text-foreground">Quick Start Guide</h4>
+                      <div className="space-y-3 text-sm text-muted-foreground dark:text-muted-foreground">
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 bg-muted dark:bg-muted rounded-full flex items-center justify-center text-xs font-semibold text-foreground dark:text-foreground">1</div>
+                          <div>
+                            <p className="font-medium text-foreground dark:text-foreground">Choose a quick action</p>
+                            <p className="text-xs">Click "Daily Check-in", "Weekly Review", or "Monthly Report" for common use cases</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 bg-muted dark:bg-muted rounded-full flex items-center justify-center text-xs font-semibold text-foreground dark:text-foreground">2</div>
+                          <div>
+                            <p className="font-medium text-foreground dark:text-foreground">Or customize your analysis</p>
+                            <p className="text-xs">Select time range and analysis type for specific insights</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 bg-muted dark:bg-muted rounded-full flex items-center justify-center text-xs font-semibold text-foreground dark:text-foreground">3</div>
+                          <div>
+                            <p className="font-medium text-foreground dark:text-foreground">Review and act</p>
+                            <p className="text-xs">Export insights, copy to clipboard, or share with your team</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className="text-xs text-gray-500 mt-3">
-                      Powered by Moonshot AI's Kimi K2 model via OpenRouter API
+                    
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-foreground dark:text-foreground">AI Features</h4>
+                      <div className="space-y-3 text-sm text-muted-foreground dark:text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Lightbulb className="w-4 h-4 text-primary" />
+                          <span className="text-foreground dark:text-foreground"><strong>Engagement Insights:</strong> Work-life balance and team dynamics</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <BarChart3 className="w-4 h-4 text-primary" />
+                          <span className="text-foreground dark:text-foreground"><strong>Executive Reports:</strong> Professional summaries and recommendations</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MessageSquare className="w-4 h-4 text-primary" />
+                          <span className="text-foreground dark:text-foreground"><strong>Mood Analysis:</strong> Employee well-being and sentiment patterns</span>
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground dark:text-muted-foreground mt-3">
+                        Powered by Moonshot AI's Kimi K2 model via OpenRouter API
+                      </div>
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+              </motion.div>
+            )}
 
         {/* Add User Dialog */}
         {showAddUserDialog && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-md mx-4">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 max-w-md w-full elevation-xl">
+              <div className="mb-4 pb-3 border-b border-border/50 dark:border-border">
+                <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
                   <UserPlus className="w-5 h-5" />
                   Add New User
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                </h3>
+              </div>
+              <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Full Name *</label>
+                  <label className="text-sm font-medium text-foreground dark:text-foreground">Full Name *</label>
                   <Input
                     placeholder="Enter full name"
                     value={newUserData.fullName}
                     onChange={(e) => setNewUserData({ ...newUserData, fullName: e.target.value })}
+                    className="bg-background dark:bg-background border-border dark:border-border mt-1"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Email (Optional)</label>
+                  <label className="text-sm font-medium text-foreground dark:text-foreground">Email (Optional)</label>
                   <Input
                     type="email"
                     placeholder="Enter email address"
                     value={newUserData.email}
                     onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
+                    className="bg-background dark:bg-background border-border dark:border-border mt-1"
                   />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <Button
                     onClick={handleAddUser}
                     disabled={!newUserData.fullName.trim()}
@@ -1727,52 +1757,60 @@ export default function AdminPage() {
                     Cancel
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Leave Management Tab Content */}
-        {activeTab === 'leave' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Leave Management</h2>
-                <p className="text-gray-600">Manage employee leave requests and balances</p>
-              </div>
-            </div>
-            
-            {/* Leave Management Component */}
-            <AdminLeaveManagement />
-          </div>
-        )}
+            {activeTab === 'leave' && (
+              <motion.div
+                key="leave"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                <div className="mb-4">
+                  <h2 className="text-2xl font-bold text-foreground dark:text-foreground">Leave Management</h2>
+                  <p className="text-muted-foreground dark:text-muted-foreground">Manage employee leave requests and balances</p>
+                </div>
+                
+                {/* Leave Management Component */}
+                <AdminLeaveManagement />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* Edit User Dialog */}
         {showEditUserDialog && editingUser && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-md mx-4">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 max-w-md w-full elevation-xl">
+              <div className="mb-4 pb-3 border-b border-border/50 dark:border-border">
+                <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
                   <Edit className="w-5 h-5" />
                   Edit User
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                </h3>
+              </div>
+              <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Full Name *</label>
+                  <label className="text-sm font-medium text-foreground dark:text-foreground">Full Name *</label>
                   <Input
                     placeholder="Enter full name"
                     value={editUserData.fullName}
                     onChange={(e) => setEditUserData({ ...editUserData, fullName: e.target.value })}
+                    className="bg-background dark:bg-background border-border dark:border-border mt-1"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Email (Optional)</label>
+                  <label className="text-sm font-medium text-foreground dark:text-foreground">Email (Optional)</label>
                   <Input
                     type="email"
                     placeholder="Enter email address"
                     value={editUserData.email}
                     onChange={(e) => setEditUserData({ ...editUserData, email: e.target.value })}
+                    className="bg-background dark:bg-background border-border dark:border-border mt-1"
                   />
                 </div>
                 <div className="flex items-center gap-2">
@@ -1781,12 +1819,13 @@ export default function AdminPage() {
                     id="active"
                     checked={editUserData.active}
                     onChange={(e) => setEditUserData({ ...editUserData, active: e.target.checked })}
+                    className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
                   />
-                  <label htmlFor="active" className="text-sm font-medium">
+                  <label htmlFor="active" className="text-sm font-medium text-foreground dark:text-foreground">
                     Active User
                   </label>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <Button
                     onClick={handleEditUser}
                     disabled={!editUserData.fullName.trim()}
@@ -1806,8 +1845,8 @@ export default function AdminPage() {
                     Cancel
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         )}
       </div>

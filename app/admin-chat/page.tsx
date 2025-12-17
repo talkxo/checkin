@@ -1,8 +1,10 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { Send, Bot, User, BarChart3, Users, Calendar, TrendingUp, MapPin, Settings, Bookmark, LogOut, AlertTriangle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import DarkModeToggle from '@/components/dark-mode-toggle';
 import ReactMarkdown from 'react-markdown';
 import SaveResponseModal from '@/components/save-response-modal';
 
@@ -198,79 +200,95 @@ export default function AdminChat() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-6xl bg-white rounded-xl shadow-lg overflow-hidden">
+    <div className="min-h-screen bg-background dark:bg-background">
+      <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 p-6 rounded-t-xl">
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <div className="flex items-baseline space-x-1">
-              <h1 className="font-cal-sans text-2xl font-semibold text-purple-600 tracking-tight">
-                insyde
-              </h1>
-              <h2 className="text-xl font-semibold text-gray-900">Chat</h2>
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/50 dark:border-border">
+          <div className="flex items-center gap-4">
+            <div className="w-8 h-8 flex items-center justify-center">
+              <img 
+                src="https://pqkph3lzaffmetri.public.blob.vercel-storage.com/1764957051530-Inside-Icon.png" 
+                alt="insyde" 
+                className="w-8 h-8 object-contain"
+              />
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.location.href = '/admin'}
-              >
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Dashboard
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogout}
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground dark:text-foreground">Admin Chat</h1>
+              <p className="text-sm text-muted-foreground dark:text-muted-foreground">AI-powered attendance insights</p>
             </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <DarkModeToggle />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.location.href = '/admin'}
+              className="text-muted-foreground dark:text-muted-foreground hover:text-foreground"
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Dashboard
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="text-muted-foreground dark:text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
           </div>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-white">
+        <div className="flex-1 overflow-y-auto space-y-6 mb-6">
           <div className="max-w-4xl mx-auto">
             {messages.length === 0 && (
-              <div className="text-center text-gray-500 mt-20">
-                <Bot className="w-12 h-12 mx-auto mb-4 text-purple-600" />
-                <h2 className="text-xl font-semibold mb-2 text-gray-900">Hello, I'm your Chat Assistant</h2>
-                <p className="text-sm mb-4">I help People Ops teams manage hybrid work with intelligent insights.</p>
-                <p className="text-sm text-gray-400">Ask me about team status, attendance patterns, space utilization, or use the quick actions below.</p>
-              </div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="text-center py-20"
+              >
+                <Bot className="w-12 h-12 mx-auto mb-4 text-primary" />
+                <h2 className="text-xl font-semibold mb-2 text-foreground dark:text-foreground">Hello, I'm your Chat Assistant</h2>
+                <p className="text-sm mb-4 text-muted-foreground dark:text-muted-foreground">I help People Ops teams manage hybrid work with intelligent insights.</p>
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground">Ask me about team status, attendance patterns, space utilization, or use the quick actions below.</p>
+              </motion.div>
             )}
 
-            {messages.map((message) => (
-              <div
+            {messages.map((message, index) => (
+              <motion.div
                 key={message.id}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} mb-6`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[80%] rounded-xl p-4 shadow-sm ${
+                  className={`max-w-[80%] rounded-xl p-4 elevation-md ${
                     message.role === 'user'
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-white text-gray-900 border border-gray-200'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-card dark:bg-card text-card-foreground dark:text-card-foreground border border-border/50 dark:border-border'
                   }`}
                 >
                   <div className="flex items-start space-x-3">
                     {message.role === 'assistant' && (
-                      <Bot className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                      <Bot className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                     )}
                     <div className="flex-1">
                       {message.role === 'assistant' ? (
                         <div className="prose prose-sm max-w-none">
                           <ReactMarkdown
                             components={{
-                              h2: ({children}) => <h2 className="text-lg font-semibold text-gray-900 mb-3">{children}</h2>,
-                              h3: ({children}) => <h3 className="text-base font-semibold text-gray-900 mb-2">{children}</h3>,
-                              p: ({children}) => <p className="text-gray-700 mb-3 leading-relaxed">{children}</p>,
-                              strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
-                              em: ({children}) => <em className="italic text-gray-700">{children}</em>,
-                              ul: ({children}) => <ul className="list-disc list-inside space-y-2 mb-4">{children}</ul>,
-                              ol: ({children}) => <ol className="list-decimal list-inside space-y-2 mb-4">{children}</ol>,
-                              li: ({children}) => <li className="text-gray-700 leading-relaxed">{children}</li>,
+                              h2: ({children}) => <h2 className="text-lg font-semibold text-foreground dark:text-foreground mb-3">{children}</h2>,
+                              h3: ({children}) => <h3 className="text-base font-semibold text-foreground dark:text-foreground mb-2">{children}</h3>,
+                              p: ({children}) => <p className="text-foreground dark:text-foreground mb-3 leading-relaxed">{children}</p>,
+                              strong: ({children}) => <strong className="font-semibold text-foreground dark:text-foreground">{children}</strong>,
+                              em: ({children}) => <em className="italic text-foreground dark:text-foreground">{children}</em>,
+                              ul: ({children}) => <ul className="list-disc list-inside space-y-2 mb-4 text-foreground dark:text-foreground">{children}</ul>,
+                              ol: ({children}) => <ol className="list-decimal list-inside space-y-2 mb-4 text-foreground dark:text-foreground">{children}</ol>,
+                              li: ({children}) => <li className="text-foreground dark:text-foreground leading-relaxed">{children}</li>,
                             }}
                           >
                             {message.content}
@@ -279,14 +297,14 @@ export default function AdminChat() {
                       ) : (
                         <div className="whitespace-pre-wrap">{message.content}</div>
                       )}
-                      <div className={`flex items-center justify-between mt-3 ${message.role === 'user' ? 'text-purple-200' : 'text-gray-400'}`}>
+                      <div className={`flex items-center justify-between mt-3 ${message.role === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground dark:text-muted-foreground'}`}>
                         <div className="text-xs">
                           {message.timestamp.toLocaleTimeString()}
                         </div>
                         {message.role === 'assistant' && (
                           <button
                             onClick={() => handleSaveResponse(message.content)}
-                            className="text-xs text-purple-600 hover:text-purple-700 flex items-center gap-1 transition-colors"
+                            className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
                             title="Save this response"
                           >
                             <Bookmark className="w-3 h-3" />
@@ -296,24 +314,24 @@ export default function AdminChat() {
                       </div>
                     </div>
                     {message.role === 'user' && (
-                      <User className="w-5 h-5 text-purple-200 mt-0.5 flex-shrink-0" />
+                      <User className="w-5 h-5 text-primary-foreground/70 mt-0.5 flex-shrink-0" />
                     )}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
 
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+                <div className="bg-card dark:bg-card border border-border/50 dark:border-border rounded-xl p-4 elevation-md">
                   <div className="flex items-center space-x-3">
-                    <Bot className="w-5 h-5 text-purple-600" />
+                    <Bot className="w-5 h-5 text-primary" />
                     <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     </div>
-                    <span className="text-sm text-gray-600 ml-2">{loadingStep}</span>
+                    <span className="text-sm text-muted-foreground dark:text-muted-foreground ml-2">{loadingStep}</span>
                   </div>
                 </div>
               </div>
@@ -322,17 +340,17 @@ export default function AdminChat() {
             {/* Error state with retry option */}
             {lastError && !isLoading && (
               <div className="flex justify-start">
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm max-w-[80%]">
+                <div className="bg-destructive/10 border border-destructive/50 rounded-xl p-4 elevation-md max-w-[80%]">
                   <div className="flex items-start space-x-3">
-                    <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    <AlertTriangle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <div className="text-sm text-red-800 font-medium mb-2">Request Failed</div>
-                      <div className="text-sm text-red-700 mb-3">{lastError}</div>
+                      <div className="text-sm text-destructive font-medium mb-2">Request Failed</div>
+                      <div className="text-sm text-destructive/90 mb-3">{lastError}</div>
                       <div className="flex space-x-2">
                         <Button
                           onClick={handleRetry}
                           size="sm"
-                          className="bg-red-600 hover:bg-red-700 text-white"
+                          variant="destructive"
                           disabled={retryCount >= 3}
                         >
                           Try Again {retryCount > 0 && `(${retryCount}/3)`}
@@ -341,7 +359,6 @@ export default function AdminChat() {
                           onClick={() => setLastError('')}
                           variant="outline"
                           size="sm"
-                          className="border-red-300 text-red-700 hover:bg-red-50"
                         >
                           Dismiss
                         </Button>
@@ -357,13 +374,13 @@ export default function AdminChat() {
         </div>
 
         {/* Hot Clues Menu */}
-        <div className="bg-white border-t border-gray-200 p-4">
+        <div className="bg-card dark:bg-card border-t border-border/50 dark:border-border p-4 rounded-b-xl">
           <div className="max-w-4xl mx-auto flex space-x-3 overflow-x-auto pb-2">
             {hotClues.map((clue, index) => (
               <button
                 key={index}
                 onClick={() => handleHotClue(clue.query)}
-                className="flex items-center space-x-2 bg-gray-100 hover:bg-purple-100 text-gray-700 hover:text-purple-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-colors border border-gray-200"
+                className="flex items-center space-x-2 bg-muted dark:bg-muted hover:bg-primary/10 text-foreground dark:text-foreground hover:text-primary px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-colors border border-border dark:border-border"
               >
                 {clue.icon}
                 <span>{clue.label}</span>
@@ -371,7 +388,7 @@ export default function AdminChat() {
             ))}
             <button
               onClick={() => window.location.href = '/admin/saved-responses'}
-              className="flex items-center space-x-2 bg-purple-100 hover:bg-purple-200 text-purple-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-colors border border-purple-200"
+              className="flex items-center space-x-2 bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-colors border border-primary/20"
             >
               <Bookmark className="w-4 h-4" />
               <span>Saved Responses</span>
@@ -380,7 +397,7 @@ export default function AdminChat() {
         </div>
 
         {/* Input */}
-        <div className="bg-white border-t border-gray-200 p-4 md:p-6 rounded-b-xl">
+        <div className="bg-card dark:bg-card border-t border-border/50 dark:border-border p-4 md:p-6 rounded-b-xl">
           <div className="max-w-4xl mx-auto flex space-x-2 md:space-x-3">
             <input
               type="text"
@@ -388,13 +405,13 @@ export default function AdminChat() {
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend(input)}
               placeholder="Ask about attendance data, employee insights..."
-              className="flex-1 bg-gray-50 border border-gray-200 text-gray-900 rounded-lg px-3 md:px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 h-[48px] text-sm md:text-base"
+              className="flex-1 bg-background dark:bg-background border border-border dark:border-border text-foreground dark:text-foreground rounded-lg px-3 md:px-4 py-3 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 h-[48px] text-sm md:text-base"
               disabled={isLoading}
             />
             <button
               onClick={() => handleSend(input)}
               disabled={isLoading || !input.trim()}
-              className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white rounded-lg transition-colors h-[48px] w-[44px] md:w-[48px] flex items-center justify-center flex-shrink-0"
+              className="bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground text-primary-foreground rounded-lg transition-colors h-[48px] w-[44px] md:w-[48px] flex items-center justify-center flex-shrink-0 elevation-md button-press"
             >
               <Send className="w-4 h-4 md:w-5 md:h-5" />
             </button>
@@ -402,30 +419,42 @@ export default function AdminChat() {
               <button
                 onClick={() => setShowStyleDropdown(!showStyleDropdown)}
                 disabled={isLoading}
-                className="bg-gray-50 border border-gray-200 text-gray-700 rounded-lg px-2 md:px-3 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 hover:bg-gray-100 transition-colors h-[48px] w-[44px] md:w-[48px] flex items-center justify-center"
+                className="bg-background dark:bg-background border border-border dark:border-border text-foreground dark:text-foreground rounded-lg px-2 md:px-3 py-3 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover:bg-muted dark:hover:bg-muted transition-colors h-[48px] w-[44px] md:w-[48px] flex items-center justify-center"
                 title="Response Style"
               >
                 <Settings className="w-4 h-4 md:w-5 md:h-5" />
               </button>
               
               {showStyleDropdown && (
-                <div className="absolute bottom-full right-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px] md:min-w-[140px]">
+                <div className="absolute bottom-full right-0 mb-2 bg-card dark:bg-card border border-border dark:border-border rounded-lg elevation-lg z-10 min-w-[120px] md:min-w-[140px]">
                   <div className="py-1">
                     <button
                       onClick={() => { setResponseStyle('short'); setShowStyleDropdown(false); }}
-                      className={`w-full text-left px-3 md:px-4 py-2 text-sm hover:bg-gray-50 ${responseStyle === 'short' ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
+                      className={`w-full text-left px-3 md:px-4 py-2 text-sm hover:bg-muted dark:hover:bg-muted transition-colors ${
+                        responseStyle === 'short' 
+                          ? 'bg-primary/10 text-primary' 
+                          : 'text-foreground dark:text-foreground'
+                      }`}
                     >
                       Short
                     </button>
                     <button
                       onClick={() => { setResponseStyle('detailed'); setShowStyleDropdown(false); }}
-                      className={`w-full text-left px-3 md:px-4 py-2 text-sm hover:bg-gray-50 ${responseStyle === 'detailed' ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
+                      className={`w-full text-left px-3 md:px-4 py-2 text-sm hover:bg-muted dark:hover:bg-muted transition-colors ${
+                        responseStyle === 'detailed' 
+                          ? 'bg-primary/10 text-primary' 
+                          : 'text-foreground dark:text-foreground'
+                      }`}
                     >
                       Detailed
                     </button>
                     <button
                       onClick={() => { setResponseStyle('report'); setShowStyleDropdown(false); }}
-                      className={`w-full text-left px-3 md:px-4 py-2 text-sm hover:bg-gray-50 ${responseStyle === 'report' ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
+                      className={`w-full text-left px-3 md:px-4 py-2 text-sm hover:bg-muted dark:hover:bg-muted transition-colors ${
+                        responseStyle === 'report' 
+                          ? 'bg-primary/10 text-primary' 
+                          : 'text-foreground dark:text-foreground'
+                      }`}
                     >
                       Report
                     </button>
