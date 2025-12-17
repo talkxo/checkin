@@ -1187,6 +1187,7 @@ export default function AdminPage() {
                       ))}
                       </TableBody>
                     </Table>
+                    </div>
                   </div>
                 )}
 
@@ -1285,6 +1286,7 @@ export default function AdminPage() {
                   ))}
                     </TableBody>
                   </Table>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -1533,8 +1535,7 @@ export default function AdminPage() {
                           </Button>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
                     {/* AI Report Display */}
                     {aiReport && (
@@ -1708,6 +1709,27 @@ export default function AdminPage() {
               </motion.div>
             )}
 
+            {activeTab === 'leave' && (
+              <motion.div
+                key="leave"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                <div className="mb-4">
+                  <h2 className="text-2xl font-bold text-foreground dark:text-foreground">Leave Management</h2>
+                  <p className="text-muted-foreground dark:text-muted-foreground">Manage employee leave requests and balances</p>
+                </div>
+                
+                {/* Leave Management Component */}
+                <AdminLeaveManagement />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
         {/* Add User Dialog */}
         {showAddUserDialog && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -1761,27 +1783,6 @@ export default function AdminPage() {
             </div>
           </div>
         )}
-
-            {activeTab === 'leave' && (
-              <motion.div
-                key="leave"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-6"
-              >
-                <div className="mb-4">
-                  <h2 className="text-2xl font-bold text-foreground dark:text-foreground">Leave Management</h2>
-                  <p className="text-muted-foreground dark:text-muted-foreground">Manage employee leave requests and balances</p>
-                </div>
-                
-                {/* Leave Management Component */}
-                <AdminLeaveManagement />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
 
         {/* Edit User Dialog */}
         {showEditUserDialog && editingUser && (
