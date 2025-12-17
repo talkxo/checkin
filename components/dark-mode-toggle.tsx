@@ -1,11 +1,29 @@
 'use client';
 
-import React from 'react';
+import React, { useContext } from 'react';
 import { Moon, Sun } from 'lucide-react';
-import { useTheme } from './theme-provider';
+import { ThemeContext } from './theme-provider';
 
 export default function DarkModeToggle() {
-  const { theme, toggleTheme } = useTheme();
+  // Use useContext directly to avoid throwing error if provider is missing
+  const themeContext = useContext(ThemeContext);
+  
+  // Default to light theme if provider is not available (during SSR)
+  const theme = themeContext?.theme || 'light';
+  const toggleTheme = themeContext?.toggleTheme || (() => {
+    // Fallback: toggle class directly if provider not available
+    if (typeof window !== 'undefined') {
+      const root = document.documentElement;
+      const isDark = root.classList.contains('dark');
+      if (isDark) {
+        root.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        root.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+  });
 
   return (
     <button

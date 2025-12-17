@@ -2,6 +2,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+
+// Force dynamic rendering for admin pages
+export const dynamic = 'force-dynamic';
 import { Send, Bot, User, BarChart3, Users, Calendar, TrendingUp, MapPin, Settings, Bookmark, LogOut, AlertTriangle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import DarkModeToggle from '@/components/dark-mode-toggle';
