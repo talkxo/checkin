@@ -952,19 +952,24 @@ export default function HomePage(){
     }
 
     const checkAutoCheckout = async () => {
-      const checkinTime = new Date(currentSession.session.checkin_ts).getTime();
-      const now = Date.now();
-      const hoursElapsed = (now - checkinTime) / (1000 * 60 * 60);
-      
-      // Get auto-checkout hours from localStorage (default: 12)
-      const autoCheckoutHours = Number(localStorage.getItem('autoCheckoutHours')) || 12;
-      const warningThreshold = autoCheckoutHours - (10 / 60); // 10 minutes before
+      try {
+        // Get check-in time and current time in UTC to avoid timezone issues
+        const checkinTime = new Date(currentSession.session.checkin_ts).getTime();
+        const now = Date.now();
+        const hoursElapsed = (now - checkinTime) / (1000 * 60 * 60);
+        
+        // Get auto-checkout hours from localStorage (default: 12)
+        const autoCheckoutHours = Number(localStorage.getItem('autoCheckoutHours')) || 12;
+        const warningThreshold = autoCheckoutHours - (10 / 60); // 10 minutes before
 
-      if (hoursElapsed >= autoCheckoutHours) {
-        // Auto-checkout - perform checkout directly without mood UI
-        try {
-          const success = await performCheckout(undefined, undefined, true);
+        console.log(`Auto-checkout check: ${hoursElapsed.toFixed(2)} hours elapsed, threshold: ${autoCheckoutHours} hours`);
+
+        if (hoursElapsed >= autoCheckoutHours) {
+          // Auto-checkout - perform checkout directly without mood UI
+          console.log('Auto-checkout triggered: session exceeded', autoCheckoutHours, 'hours');
+          const success = await performCheckout(undefined, `Auto-checked out after ${hoursElapsed.toFixed(2)} hours`, true);
           if (success) {
+            console.log('Auto-checkout successful');
             if ('Notification' in window && Notification.permission === 'granted') {
               new Notification('Auto-Checkout', {
                 body: `You've been automatically checked out after ${autoCheckoutHours} hours.`,
@@ -973,31 +978,36 @@ export default function HomePage(){
               });
             }
           } else {
-            console.error('Auto-checkout failed');
+            console.error('Auto-checkout failed - performCheckout returned false');
           }
-        } catch (error) {
-          console.error('Auto-checkout error:', error);
+        } else if (hoursElapsed >= warningThreshold) {
+          // Show warning 10 minutes before (only set once)
+          if (!autoCheckoutWarning) {
+            setAutoCheckoutWarning(true);
+            
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification('Auto-Checkout Warning', {
+                body: `You'll be automatically checked out in 10 minutes.`,
+                icon: '/insyde-logo.png',
+                tag: 'auto-checkout-warning'
+              });
+            }
+          }
         }
-      } else if (hoursElapsed >= warningThreshold && !autoCheckoutWarning) {
-        // Show warning 10 minutes before
-        setAutoCheckoutWarning(true);
-        
-        if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification('Auto-Checkout Warning', {
-            body: `You'll be automatically checked out in 10 minutes.`,
-            icon: '/insyde-logo.png',
-            tag: 'auto-checkout-warning'
-          });
-        }
+      } catch (error) {
+        console.error('Auto-checkout check error:', error);
       }
     };
 
-    // Check every 15 minutes
-    const interval = setInterval(checkAutoCheckout, 15 * 60 * 1000);
-    checkAutoCheckout(); // Check immediately
+    // Check immediately on mount and when session changes
+    checkAutoCheckout();
+    
+    // Check every 5 minutes for more reliable detection (was 15 minutes)
+    // This ensures we catch the 12-hour threshold even if the page was idle
+    const interval = setInterval(checkAutoCheckout, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [hasOpen, currentSession, autoCheckoutWarning]);
+  }, [hasOpen, currentSession?.session?.checkin_ts]);
 
   // Format current date in IST
   const dateString = currentTime.toLocaleDateString('en-US', { 

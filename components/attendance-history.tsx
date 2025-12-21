@@ -411,16 +411,16 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
                         const checkinTime = dayData?.checkinTime || null;
                         
                         // Determine color based on check-in status
-                        let bgColor = isWeekend ? 'bg-muted/50' : 'bg-muted'; // Greyed for weekends
+                        // Priority: checkinStatus > active status
+                        // Show check-in status colors even when session is active
+                        let bgColor = isWeekend ? 'bg-muted/50' : 'bg-muted'; // Default greyed for weekends
                         
                         if (checkinStatus === 'none') {
                           // No check-in
                           bgColor = isWeekend ? 'bg-muted/50' : 'bg-muted';
-                        } else if (status === 'active') {
-                          // Active session (checked in but not out)
-                          bgColor = isWeekend ? 'bg-yellow-300' : 'bg-yellow-400';
                         } else {
-                          // Check-in status colors
+                          // Show check-in status colors regardless of active status
+                          // This ensures users see their check-in time color even when session is active
                           switch (checkinStatus) {
                             case 'early':
                               bgColor = isWeekend ? 'bg-blue-300' : 'bg-blue-400'; // Blue for early
@@ -435,7 +435,12 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
                               bgColor = isWeekend ? 'bg-orange-500' : 'bg-orange-600'; // Orange for late
                               break;
                             default:
-                              bgColor = isWeekend ? 'bg-muted/50' : 'bg-muted';
+                              // Fallback: if status is active but no check-in status, show yellow
+                              if (status === 'active') {
+                                bgColor = isWeekend ? 'bg-yellow-300' : 'bg-yellow-400';
+                              } else {
+                                bgColor = isWeekend ? 'bg-muted/50' : 'bg-muted';
+                              }
                           }
                         }
                         

@@ -9,25 +9,10 @@ export async function POST(req: NextRequest) {
     const targetYear = year || new Date().getFullYear();
     const targetMonth = month || new Date().getMonth() + 1;
 
-    // Check if accrual has already been processed for this month (unless forced)
-    if (!force) {
-      const { data: existingAccrual, error: checkError } = await supabaseAdmin
-        .from('leave_accruals')
-        .select('id')
-        .eq('year', targetYear)
-        .eq('month', targetMonth)
-        .limit(1);
-
-      if (checkError) {
-        console.error('Error checking existing accrual:', checkError);
-      } else if (existingAccrual && existingAccrual.length > 0) {
-        return NextResponse.json({
-          message: 'Accrual already processed for this month',
-          year: targetYear,
-          month: targetMonth
-        });
-      }
-    }
+    // Note: We don't check for existing accruals here because:
+    // 1. The database function process_monthly_leave_accrual uses ON CONFLICT to handle duplicates per employee
+    // 2. Checking for ANY accrual would prevent processing for employees who haven't had accruals processed yet
+    // 3. The force flag allows re-processing if needed
 
     // Call the database function to process accrual
     const { error } = await supabaseAdmin
