@@ -263,13 +263,31 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
   const openEmployeeLeaveDialog = (employeeData: any) => {
     setSelectedEmployee(employeeData);
     const initialBalances: any = {};
+    
+    // Create a map of existing balances by leave type name
+    const balanceMap = new Map();
     employeeData.leaveBalance.forEach((balance: any) => {
-      initialBalances[balance.leave_type_name] = {
+      balanceMap.set(balance.leave_type_name, {
         total_entitlement: balance.total_entitlement,
         used_leaves: balance.used_leaves,
         pending_leaves: balance.pending_leaves
-      };
+      });
     });
+    
+    // Initialize balances for all leave types, using existing values or defaults
+    leaveTypes.forEach((leaveType) => {
+      if (balanceMap.has(leaveType.name)) {
+        initialBalances[leaveType.name] = balanceMap.get(leaveType.name);
+      } else {
+        // If no balance exists for this leave type (e.g., new year), initialize with 0
+        initialBalances[leaveType.name] = {
+          total_entitlement: 0,
+          used_leaves: 0,
+          pending_leaves: 0
+        };
+      }
+    });
+    
     setEditingBalances(initialBalances);
     setShowEmployeeLeaveDialog(true);
   };
@@ -583,69 +601,73 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
           
           {selectedEmployee && (
             <div className="space-y-4">
-              {selectedEmployee.leaveBalance.map((balance: any) => (
-                <div key={balance.leave_type_name} className="border border-border/50 dark:border-border rounded-lg p-4 bg-muted/30 dark:bg-muted/20">
-                  <h4 className="font-semibold mb-3 text-foreground dark:text-foreground">{balance.leave_type_name}</h4>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor={`total_${balance.leave_type_name}`} className="text-foreground dark:text-foreground">Total Entitlement</Label>
-                      <input
-                        id={`total_${balance.leave_type_name}`}
-                        type="number"
-                        min="0"
-                        className="w-full px-3 py-2 border border-input dark:border-input rounded-md text-sm bg-background dark:bg-background text-foreground dark:text-foreground"
-                        value={editingBalances[balance.leave_type_name]?.total_entitlement || 0}
-                        onChange={(e) => setEditingBalances({
-                          ...editingBalances,
-                          [balance.leave_type_name]: {
-                            ...editingBalances[balance.leave_type_name],
-                            total_entitlement: parseInt(e.target.value) || 0
-                          }
-                        })}
-                      />
+              {leaveTypes.map((leaveType) => {
+                const leaveTypeName = leaveType.name;
+                const balance = editingBalances[leaveTypeName] || { total_entitlement: 0, used_leaves: 0, pending_leaves: 0 };
+                return (
+                  <div key={leaveTypeName} className="border border-border/50 dark:border-border rounded-lg p-4 bg-muted/30 dark:bg-muted/20">
+                    <h4 className="font-semibold mb-3 text-foreground dark:text-foreground">{leaveTypeName}</h4>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor={`total_${leaveTypeName}`} className="text-foreground dark:text-foreground">Total Entitlement</Label>
+                        <input
+                          id={`total_${leaveTypeName}`}
+                          type="number"
+                          min="0"
+                          className="w-full px-3 py-2 border border-input dark:border-input rounded-md text-sm bg-background dark:bg-background text-foreground dark:text-foreground"
+                          value={balance.total_entitlement || 0}
+                          onChange={(e) => setEditingBalances({
+                            ...editingBalances,
+                            [leaveTypeName]: {
+                              ...balance,
+                              total_entitlement: parseInt(e.target.value) || 0
+                            }
+                          })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`used_${leaveTypeName}`} className="text-foreground dark:text-foreground">Used Leaves</Label>
+                        <input
+                          id={`used_${leaveTypeName}`}
+                          type="number"
+                          min="0"
+                          className="w-full px-3 py-2 border border-input dark:border-input rounded-md text-sm bg-background dark:bg-background text-foreground dark:text-foreground"
+                          value={balance.used_leaves || 0}
+                          onChange={(e) => setEditingBalances({
+                            ...editingBalances,
+                            [leaveTypeName]: {
+                              ...balance,
+                              used_leaves: parseInt(e.target.value) || 0
+                            }
+                          })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`pending_${leaveTypeName}`} className="text-foreground dark:text-foreground">Pending Leaves</Label>
+                        <input
+                          id={`pending_${leaveTypeName}`}
+                          type="number"
+                          min="0"
+                          className="w-full px-3 py-2 border border-input dark:border-input rounded-md text-sm bg-background dark:bg-background text-foreground dark:text-foreground"
+                          value={balance.pending_leaves || 0}
+                          onChange={(e) => setEditingBalances({
+                            ...editingBalances,
+                            [leaveTypeName]: {
+                              ...balance,
+                              pending_leaves: parseInt(e.target.value) || 0
+                            }
+                          })}
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <Label htmlFor={`used_${balance.leave_type_name}`} className="text-foreground dark:text-foreground">Used Leaves</Label>
-                      <input
-                        id={`used_${balance.leave_type_name}`}
-                        type="number"
-                        min="0"
-                        className="w-full px-3 py-2 border border-input dark:border-input rounded-md text-sm bg-background dark:bg-background text-foreground dark:text-foreground"
-                        value={editingBalances[balance.leave_type_name]?.used_leaves || 0}
-                        onChange={(e) => setEditingBalances({
-                          ...editingBalances,
-                          [balance.leave_type_name]: {
-                            ...editingBalances[balance.leave_type_name],
-                            used_leaves: parseInt(e.target.value) || 0
-                          }
-                        })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor={`pending_${balance.leave_type_name}`} className="text-foreground dark:text-foreground">Pending Leaves</Label>
-                      <input
-                        id={`pending_${balance.leave_type_name}`}
-                        type="number"
-                        min="0"
-                        className="w-full px-3 py-2 border border-input dark:border-input rounded-md text-sm bg-background dark:bg-background text-foreground dark:text-foreground"
-                        value={editingBalances[balance.leave_type_name]?.pending_leaves || 0}
-                        onChange={(e) => setEditingBalances({
-                          ...editingBalances,
-                          [balance.leave_type_name]: {
-                            ...editingBalances[balance.leave_type_name],
-                            pending_leaves: parseInt(e.target.value) || 0
-                          }
-                        })}
-                      />
+                    <div className="mt-2 text-sm text-muted-foreground dark:text-muted-foreground">
+                      Available: {Math.max(0, (balance.total_entitlement || 0) - 
+                                            (balance.used_leaves || 0) - 
+                                            (balance.pending_leaves || 0))} days
                     </div>
                   </div>
-                  <div className="mt-2 text-sm text-muted-foreground dark:text-muted-foreground">
-                    Available: {Math.max(0, (editingBalances[balance.leave_type_name]?.total_entitlement || 0) - 
-                                          (editingBalances[balance.leave_type_name]?.used_leaves || 0) - 
-                                          (editingBalances[balance.leave_type_name]?.pending_leaves || 0))} days
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 

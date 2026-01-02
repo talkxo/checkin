@@ -29,25 +29,52 @@ export async function POST(req: NextRequest) {
 
       const { total_entitlement, used_leaves, pending_leaves } = balanceData as any;
 
-      // Update or insert leave balance
-      const { error: upsertError } = await supabaseAdmin
+      // First, try to find existing record
+      const { data: existingBalance, error: findError } = await supabaseAdmin
         .from('leave_balances')
-        .upsert({
-          employee_id: employeeId,
-          leave_type_id: leaveType.id,
-          year: year,
-          total_entitlement: total_entitlement || 0,
-          used_leaves: used_leaves || 0,
-          pending_leaves: pending_leaves || 0,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'employee_id,leave_type_id,year'
-        });
+        .select('id')
+        .eq('employee_id', employeeId)
+        .eq('leave_type_id', leaveType.id)
+        .eq('year', year)
+        .maybeSingle();
 
-      if (upsertError) {
-        console.error(`Error updating leave balance for ${leaveTypeName}:`, upsertError);
+      if (findError) {
+        console.error(`Error finding leave balance for ${leaveTypeName}:`, findError);
         return NextResponse.json({ 
-          error: `Failed to update leave balance for ${leaveTypeName}` 
+          error: `Failed to find leave balance for ${leaveTypeName}` 
+        }, { status: 500 });
+      }
+
+      const balanceDataToSave = {
+        employee_id: employeeId,
+        leave_type_id: leaveType.id,
+        year: year,
+        total_entitlement: total_entitlement || 0,
+        used_leaves: used_leaves || 0,
+        pending_leaves: pending_leaves || 0,
+        updated_at: new Date().toISOString()
+      };
+
+      let error;
+      if (existingBalance) {
+        // Update existing record
+        const { error: updateError } = await supabaseAdmin
+          .from('leave_balances')
+          .update(balanceDataToSave)
+          .eq('id', existingBalance.id);
+        error = updateError;
+      } else {
+        // Insert new record
+        const { error: insertError } = await supabaseAdmin
+          .from('leave_balances')
+          .insert(balanceDataToSave);
+        error = insertError;
+      }
+
+      if (error) {
+        console.error(`Error ${existingBalance ? 'updating' : 'inserting'} leave balance for ${leaveTypeName}:`, error);
+        return NextResponse.json({ 
+          error: `Failed to ${existingBalance ? 'update' : 'create'} leave balance for ${leaveTypeName}: ${error.message}` 
         }, { status: 500 });
       }
     }
