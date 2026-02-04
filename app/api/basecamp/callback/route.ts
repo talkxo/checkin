@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { setSetting } from '@/lib/settings';
 export async function GET(req: NextRequest) {
   try {
-    const code = new URL(req.url).searchParams.get('code');
+    const url = new URL(req.url);
+    const code = url.searchParams.get('code');
+    const state = url.searchParams.get('state');
     if (!code) {
       console.error('Basecamp callback: Missing code parameter');
       return new NextResponse('Missing authorization code', { status: 400 });
+    }
+
+    // Validate OAuth state to prevent CSRF
+    const cookieStore = cookies();
+    const stateCookie = cookieStore.get('bc_oauth_state');
+    cookieStore.delete('bc_oauth_state');
+    if (!state || !stateCookie?.value || state !== stateCookie.value) {
+      console.error('Basecamp callback: Invalid or missing state');
+      return new NextResponse('Invalid OAuth state', { status: 400 });
     }
 
     // Check if required environment variables are set
@@ -14,7 +26,7 @@ export async function GET(req: NextRequest) {
       return new NextResponse('Basecamp not properly configured', { status: 500 });
     }
 
-    const base = process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
+    const base = process.env.NEXT_PUBLIC_APP_URL || url.origin;
     const body = new URLSearchParams({ 
       type: 'web_server', 
       client_id: process.env.BC_CLIENT_ID, 
