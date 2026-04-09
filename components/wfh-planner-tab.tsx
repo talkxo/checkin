@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { House } from 'lucide-react';
 import WeekStrip from './week-strip';
 import { getMondayOfWeek } from '@/lib/time';
 import { firePlanSavedConfetti } from '@/lib/use-reward';
@@ -196,7 +197,12 @@ function TeamWeekView({ weekStart }: { weekStart: string }) {
                       : 'bg-muted/40 border-border/50 text-muted-foreground'
                   } ${isToday ? 'ring-2 ring-primary/40 ring-offset-2 ring-offset-background' : ''}`}
                 >
-                  {isWFH && <span className="uppercase">WFH</span>}
+                  {isWFH && (
+                    <>
+                      <House className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span className="sr-only">Remote</span>
+                    </>
+                  )}
                 </div>
               );
             })}
