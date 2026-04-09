@@ -1494,8 +1494,10 @@ export default function HomePage(){
                     <PresenceStrip />
                   </motion.div>
 
-                  {/* Stats Section — Raised card */}
-                  <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="bg-card rounded-2xl border border-border/50 p-4 shadow-sm dark:shadow-none space-y-3">
+                  <div className="my-1 h-px bg-border/60" />
+
+                  {/* Stats Section */}
+                  <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="space-y-3">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Overview</h3>
                     </div>
@@ -1541,6 +1543,8 @@ export default function HomePage(){
                       />
                     </div>
                   </motion.div>
+
+                  <div className="my-1 h-px bg-border/60" />
 
                   {/* Calendar Section */}
                   <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>

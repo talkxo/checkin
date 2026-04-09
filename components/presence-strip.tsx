@@ -24,11 +24,11 @@ export default function PresenceStrip() {
   const remote = people.filter(p => p.mode === 'remote');
 
   return (
-    <div className="rounded-2xl border border-border/50 bg-card px-4 py-3 shadow-sm dark:shadow-none">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+    <section className="space-y-2">
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
         Today&apos;s Presence
-      </p>
-      <div className="mt-2 space-y-2">
+      </h3>
+      <div className="space-y-2">
       {inOffice.length > 0 && (
         <div className="flex items-start gap-2.5 rounded-xl bg-muted/40 dark:bg-muted/20 px-3 py-2">
           <span className="mt-0.5 text-sm">&#x1F3E2;</span>
@@ -56,6 +56,6 @@ export default function PresenceStrip() {
         </div>
       )}
       </div>
-    </div>
+    </section>
   );
 }
