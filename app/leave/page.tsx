@@ -31,10 +31,7 @@ export default function LeavePage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background dark:bg-background flex items-center justify-center p-8">
-        <div className="bg-card dark:bg-card rounded-2xl elevation-lg p-8 text-center fade-in">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-foreground dark:text-foreground">Loading leave management...</p>
-        </div>
+        <img src="/loader.gif" alt="Loading..." className="w-[150px] h-[150px] object-contain" />
       </div>
     );
   }

@@ -444,13 +444,12 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
     fetchLeaveHistory();
   }, [employeeSlug, employeeEmail]);
 
+
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="rounded-3xl border border-border/60 bg-card p-8 text-center shadow-sm">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-foreground">Loading your leave information...</p>
-        </div>
+        <img src="/loader.gif" alt="Loading..." className="w-[150px] h-[150px] object-contain" />
       </div>
     );
   }
