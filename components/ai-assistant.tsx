@@ -195,7 +195,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                 <i className="fas fa-robot text-white text-lg"></i>
               </div>
               <div>
-                <DialogTitle className="text-lg font-semibold text-gray-900">
+                <DialogTitle className="text-lg font-semibold text-foreground">
                   INSYDE Assistant
                 </DialogTitle>
                 <p className="text-sm text-gray-600">
@@ -226,7 +226,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                 className={`max-w-[80%] rounded-lg p-4 ${
                   message.role === 'user'
                     ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-900'
+                    : 'bg-gray-100 text-foreground'
                 }`}
               >
                 <div className="flex items-start space-x-2">

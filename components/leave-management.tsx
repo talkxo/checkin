@@ -500,14 +500,12 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
             <DialogContent className="max-h-[86vh] overflow-y-auto rounded-3xl border border-border/60 bg-card sm:max-w-[540px]">
               <DialogHeader>
                 <DialogTitle className="text-xl font-semibold text-foreground">Request Leave</DialogTitle>
-                <DialogDescription className="text-muted-foreground">Quick apply or fill details.</DialogDescription>
               </DialogHeader>
 
               <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3.5">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-semibold leading-none text-foreground">Quick apply</p>
-                    <p className="mt-1 text-xs text-muted-foreground">Need tomorrow off quickly?</p>
                   </div>
                   <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10">
                     <HeartPulse className="h-4 w-4 text-red-500 dark:text-red-400" />
@@ -530,7 +528,7 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
                 >
                   {sickLeaveType
                     ? sickLeaveAvailable > 0
-                      ? `Sick Leave for Tomorrow (${tomorrowDateLabel})`
+                      ? `🤒 Sick, can't make it tomorrow (${tomorrowDateLabel})`
                       : 'Sick Leave unavailable (0 left)'
                     : 'Sick leave type unavailable'}
                 </Button>

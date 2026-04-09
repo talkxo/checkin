@@ -46,7 +46,7 @@ export default function AdminLeavePage() {
               >
                 <ArrowLeft className="w-5 h-5 text-foreground dark:text-foreground" />
               </Link>
-              <h1 className="text-2xl font-semibold text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>
+              <h1 className="text-2xl font-semibold text-foreground dark:text-foreground">
                 Admin Leave Management
               </h1>
             </div>

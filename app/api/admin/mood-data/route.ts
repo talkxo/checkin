@@ -8,24 +8,41 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const timeRange = searchParams.get('range') || 'week';
+    const customStartDate = searchParams.get('startDate');
+    const customEndDate = searchParams.get('endDate');
 
     const now = nowIST();
     let startDate: Date;
     let endDate: Date = new Date(now);
 
-    // Calculate date range based on parameter
-    switch (timeRange) {
-      case 'week':
-        startDate = new Date(now);
-        startDate.setDate(now.getDate() - 7);
-        break;
-      case 'month':
-        startDate = new Date(now);
-        startDate.setMonth(now.getMonth() - 1);
-        break;
-      default:
-        startDate = new Date(now);
-        startDate.setDate(now.getDate() - 7);
+    // Handle custom date range
+    if (customStartDate && customEndDate) {
+      startDate = new Date(customStartDate);
+      endDate = new Date(customEndDate);
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      // Calculate date range based on parameter
+      switch (timeRange) {
+        case 'week':
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case 'month':
+          startDate = new Date(now);
+          startDate.setMonth(now.getMonth() - 1);
+          break;
+        case 'currentMonth':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+          break;
+        case 'previousMonth':
+          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+          break;
+        default:
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - 7);
+      }
     }
 
     // Get sessions with mood data in the date range

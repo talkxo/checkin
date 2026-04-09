@@ -105,7 +105,7 @@ export default function SavedResponsesPage() {
     <div className="container mx-auto p-6 max-w-6xl">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Saved Responses</h1>
+          <h1 className="text-3xl font-bold text-foreground">Saved Responses</h1>
           <p className="text-gray-600 mt-2">Browse and manage your saved AI chat responses</p>
         </div>
         <Button onClick={() => window.history.back()} variant="outline">
@@ -180,7 +180,7 @@ export default function SavedResponsesPage() {
         <Card>
           <CardContent className="text-center py-12">
             <Tag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No saved responses</h3>
+            <h3 className="text-lg font-medium text-foreground mb-2">No saved responses</h3>
             <p className="text-gray-600">
               {selectedTags.length > 0 
                 ? `No responses found with the selected tags: ${selectedTags.join(', ')}`

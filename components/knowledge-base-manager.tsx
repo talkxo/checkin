@@ -147,7 +147,7 @@ export default function KnowledgeBaseManager({ isOpen, onClose }: KnowledgeBaseM
         <DialogHeader className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <DialogTitle className="text-xl font-semibold text-gray-900">
+              <DialogTitle className="text-xl font-semibold text-foreground">
                 Knowledge Base Manager
               </DialogTitle>
               <p className="text-sm text-gray-600 mt-1">
@@ -188,7 +188,7 @@ export default function KnowledgeBaseManager({ isOpen, onClose }: KnowledgeBaseM
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-2">
+                        <h3 className="font-semibold text-foreground mb-2">
                           {item.category}
                         </h3>
                         <p className="text-sm text-gray-600 line-clamp-3">
@@ -237,7 +237,7 @@ export default function KnowledgeBaseManager({ isOpen, onClose }: KnowledgeBaseM
               <div className="flex-1 flex flex-col">
                 <div className="p-4 border-b border-gray-200">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-gray-900">
+                    <h2 className="text-lg font-semibold text-foreground">
                       {isEditing ? 'Edit Knowledge Item' : selectedItem.category}
                     </h2>
                     {!isEditing && (
@@ -307,7 +307,7 @@ export default function KnowledgeBaseManager({ isOpen, onClose }: KnowledgeBaseM
                   ) : (
                     <div className="prose prose-sm max-w-none">
                       <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        <h3 className="text-lg font-semibold text-foreground mb-2">
                           {selectedItem.category}
                         </h3>
                         <div className="text-sm text-gray-600">

@@ -184,7 +184,7 @@ Please try asking again in a few minutes, or use the dashboard for immediate ins
       return NextResponse.json({ response: staticFallback });
     }
     
-    // Try AI response with 8-second timeout (same as employee assistant)
+    // Try AI response with a longer timeout for thinking models
     let aiResponse;
     try {
       const result = await Promise.race([
@@ -193,7 +193,7 @@ Please try asking again in a few minutes, or use the dashboard for immediate ins
           { role: 'user', content: prompt }
         ], 0.3),
         new Promise<{ success: boolean; data?: any; error?: string }>((_, reject) => 
-          setTimeout(() => reject(new Error('AI timeout')), 8000) // 8 second timeout
+          setTimeout(() => reject(new Error('AI timeout')), 20000) // 20 second timeout
         )
       ]);
       aiResponse = result as { success: boolean; data?: any; error?: string };

@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   Brain,
   Calendar,
   Eye,
   LogOut,
-  MessageSquare,
   RefreshCw,
   ShieldCheck,
   Users,
@@ -49,12 +49,32 @@ const ADMIN_LATE_CUTOFF_MINUTES = 630;
 type AttendanceStatusFilter = "all" | "active" | "attention" | "missing";
 type AttendanceModeFilter = "all" | "office" | "remote";
 type AiFeature = "insights" | "report" | "sentiment";
-type AiRange = "today" | "week" | "month";
+type AiRange = "today" | "week" | "month" | "lastMonth" | "custom";
 
 interface NoticeState {
   variant: "success" | "error" | "info" | "warning";
   title?: string;
   message: string;
+}
+
+interface AiResultMeta {
+  recordsAnalyzed: number;
+  uniquePeople: number;
+  officeCount: number;
+  remoteCount: number;
+  moodEntries: number;
+}
+
+interface AnimatedBlobConfig {
+  id: string;
+  size: number;
+  left: string;
+  top: string;
+  color: string;
+  opacity: number;
+  spread: number;
+  animate: { x: string[]; y: string[] };
+  transition: { duration: number; delay: number; repeat: number; repeatType: "mirror"; ease: "easeInOut" };
 }
 
 const DEFAULT_ATTENDANCE_RANGE: AttendanceDateRange = {
@@ -105,10 +125,21 @@ export default function AdminPage() {
   const [editUserData, setEditUserData] = useState(defaultEditForm);
 
   const [aiTimeRange, setAiTimeRange] = useState<AiRange>("week");
+  const [aiCustomRange, setAiCustomRange] = useState<{ startDate: string; endDate: string }>(() => {
+    const today = formatISTDateKey(new Date());
+    return { startDate: today, endDate: today };
+  });
   const [selectedAiFeature, setSelectedAiFeature] = useState<AiFeature>("insights");
   const [customPrompt, setCustomPrompt] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState("");
+  const [aiResultMeta, setAiResultMeta] = useState<AiResultMeta>({
+    recordsAnalyzed: 0,
+    uniquePeople: 0,
+    officeCount: 0,
+    remoteCount: 0,
+    moodEntries: 0,
+  });
 
   useEffect(() => {
     const now = new Date();
@@ -201,6 +232,98 @@ export default function AdminPage() {
     return `${formatISTDateLong(lastUpdatedAt)} at ${formatISTTimeShort(lastUpdatedAt)}`;
   }, [lastUpdatedAt]);
 
+  const blobCounts = useMemo(() => {
+    return todayData.reduce(
+      (acc, entry) => {
+        const status = entry.status?.toLowerCase();
+        const isPresent = status === "in" || status === "complete";
+        if (!isPresent) return acc;
+
+        const mode = entry.mode?.toLowerCase();
+        if (mode === "office") acc.office += 1;
+        if (mode === "remote") acc.remote += 1;
+        return acc;
+      },
+      { office: 0, remote: 0 }
+    );
+  }, [todayData]);
+
+  const animatedBlobs = useMemo<AnimatedBlobConfig[]>(() => {
+    const total = blobCounts.office + blobCounts.remote;
+    if (!total) return [];
+
+    const createBlob = (color: "office" | "remote", index: number): AnimatedBlobConfig => {
+      const normalizedIndex = index + 1;
+      const densityScale = total > 30 ? 0.56 : total > 22 ? 0.66 : total > 14 ? 0.78 : 1;
+      const baseSize = 200 * densityScale;
+      const sizeJitter = (normalizedIndex % 5) * (14 * densityScale);
+      const size = Math.round(baseSize + sizeJitter);
+      const spread = total > 30 ? 89 : total > 22 ? 86 : total > 14 ? 82 : 78;
+      const edge = normalizedIndex % 4;
+      const edgeOffset = `${(normalizedIndex * 19) % 90}%`;
+      const left = edge === 0 ? "0%" : edge === 1 ? "100%" : edgeOffset;
+      const top = edge === 2 ? "0%" : edge === 3 ? "100%" : edgeOffset;
+      const roamX = 14 + (normalizedIndex % 5) * 4;
+      const roamY = 12 + (normalizedIndex % 6) * 3;
+      const duration = 22 + (normalizedIndex % 9) * 2;
+      const delay = (normalizedIndex % 7) * 0.3;
+      const isOffice = color === "office";
+      const startOpacity = isOffice ? 0.34 : 0.3;
+      const gradient = isOffice ? "#67dfc2" : "#8f7cff";
+      const pathByEdge: Record<number, { x: number[]; y: number[] }> = {
+        // left edge -> mostly move rightward
+        0: {
+          x: [0, roamX, roamX * 0.45, roamX * 0.82],
+          y: [0, roamY * 0.65, -roamY * 0.5, roamY * 0.3],
+        },
+        // right edge -> mostly move leftward
+        1: {
+          x: [0, -roamX, -roamX * 0.42, -roamX * 0.8],
+          y: [0, -roamY * 0.55, roamY * 0.45, -roamY * 0.28],
+        },
+        // top edge -> mostly move downward
+        2: {
+          x: [0, roamX * 0.55, -roamX * 0.48, roamX * 0.3],
+          y: [0, roamY, roamY * 0.46, roamY * 0.82],
+        },
+        // bottom edge -> mostly move upward
+        3: {
+          x: [0, -roamX * 0.6, roamX * 0.44, -roamX * 0.26],
+          y: [0, -roamY, -roamY * 0.44, -roamY * 0.78],
+        },
+      };
+      const movement = pathByEdge[edge];
+
+      return {
+        id: `${color}-${normalizedIndex}`,
+        size,
+        left,
+        top,
+        color: gradient,
+        opacity: startOpacity,
+        spread,
+        animate: {
+          x: movement.x.map((value) => `${value}vw`),
+          y: movement.y.map((value) => `${value}vh`),
+        },
+        transition: {
+          duration,
+          delay,
+          repeat: Infinity,
+          repeatType: "mirror",
+          ease: "easeInOut",
+        },
+      };
+    };
+
+    const officeBlobs = Array.from({ length: blobCounts.office }, (_, index) => createBlob("office", index));
+    const remoteBlobs = Array.from({ length: blobCounts.remote }, (_, index) =>
+      createBlob("remote", index + blobCounts.office)
+    );
+
+    return [...officeBlobs, ...remoteBlobs];
+  }, [blobCounts.office, blobCounts.remote]);
+
   const refreshOverview = async () => {
     setIsRefreshing(true);
     try {
@@ -251,10 +374,32 @@ export default function AdminPage() {
     const now = new Date();
     const todayKey = formatISTDateKey(now);
     const [year, month] = todayKey.split("-").map(Number);
+    const todayIST = new Date(`${todayKey}T12:00:00+05:30`);
     let startDate = "";
     let endDate = "";
 
     switch (preset) {
+      case "today":
+        startDate = todayKey;
+        endDate = todayKey;
+        break;
+      case "yesterday": {
+        const yesterdayIST = new Date(todayIST);
+        yesterdayIST.setDate(yesterdayIST.getDate() - 1);
+        const yesterdayKey = formatISTDateKey(yesterdayIST);
+        startDate = yesterdayKey;
+        endDate = yesterdayKey;
+        break;
+      }
+      case "thisWeek": {
+        const weekStartIST = new Date(todayIST);
+        const dayOfWeek = weekStartIST.getDay(); // Sunday=0, Monday=1
+        const deltaToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+        weekStartIST.setDate(weekStartIST.getDate() + deltaToMonday);
+        startDate = formatISTDateKey(weekStartIST);
+        endDate = todayKey;
+        break;
+      }
       case "currentMonth":
         startDate = `${year}-${String(month).padStart(2, "0")}-01`;
         endDate = todayKey;
@@ -468,14 +613,28 @@ export default function AdminPage() {
   };
 
   const loadHistoricalData = async (range: AiRange) => {
-    const response = await fetch(`/api/admin/historical-data?range=${range}`);
+    const params = new URLSearchParams();
+    if (range === "lastMonth") params.set("range", "previousMonth");
+    else params.set("range", range);
+    if (range === "custom" && aiCustomRange.startDate && aiCustomRange.endDate) {
+      params.set("startDate", aiCustomRange.startDate);
+      params.set("endDate", aiCustomRange.endDate);
+    }
+    const response = await fetch(`/api/admin/historical-data?${params.toString()}`);
     if (!response.ok) return [];
     const data = await response.json();
     return data.attendanceData || [];
   };
 
   const loadMoodData = async (range: AiRange) => {
-    const response = await fetch(`/api/admin/mood-data?range=${range}`);
+    const params = new URLSearchParams();
+    if (range === "lastMonth") params.set("range", "previousMonth");
+    else params.set("range", range);
+    if (range === "custom" && aiCustomRange.startDate && aiCustomRange.endDate) {
+      params.set("startDate", aiCustomRange.startDate);
+      params.set("endDate", aiCustomRange.endDate);
+    }
+    const response = await fetch(`/api/admin/mood-data?${params.toString()}`);
     if (!response.ok) return [];
     const data = await response.json();
     return data.moodData || [];
@@ -486,25 +645,63 @@ export default function AdminPage() {
     try {
       if (selectedAiFeature === "sentiment") {
         const moodData = await loadMoodData(aiTimeRange);
+        const uniquePeople = new Set(
+          moodData.map((entry: any) => entry?.employee_id || entry?.slug || entry?.name).filter(Boolean)
+        ).size;
+        setAiResultMeta({
+          recordsAnalyzed: moodData.length,
+          uniquePeople,
+          officeCount: moodData.filter((entry: any) => entry?.mode === "office").length,
+          remoteCount: moodData.filter((entry: any) => entry?.mode === "remote").length,
+          moodEntries: moodData.length,
+        });
         const response = await fetch("/api/ai/sentiment", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             moodData,
-            timeRange: aiTimeRange === "today" ? "Today" : aiTimeRange === "week" ? "This Week" : "This Month",
+            timeRange:
+              aiTimeRange === "today"
+                ? "Today"
+                : aiTimeRange === "week"
+                ? "This Week"
+                : aiTimeRange === "lastMonth"
+                ? "Last Month"
+                : aiTimeRange === "custom"
+                ? `${aiCustomRange.startDate} to ${aiCustomRange.endDate}`
+                : "This Month",
           }),
         });
         const data = await response.json();
         setAiResult(data.sentiment || "No sentiment analysis returned.");
       } else {
         const attendancePayload = aiTimeRange === "today" ? todayData : await loadHistoricalData(aiTimeRange);
+        const uniquePeople = new Set(
+          attendancePayload.map((entry: any) => entry?.employee_id || entry?.slug || entry?.name).filter(Boolean)
+        ).size;
+        setAiResultMeta({
+          recordsAnalyzed: attendancePayload.length,
+          uniquePeople,
+          officeCount: attendancePayload.filter((entry: any) => entry?.mode === "office").length,
+          remoteCount: attendancePayload.filter((entry: any) => entry?.mode === "remote").length,
+          moodEntries: attendancePayload.filter((entry: any) => entry?.mood).length,
+        });
         const endpoint = selectedAiFeature === "report" ? "/api/ai/report" : "/api/ai/insights";
         const response = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             attendanceData: attendancePayload,
-            timeRange: aiTimeRange === "today" ? "Today" : aiTimeRange === "week" ? "This Week" : "This Month",
+            timeRange:
+              aiTimeRange === "today"
+                ? "Today"
+                : aiTimeRange === "week"
+                ? "This Week"
+                : aiTimeRange === "lastMonth"
+                ? "Last Month"
+                : aiTimeRange === "custom"
+                ? `${aiCustomRange.startDate} to ${aiCustomRange.endDate}`
+                : "This Month",
             prompt: customPrompt || undefined,
           }),
         });
@@ -527,8 +724,28 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        {animatedBlobs.map((blob) => {
+          return (
+            <motion.div
+              key={blob.id}
+              className="absolute z-0 rounded-full blur-2xl"
+              style={{
+                width: `${blob.size}px`,
+                height: `${blob.size}px`,
+                left: blob.left,
+                top: blob.top,
+                opacity: blob.opacity,
+                background: `radial-gradient(circle at center, ${blob.color} 0%, transparent ${blob.spread}%)`,
+              }}
+              animate={blob.animate}
+              transition={blob.transition}
+            />
+          );
+        })}
+      </div>
+      <div className="relative z-10 mx-auto max-w-7xl px-4 py-6 sm:px-6">
         <WorkspaceShell
           title="Operational Workspace"
           subtitle="Operate attendance, people, and leave with clearer prioritization and fewer dead ends."
@@ -537,10 +754,6 @@ export default function AdminPage() {
           onTabChange={setActiveTab}
           actions={
             <>
-              <Button variant="outline" size="sm" onClick={() => router.push("/admin-chat")} className="rounded-xl">
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Chat Mode
-              </Button>
               <Button variant="outline" size="sm" onClick={refreshOverview} className="rounded-xl">
                 <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
                 Refresh
@@ -617,10 +830,13 @@ export default function AdminPage() {
               customPrompt={customPrompt}
               onCustomPromptChange={setCustomPrompt}
               onAiTimeRangeChange={setAiTimeRange}
+              aiCustomRange={aiCustomRange}
+              onAiCustomRangeChange={setAiCustomRange}
               onSelectedAiFeatureChange={setSelectedAiFeature}
               onGenerate={generateAiOutput}
               isLoading={isAiLoading}
               result={aiResult}
+              resultMeta={aiResultMeta}
             />
           ) : null}
 

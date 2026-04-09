@@ -8,7 +8,11 @@ interface AIResponse {
 }
 
 // Helper function to make API calls to OpenRouter with fallback models
-export async function callOpenRouter(messages: any[], temperature: number = 0.7): Promise<AIResponse> {
+export async function callOpenRouter(
+  messages: any[],
+  temperature: number = 0.7,
+  maxTokens: number = 2000
+): Promise<AIResponse> {
   if (!OPENROUTER_API_KEY) {
     console.error('OpenRouter API key not configured');
     return {
@@ -50,7 +54,7 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
             model,
             messages,
             temperature,
-            max_tokens: 1200 // Increased for more complete responses
+            max_tokens: maxTokens
           }),
           signal: controller.signal
         });
@@ -82,10 +86,53 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
 
         const data = await response.json();
         console.log(`✅ Success with model: ${model}`);
-        console.log(`Response length: ${data.choices[0]?.message?.content?.length || 0} characters`);
+
+        const firstChoice = data.choices?.[0];
+        let finalContent = firstChoice?.message?.content || '';
+        let finishReason = firstChoice?.finish_reason;
+
+        // If model output is truncated, request continuation and append.
+        for (let continuation = 0; continuation < 2 && finishReason === 'length'; continuation++) {
+          const continuationResponse = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': 'https://talkxo-checkin.vercel.app',
+              'X-Title': 'INSYDE AI'
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                ...messages,
+                { role: 'assistant', content: finalContent },
+                {
+                  role: 'user',
+                  content:
+                    'Continue exactly from where you stopped. Do not repeat previous sections. Return only the remaining markdown.'
+                }
+              ],
+              temperature,
+              max_tokens: maxTokens
+            }),
+            signal: controller.signal
+          });
+
+          if (!continuationResponse.ok) break;
+
+          const continuationData = await continuationResponse.json();
+          const continuationChoice = continuationData.choices?.[0];
+          const continuationContent = continuationChoice?.message?.content || '';
+          if (!continuationContent.trim()) break;
+
+          finalContent = `${finalContent.trimEnd()}\n\n${continuationContent.trimStart()}`;
+          finishReason = continuationChoice?.finish_reason;
+        }
+
+        console.log(`Response length: ${finalContent.length} characters`);
         return {
           success: true,
-          data: data.choices[0]?.message?.content || ''
+          data: finalContent
         };
       } catch (error) {
         console.log(`Model ${model} error (attempt ${attempt}):`, error);
@@ -205,7 +252,7 @@ Format this as a professional HR report that prioritizes employee well-being and
   return callOpenRouter([
     { role: 'system', content: 'You are a senior HR professional with expertise in employee engagement, organizational psychology, and workplace well-being. Create comprehensive reports that prioritize human connection, empathy, and employee-centric insights.' },
     { role: 'user', content: prompt }
-  ], 0.5);
+  ], 0.5, 2400);
 }
 
 // AI Feature 4: Smart Notifications & Alerts

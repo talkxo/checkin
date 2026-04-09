@@ -11,6 +11,8 @@ interface StatTileProps {
   tone?: "default" | "accent" | "warning";
 }
 
+const WIDGET_TITLE_CLASS = "text-xs font-semibold uppercase tracking-[0.2em] leading-none text-primary";
+
 export function StatTile({
   label,
   value,
@@ -29,7 +31,7 @@ export function StatTile({
     <div className="rounded-2xl border border-border/50 bg-card p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+          <p className={WIDGET_TITLE_CLASS}>{label}</p>
           <p className="mt-2 text-2xl font-semibold text-foreground [font-variant-numeric:tabular-nums]">{value}</p>
           {helper ? <p className="mt-1 text-xs text-muted-foreground">{helper}</p> : null}
         </div>

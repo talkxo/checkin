@@ -76,7 +76,7 @@ function AdminLoginContent() {
             />
           </div>
 
-          <h1 className="text-[2rem] leading-tight font-semibold tracking-[-0.01em] text-foreground sm:text-[2.15rem]" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>
+          <h1 className="text-[2rem] leading-tight font-semibold tracking-[-0.01em] text-foreground sm:text-[2.15rem]">
             Run admin operations from one focused workspace.
           </h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">

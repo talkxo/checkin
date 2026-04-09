@@ -7,16 +7,17 @@
 
 /* Import Cal Sans */
 @import url('https://fonts.googleapis.com/css2?family=Cal+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Funnel+Display:wght@500&family=Open+Sans:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
     /* shadcn/ui Default Theme - https://ui.shadcn.com/themes */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 0 0% 13.3%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 0 0% 13.3%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 0 0% 13.3%;
     --primary: 246 30% 55%;
     --primary-foreground: 0 0% 100%;
     --gradient-from: #6a63b6;
@@ -106,6 +107,21 @@
   /* Cal Sans font class */
   .font-cal-sans {
     font-family: 'Cal Sans', system-ui, sans-serif;
+  }
+
+  .admin-typography {
+    font-family: 'Open Sans', system-ui, sans-serif;
+  }
+
+  .admin-typography :is(h1, h2, h3, h4, h5, h6, [role='heading'], [data-slot='card-title'], [data-slot='dialog-title']) {
+    font-family: 'Funnel Display', system-ui, sans-serif;
+    font-weight: 500;
+  }
+
+  /* Force legacy inline Playfair styles to Funnel Display within Admin only */
+  .admin-typography [style*='--font-playfair-display'] {
+    font-family: 'Funnel Display', system-ui, sans-serif !important;
+    font-weight: 500 !important;
   }
 
   /* Elevation System - Multi-layer shadows for depth */

@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
     // Get employees in scope first so attendance can include leave-only or missing employees too
     let employeeQuery = supabaseAdmin
       .from('employees')
-      .select('id, full_name, slug')
+      .select('id, full_name, slug, active')
       .order('full_name');
 
     if (employeeId) {
@@ -154,14 +154,21 @@ export async function GET(req: NextRequest) {
       leaveDaysByEmployee.set(request.employee_id, entry);
     });
 
+    // Exclude employees who are both inactive and have no sessions in range.
+    // Keep inactive employees if they have session history in the selected period.
+    const scopedEmployees = (employees || []).filter((employee: any) => {
+      const employeeSessions = employeeGroups.get(employee.id) || [];
+      return employee.active !== false || employeeSessions.length > 0;
+    });
+
     // Calculate employee summaries
     const employeeSummaries: EmployeeSummary[] = [];
     let totalHours = 0;
     let totalOfficeHours = 0;
     let totalRemoteHours = 0;
-    const totalEmployees = employees?.length || 0;
+    const totalEmployees = scopedEmployees.length;
 
-    (employees || []).forEach((employee) => {
+    scopedEmployees.forEach((employee: any) => {
       const employeeSessions = employeeGroups.get(employee.id) || [];
       const employeeName = employee.full_name || 'Unknown';
       const employeeSlug = employee.slug || '';

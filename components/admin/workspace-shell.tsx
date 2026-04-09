@@ -34,8 +34,14 @@ export function WorkspaceShell({
     <div className="space-y-6">
       <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">INSYDE Admin</p>
-          <h1 className="mt-2 text-3xl font-semibold text-foreground">{title}</h1>
+          <div className="flex items-center gap-3">
+            <img
+              src="https://pqkph3lzaffmetri.public.blob.vercel-storage.com/1764957051530-Inside-Icon.png"
+              alt="INSYDE"
+              className="h-8 w-8 object-contain"
+            />
+            <h1 className="text-3xl font-bold text-foreground">{title}</h1>
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
         </div>
         {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}

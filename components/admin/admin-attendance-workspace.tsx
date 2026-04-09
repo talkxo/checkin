@@ -106,7 +106,7 @@ export function AdminAttendanceWorkspace({
               />
             </div>
             <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-              {["currentMonth", "previousMonth", "last7Days", "last30Days"].map((preset) => (
+              {["today", "yesterday", "thisWeek", "currentMonth", "previousMonth", "last7Days", "last30Days"].map((preset) => (
                 <button
                   key={preset}
                   onClick={() => onDateRangePresetChange(preset)}
@@ -114,7 +114,19 @@ export function AdminAttendanceWorkspace({
                     dateRange.preset === preset ? "border-primary/25 bg-primary/10 text-foreground" : "border-border/60 bg-card text-muted-foreground"
                   }`}
                 >
-                  {preset === "currentMonth" ? "This Month" : preset === "previousMonth" ? "Previous Month" : preset === "last7Days" ? "Last 7 Days" : "Last 30 Days"}
+                  {preset === "today"
+                    ? "Today"
+                    : preset === "yesterday"
+                    ? "Yesterday"
+                    : preset === "thisWeek"
+                    ? "This Week"
+                    : preset === "currentMonth"
+                    ? "This Month"
+                    : preset === "previousMonth"
+                    ? "Previous Month"
+                    : preset === "last7Days"
+                    ? "Last 7 Days"
+                    : "Last 30 Days"}
                 </button>
               ))}
             </div>

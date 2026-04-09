@@ -135,7 +135,7 @@ export default function PinChangeModal({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Change Your PIN</h2>
+        <h2 className="text-2xl font-semibold text-foreground mb-2">Change Your PIN</h2>
         <p className="text-sm text-gray-600 mb-6">
           Hi {employeeName}! For security, please change your PIN to a new 4-digit code.
         </p>
