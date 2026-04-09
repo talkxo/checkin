@@ -10,10 +10,11 @@ export async function GET(req: NextRequest) {
     const end = new Date(now);
     end.setHours(23, 59, 59, 999);
 
-    // Get all employees
+    // Get active employees only (exclude disabled/inactive users)
     const { data: employees, error: empError } = await supabaseAdmin
       .from('employees')
       .select('id, full_name, slug')
+      .eq('active', true)
       .order('full_name');
     
     if (empError) return NextResponse.json({ error: empError.message }, { status: 500 });

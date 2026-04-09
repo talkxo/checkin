@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { AlertCircle, Briefcase, Calendar, CheckCircle, Clock, HeartPulse, Plus, Umbrella, XCircle } from 'lucide-react';
+import { AlertCircle, Briefcase, Calendar, CalendarDays, CheckCircle, Clock, HeartPulse, PartyPopper, Plus, Umbrella, X, XCircle } from 'lucide-react';
 import { formatISTDateLong, formatISTDateShort } from '@/lib/time';
 import type { LeaveBalanceResponse, LeaveRequestFormData, LeaveType } from '@/types/leave';
 
@@ -34,9 +34,11 @@ function SectionHeader({
 
 function SummaryTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border/60 bg-background px-4 py-4">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
-      <p className="mt-3 text-3xl font-semibold leading-none text-foreground [font-variant-numeric:tabular-nums]">{value}</p>
+    <div className="flex min-h-[92px] flex-col justify-between rounded-2xl border border-border/60 bg-background px-3 py-3 sm:px-4 sm:py-4">
+      <p className="text-[9px] font-semibold uppercase leading-none tracking-[0.06em] text-muted-foreground sm:text-[10px] sm:tracking-[0.1em]">
+        {label}
+      </p>
+      <p className="text-3xl font-semibold leading-none text-foreground [font-variant-numeric:tabular-nums]">{value}</p>
     </div>
   );
 }
@@ -60,6 +62,10 @@ function toInputDateValue(date: Date): string {
 function getLeaveTypeMeta(name: string) {
   const normalized = name.toLowerCase();
 
+  if (normalized.includes('bonus')) {
+    return { icon: PartyPopper, tint: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20' };
+  }
+
   if (normalized.includes('sick')) {
     return { icon: HeartPulse, tint: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20' };
   }
@@ -71,9 +77,161 @@ function getLeaveTypeMeta(name: string) {
   return { icon: Briefcase, tint: 'bg-primary/10 text-primary border-primary/25' };
 }
 
+function getShortLeaveTypeLabel(name: string) {
+  return name.replace(/\s*leave\s*/gi, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function normalizeLeaveTypeName(name: string) {
+  return name.trim().toLowerCase();
+}
+
 interface LeaveManagementProps {
   employeeSlug?: string;
   employeeEmail?: string;
+}
+
+function ScratchGetWellBanner({ onClose }: { onClose: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [revealed, setRevealed] = useState(false);
+  const [gifUrl, setGifUrl] = useState<string | null>(null);
+  const [isGifLoading, setIsGifLoading] = useState(false);
+
+  const loadGif = async () => {
+    setIsGifLoading(true);
+    try {
+      const response = await fetch('/api/giphy/get-well');
+      if (!response.ok) {
+        setGifUrl(null);
+        return;
+      }
+      const data = await response.json();
+      setGifUrl(data?.gifUrl || null);
+    } catch {
+      setGifUrl(null);
+    } finally {
+      setIsGifLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadGif();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
+
+    const rect = container.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const width = Math.max(220, Math.floor(rect.width));
+    const height = Math.max(220, Math.floor(rect.height || rect.width));
+
+    canvas.width = Math.floor(width * dpr);
+    canvas.height = Math.floor(height * dpr);
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.scale(dpr, dpr);
+    const scratchGradient = ctx.createLinearGradient(0, 0, width, height);
+    scratchGradient.addColorStop(0, '#6ee7b7'); // brighter mint
+    scratchGradient.addColorStop(0.48, '#67e8f9'); // bright aqua
+    scratchGradient.addColorStop(1, '#38bdf8'); // vivid sky blue
+    ctx.fillStyle = scratchGradient;
+    ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = 'rgba(15,23,42,0.72)';
+    ctx.font = '700 16px system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Scratch here', width / 2, height / 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 1;
+    ctx.strokeText('Scratch here', width / 2, height / 2);
+    ctx.globalCompositeOperation = 'destination-out';
+
+    let drawing = false;
+    const scratchAt = (x: number, y: number) => {
+      ctx.beginPath();
+      ctx.arc(x, y, 13, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    const getLocalCoords = (clientX: number, clientY: number) => {
+      const r = canvas.getBoundingClientRect();
+      return { x: clientX - r.left, y: clientY - r.top };
+    };
+
+    const onDown = (e: PointerEvent) => {
+      drawing = true;
+      const p = getLocalCoords(e.clientX, e.clientY);
+      scratchAt(p.x, p.y);
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!drawing) return;
+      const p = getLocalCoords(e.clientX, e.clientY);
+      scratchAt(p.x, p.y);
+    };
+    const onUp = () => {
+      drawing = false;
+      const sample = ctx.getImageData(0, 0, width, height).data;
+      let transparent = 0;
+      for (let i = 3; i < sample.length; i += 4) {
+        if (sample[i] < 20) transparent++;
+      }
+      const ratio = transparent / (sample.length / 4);
+      if (ratio > 0.42) {
+        setRevealed(true);
+      }
+    };
+
+    canvas.addEventListener('pointerdown', onDown);
+    canvas.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+
+    return () => {
+      canvas.removeEventListener('pointerdown', onDown);
+      canvas.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+  }, []);
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-fuchsia-400/30 bg-gradient-to-br from-fuchsia-500/15 via-primary/15 to-cyan-500/15 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset]">
+      <div className="absolute right-3 top-3 z-30">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Dismiss get well banner"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-border/60 bg-background/70 text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      <div
+        ref={containerRef}
+        className="relative aspect-square w-full overflow-hidden"
+        onClick={() => {
+          if (revealed && !isGifLoading) {
+            loadGif();
+          }
+        }}
+      >
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-4 text-center">
+          {gifUrl && !isGifLoading ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={gifUrl} alt="Get well soon gif" className="h-full w-full object-cover" />
+          ) : (
+            <p className="text-sm font-medium text-foreground">Loading a get well soon surprise...</p>
+          )}
+        </div>
+        {!revealed ? <canvas ref={canvasRef} className="relative z-10 touch-none" /> : null}
+      </div>
+    </div>
+  );
 }
 
 export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveManagementProps) {
@@ -82,19 +240,22 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showRequestDialog, setShowRequestDialog] = useState(false);
+  const [requestStep, setRequestStep] = useState<1 | 2>(1);
   const [requestForm, setRequestForm] = useState<LeaveRequestFormData>({
     leaveTypeId: '',
     startDate: '',
     endDate: '',
     reason: '',
   });
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showSickScratchBanner, setShowSickScratchBanner] = useState(false);
 
   const fetchLeaveData = async () => {
     try {
       setIsLoading(true);
-      setError(null);
+      setLoadError(null);
 
       if (!employeeSlug && !employeeEmail) {
         setIsLoading(false);
@@ -118,7 +279,7 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
       const data = await response.json();
       setLeaveData(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load leave data');
+      setLoadError(err instanceof Error ? err.message : 'Failed to load leave data');
     } finally {
       setIsLoading(false);
     }
@@ -141,12 +302,33 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
   const submitLeaveRequest = async (formOverride?: LeaveRequestFormData) => {
     try {
       setIsSubmitting(true);
-      setError(null);
+      setFormError(null);
       setSuccess(null);
       const effectiveForm = formOverride ?? requestForm;
 
       if (!effectiveForm.leaveTypeId || !effectiveForm.startDate || !effectiveForm.endDate) {
-        setError('Please choose a leave type, start date and end date.');
+        setFormError('Please choose a leave type, start date and end date.');
+        return;
+      }
+
+      const start = new Date(effectiveForm.startDate);
+      const end = new Date(effectiveForm.endDate);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+        setFormError('Please select a valid date range.');
+        return;
+      }
+
+      const selectedType = leaveTypes.find((type) => type.id === effectiveForm.leaveTypeId);
+      const selectedBalance = leaveData?.leaveBalance.find(
+        (balance) => balance.leave_type_name.toLowerCase() === (selectedType?.name || '').toLowerCase(),
+      );
+      const requestedDays = Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
+      if ((selectedBalance?.available_leaves ?? 0) < requestedDays) {
+        setFormError(
+          `Insufficient ${selectedType?.name || 'leave'} balance. Requested ${requestedDays} day(s), available ${
+            selectedBalance?.available_leaves ?? 0
+          }.`,
+        );
         return;
       }
 
@@ -165,15 +347,22 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 409) {
+          throw new Error('A request for this leave type already exists for the selected date(s).');
+        }
         throw new Error(data.error || 'Failed to submit leave request');
       }
 
       setSuccess('Leave request submitted successfully!');
+      if ((selectedType?.name || '').toLowerCase().includes('sick')) {
+        setShowSickScratchBanner(true);
+      }
       setShowRequestDialog(false);
+      setRequestStep(1);
       setRequestForm({ leaveTypeId: '', startDate: '', endDate: '', reason: '' });
       await fetchLeaveData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit request');
+      setFormError(err instanceof Error ? err.message : 'Failed to submit request');
     } finally {
       setIsSubmitting(false);
     }
@@ -235,7 +424,7 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
     );
   }
 
-  if (error) {
+  if (loadError) {
     return (
       <div className="mx-auto max-w-2xl">
         <Card className="rounded-3xl border-destructive/50 bg-destructive/10">
@@ -244,7 +433,7 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
               <AlertCircle className="mt-0.5 h-6 w-6" />
               <div>
                 <h3 className="font-semibold">Error Loading Leave Data</h3>
-                <p className="mt-1 text-sm">{error}</p>
+                <p className="mt-1 text-sm">{loadError}</p>
               </div>
             </div>
           </CardContent>
@@ -272,42 +461,62 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
   const pendingRequestCount = leaveData.pendingRequests.filter((request) => request.status === 'pending').length;
   const approvedRequestCount = leaveData.pendingRequests.filter((request) => request.status === 'approved').length;
   const bonusLeavesEarned = leaveData.accrualHistory.reduce((total, accrual) => total + accrual.accrued_leaves, 0);
+  const leaveBalanceByType = new Map(
+    leaveData.leaveBalance.map((balance) => [normalizeLeaveTypeName(balance.leave_type_name), balance.available_leaves]),
+  );
   const sickLeaveType = leaveTypes.find((type) => type.name.toLowerCase().includes('sick'));
+  const sickLeaveAvailable = sickLeaveType ? leaveBalanceByType.get(normalizeLeaveTypeName(sickLeaveType.name)) ?? 0 : 0;
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowDateLabel = formatISTDateShort(toInputDateValue(tomorrow));
+  const handleDialogOpenChange = (open: boolean) => {
+    setShowRequestDialog(open);
+    if (open) {
+      setFormError(null);
+      setSuccess(null);
+    }
+    if (!open) {
+      setRequestStep(1);
+    }
+  };
 
   return (
     <div className="space-y-6 pb-6">
       <section className="rounded-3xl border border-border/60 bg-card p-5 shadow-sm sm:p-6">
+        {showSickScratchBanner ? (
+          <div className="mb-4">
+            <ScratchGetWellBanner onClose={() => setShowSickScratchBanner(false)} />
+          </div>
+        ) : null}
+
         <div className="flex justify-end">
-          <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
+          <Dialog open={showRequestDialog} onOpenChange={handleDialogOpenChange}>
             <DialogTrigger asChild>
               <Button variant="outline" className="h-11 w-full border-primary/40 text-primary hover:bg-primary/10 hover:text-primary sm:w-auto">
                 <Plus className="mr-2 h-4 w-4" />
                 Request Leave
               </Button>
             </DialogTrigger>
-            <DialogContent className="rounded-3xl border border-border/60 bg-card sm:max-w-[540px]">
+            <DialogContent className="max-h-[86vh] overflow-y-auto rounded-3xl border border-border/60 bg-card sm:max-w-[540px]">
               <DialogHeader>
                 <DialogTitle className="text-xl font-semibold text-foreground">Request Leave</DialogTitle>
-                <DialogDescription className="text-muted-foreground">
-                  Submit a new leave request. Make sure you have sufficient balance.
-                </DialogDescription>
+                <DialogDescription className="text-muted-foreground">Quick apply or fill details.</DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-4">
-                <div className="flex items-start justify-between gap-3">
+              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3.5">
+                <div className="mb-2 flex items-center justify-between gap-2">
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Need tomorrow off quickly?</p>
-                    <p className="mt-1 text-xs text-muted-foreground">Apply sick leave for {tomorrowDateLabel} in one tap.</p>
+                    <p className="text-sm font-semibold leading-none text-foreground">Quick apply</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Need tomorrow off quickly?</p>
                   </div>
-                  <HeartPulse className="mt-0.5 h-5 w-5 text-red-500 dark:text-red-400" />
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10">
+                    <HeartPulse className="h-4 w-4 text-red-500 dark:text-red-400" />
+                  </span>
                 </div>
                 <Button
                   type="button"
-                  className="h-12 w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                  disabled={isSubmitting || !sickLeaveType}
+                  className="h-11 w-full rounded-xl bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+                  disabled={isSubmitting || !sickLeaveType || sickLeaveAvailable <= 0}
                   onClick={() => {
                     if (!sickLeaveType) return;
                     const tomorrowDate = toInputDateValue(tomorrow);
@@ -319,112 +528,183 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
                     });
                   }}
                 >
-                  {sickLeaveType ? `Sick Leave for Tomorrow (${tomorrowDateLabel})` : 'Sick leave type unavailable'}
+                  {sickLeaveType
+                    ? sickLeaveAvailable > 0
+                      ? `Sick Leave for Tomorrow (${tomorrowDateLabel})`
+                      : 'Sick Leave unavailable (0 left)'
+                    : 'Sick leave type unavailable'}
                 </Button>
               </div>
 
-              <div className="relative py-1">
-                <div className="h-px bg-border/70" />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-border/60 bg-card px-3 py-0.5 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                  Or fill details
-                </span>
+              <div className="border-t border-border/70 pt-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Or fill details</p>
               </div>
 
-              <div className="grid gap-5 py-2">
-                <div className="grid gap-2">
-                  <Label htmlFor="leaveType" className="text-sm font-medium text-foreground">Leave Type</Label>
-                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                    {leaveTypes.map((type) => {
-                      const selected = requestForm.leaveTypeId === type.id;
-                      const meta = getLeaveTypeMeta(type.name);
-                      const Icon = meta.icon;
-
-                      return (
-                        <button
-                          key={type.id}
-                          type="button"
-                          onClick={() => setRequestForm({ ...requestForm, leaveTypeId: type.id })}
-                          className={`flex min-h-[54px] items-center gap-3 rounded-xl border px-3 py-2 text-left transition-all ${
-                            selected
-                              ? 'border-primary bg-primary/10 text-foreground shadow-sm'
-                              : 'border-border/70 bg-background text-foreground hover:border-primary/40 hover:bg-muted/50'
-                          }`}
-                        >
-                          <span className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border ${meta.tint}`}>
-                            <Icon className="h-4 w-4" />
-                          </span>
-                          <span className="text-sm font-medium">{type.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
+              {requestStep === 1 ? (
+                <div className="grid gap-3 py-1 sm:gap-4 sm:py-2">
                   <div className="grid gap-2">
-                    <Label htmlFor="startDate" className="text-sm font-medium text-foreground">Start Date</Label>
-                    <Input
-                      id="startDate"
-                      type="date"
-                      className="border-input focus:border-primary focus:ring-primary"
-                      value={requestForm.startDate}
-                      onChange={(e) => setRequestForm({ ...requestForm, startDate: e.target.value })}
+                    <Label htmlFor="leaveType" className="text-sm font-medium text-foreground">Leave Type</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {leaveTypes.map((type) => {
+                        const selected = requestForm.leaveTypeId === type.id;
+                        const meta = getLeaveTypeMeta(type.name);
+                        const Icon = meta.icon;
+                        const shortLabel = getShortLeaveTypeLabel(type.name) || type.name;
+                        const available = leaveBalanceByType.get(normalizeLeaveTypeName(type.name)) ?? 0;
+                        const isDisabled = available <= 0;
+
+                        return (
+                          <button
+                            key={type.id}
+                            type="button"
+                            disabled={isDisabled}
+                            onClick={() => {
+                              if (isDisabled) return;
+                              setFormError(null);
+                              setRequestForm({ ...requestForm, leaveTypeId: type.id });
+                            }}
+                            className={`flex h-11 items-center justify-start gap-2 rounded-xl border px-2.5 py-1.5 text-left transition-all ${
+                              selected
+                                ? 'border-primary bg-primary/10 text-foreground shadow-sm'
+                                : isDisabled
+                                  ? 'border-border/60 bg-background/60 text-muted-foreground opacity-60'
+                                  : 'border-border/70 bg-background text-foreground hover:border-primary/40 hover:bg-muted/50'
+                            }`}
+                          >
+                            <span className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${meta.tint}`}>
+                              <Icon className="h-3.5 w-3.5" />
+                            </span>
+                            <span className="flex min-w-0 items-center gap-1.5">
+                              <span className="truncate text-xs font-medium leading-none">{shortLabel}</span>
+                              <span className="shrink-0 text-[10px] font-semibold text-muted-foreground">({available})</span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="grid gap-2">
+                      <Label htmlFor="startDate" className="text-sm font-medium text-foreground">Start Date</Label>
+                      <div className="relative">
+                        <Input
+                          id="startDate"
+                          type="date"
+                          className="h-11 border-input pr-10 text-left leading-none focus:border-primary focus:ring-primary [&::-webkit-calendar-picker-indicator]:opacity-0"
+                          value={requestForm.startDate}
+                          onChange={(e) => {
+                            setFormError(null);
+                            setRequestForm({ ...requestForm, startDate: e.target.value });
+                          }}
+                        />
+                        <CalendarDays className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      </div>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="endDate" className="text-sm font-medium text-foreground">End Date</Label>
+                      <div className="relative">
+                        <Input
+                          id="endDate"
+                          type="date"
+                          className="h-11 border-input pr-10 text-left leading-none focus:border-primary focus:ring-primary [&::-webkit-calendar-picker-indicator]:opacity-0"
+                          value={requestForm.endDate}
+                          onChange={(e) => {
+                            setFormError(null);
+                            setRequestForm({ ...requestForm, endDate: e.target.value });
+                          }}
+                        />
+                        <CalendarDays className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    className="h-10 bg-primary text-primary-foreground hover:bg-primary/90"
+                      onClick={() => {
+                        setFormError(null);
+                        setRequestStep(2);
+                      }}
+                    disabled={!requestForm.leaveTypeId || !requestForm.startDate || !requestForm.endDate}
+                  >
+                    Continue
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid gap-3 py-1 sm:gap-4 sm:py-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-xl border border-border/70 bg-muted/30 px-3 py-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Start</p>
+                      <p className="mt-1 text-sm font-medium text-foreground">{requestForm.startDate || '-'}</p>
+                    </div>
+                    <div className="rounded-xl border border-border/70 bg-muted/30 px-3 py-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">End</p>
+                      <p className="mt-1 text-sm font-medium text-foreground">{requestForm.endDate || '-'}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="reason" className="text-sm font-medium text-foreground">Reason (Optional)</Label>
+                    <Textarea
+                      id="reason"
+                      className="min-h-[84px] resize-none border-input focus:border-primary focus:ring-primary"
+                      value={requestForm.reason}
+                      onChange={(e) => {
+                        setFormError(null);
+                        setRequestForm({ ...requestForm, reason: e.target.value });
+                      }}
+                      placeholder="Brief reason for leave..."
                     />
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="endDate" className="text-sm font-medium text-foreground">End Date</Label>
-                    <Input
-                      id="endDate"
-                      type="date"
-                      className="border-input focus:border-primary focus:ring-primary"
-                      value={requestForm.endDate}
-                      onChange={(e) => setRequestForm({ ...requestForm, endDate: e.target.value })}
-                    />
-                  </div>
                 </div>
+              )}
 
-                <div className="grid gap-2">
-                  <Label htmlFor="reason" className="text-sm font-medium text-foreground">Reason (Optional)</Label>
-                  <Textarea
-                    id="reason"
-                    className="min-h-[120px] resize-none border-input focus:border-primary focus:ring-primary"
-                    value={requestForm.reason}
-                    onChange={(e) => setRequestForm({ ...requestForm, reason: e.target.value })}
-                    placeholder="Brief reason for leave..."
-                  />
-                </div>
-              </div>
-
-              {error ? <div className="rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">{error}</div> : null}
+              {formError ? <div className="rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">{formError}</div> : null}
               {success ? <div className="rounded-xl border border-primary/25 bg-primary/10 p-3 text-sm text-foreground">{success}</div> : null}
 
               <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <Button variant="outline" onClick={() => setShowRequestDialog(false)} className="border-border text-foreground hover:bg-muted">
-                  Cancel
-                </Button>
-                <Button
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
-                  onClick={() => submitLeaveRequest()}
-                  disabled={isSubmitting || !requestForm.leaveTypeId || !requestForm.startDate || !requestForm.endDate}
-                >
-                  {isSubmitting ? 'Submitting...' : 'Submit Request'}
-                </Button>
+                {requestStep === 2 ? (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setFormError(null);
+                        setRequestStep(1);
+                      }}
+                      className="border-border text-foreground hover:bg-muted"
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                      onClick={() => submitLeaveRequest()}
+                      disabled={isSubmitting || !requestForm.leaveTypeId || !requestForm.startDate || !requestForm.endDate}
+                    >
+                      {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="outline" onClick={() => setShowRequestDialog(false)} className="border-border text-foreground hover:bg-muted">
+                    Cancel
+                  </Button>
+                )}
               </div>
             </DialogContent>
           </Dialog>
         </div>
 
-        {(error || success) ? (
+        {success ? (
           <div className="mt-5 space-y-2">
-            {error ? <div className="rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div> : null}
             {success ? <div className="rounded-2xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm text-foreground">{success}</div> : null}
           </div>
         ) : null}
 
         <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <SummaryTile label="Available" value={`${getTotalAvailableLeaves()}`} />
+          <SummaryTile label="Balance" value={`${getTotalAvailableLeaves()}`} />
           <SummaryTile label="Pending" value={`${pendingRequestCount}`} />
-          <SummaryTile label="Approved" value={`${approvedRequestCount}`} />
+          <SummaryTile label="Used" value={`${approvedRequestCount}`} />
           <SummaryTile label="Bonus" value={`${bonusLeavesEarned}`} />
         </div>
       </section>

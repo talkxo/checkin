@@ -360,6 +360,77 @@ export default function HomePage(){
     }
   },[]);
 
+  // Compute streak for Team tab from recent IST check-in dates.
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setStreak(0);
+      return;
+    }
+
+    const activeSlug =
+      selectedEmployee?.slug ||
+      me?.slug ||
+      (typeof window !== 'undefined' ? localStorage.getItem('userSlug') : null);
+
+    if (!activeSlug) {
+      setStreak(0);
+      return;
+    }
+
+    const toDateKey = (date: Date) => {
+      const y = date.getUTCFullYear();
+      const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const d = String(date.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    };
+
+    const previousWorkday = (date: Date) => {
+      const cursor = new Date(date);
+      do {
+        cursor.setUTCDate(cursor.getUTCDate() - 1);
+      } while (cursor.getUTCDay() === 0 || cursor.getUTCDay() === 6);
+      return cursor;
+    };
+
+    const computeStreakFromDates = (dateKeys: string[]) => {
+      const uniqueKeys = Array.from(new Set(dateKeys)).sort((a, b) => b.localeCompare(a));
+      if (uniqueKeys.length === 0) return 0;
+
+      const [year, month, day] = uniqueKeys[0].split('-').map(Number);
+      let cursor = new Date(Date.UTC(year, month - 1, day));
+      let days = 0;
+
+      for (let i = 0; i < 366; i++) {
+        const key = toDateKey(cursor);
+        if (!uniqueKeys.includes(key)) break;
+        days += 1;
+        cursor = previousWorkday(cursor);
+      }
+
+      return days;
+    };
+
+    const fetchStreak = async () => {
+      try {
+        const response = await fetch(`/api/admin/recent-activity?range=month&slug=${encodeURIComponent(activeSlug)}`);
+        if (!response.ok) {
+          setStreak(0);
+          return;
+        }
+
+        const data = await response.json();
+        const dateKeys = (data.recentActivity || []).map((item: any) =>
+          new Date(item.checkinTime).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
+        );
+        setStreak(computeStreakFromDates(dateKeys));
+      } catch {
+        setStreak(0);
+      }
+    };
+
+    fetchStreak();
+  }, [isLoggedIn, me?.slug, selectedEmployee?.slug]);
+
   // Get current location and determine mode
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {

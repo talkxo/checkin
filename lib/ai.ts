@@ -21,7 +21,7 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
 
   // Use only free models with fallbacks for better reliability
   const models = [
-    'moonshotai/kimi-k2:free',           // Primary: Advanced reasoning, perfect for DB queries
+    'liquid/lfm-2.5-1.2b-thinking:free', // Primary: requested OpenRouter model
     'google/gemma-3n-e4b-it:free',       // Fallback 1: Original reliable model
     'meta-llama/llama-3.2-3b-instruct:free',  // Fallback 2: Fast and efficient
     'microsoft/phi-3-mini-128k-instruct:free' // Fallback 3: Good for structured data

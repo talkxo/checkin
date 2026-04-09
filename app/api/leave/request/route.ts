@@ -90,6 +90,34 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
+    // Prevent duplicate/overlapping requests for the same leave type while active.
+    // This blocks repeated one-click submits for the same date window.
+    const { data: conflictingRequest, error: conflictError } = await supabaseAdmin
+      .from('leave_requests')
+      .select('id, status, start_date, end_date')
+      .eq('employee_id', emp.id)
+      .eq('leave_type_id', leaveTypeId)
+      .in('status', ['pending', 'approved'])
+      .lte('start_date', endDate)
+      .gte('end_date', startDate)
+      .limit(1)
+      .maybeSingle();
+
+    if (conflictError) {
+      console.error('Error checking existing leave requests:', conflictError);
+      return NextResponse.json({ error: 'Failed to validate existing requests' }, { status: 500 });
+    }
+
+    if (conflictingRequest) {
+      return NextResponse.json(
+        {
+          error: 'A leave request for this leave type already exists for the selected date range',
+          conflict: conflictingRequest,
+        },
+        { status: 409 },
+      );
+    }
+
     // Create leave request
     const { data: leaveRequest, error } = await supabaseAdmin
       .from('leave_requests')

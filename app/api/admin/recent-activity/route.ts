@@ -8,6 +8,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const range = searchParams.get('range') || 'today'; // today, week, month
+    const slug = searchParams.get('slug');
     
     const now = nowIST();
     let startDate = new Date(now);
@@ -27,8 +28,36 @@ export async function GET(req: NextRequest) {
         startDate.setHours(0, 0, 0, 0);
     }
 
+    let employeeId: string | null = null;
+    if (slug) {
+      const { data: employeeBySlug, error: employeeLookupError } = await supabaseAdmin
+        .from('employees')
+        .select('id')
+        .eq('slug', slug)
+        .eq('active', true)
+        .maybeSingle();
+
+      if (employeeLookupError) {
+        return NextResponse.json({ error: employeeLookupError.message }, { status: 500 });
+      }
+
+      if (!employeeBySlug?.id) {
+        return NextResponse.json({
+          recentActivity: [],
+          currentlyCheckedIn: [],
+          range,
+          startDate: startDate.toISOString(),
+          endDate: now.toISOString(),
+          totalRecentSessions: 0,
+          totalCurrentlyCheckedIn: 0
+        });
+      }
+
+      employeeId = employeeBySlug.id;
+    }
+
     // Get recent check-ins with employee info
-    const { data: recentSessions, error } = await supabaseAdmin
+    let sessionsQuery = supabaseAdmin
       .from('sessions')
       .select(`
         id,
@@ -44,7 +73,13 @@ export async function GET(req: NextRequest) {
       .gte('checkin_ts', startDate.toISOString())
       .lte('checkin_ts', now.toISOString())
       .order('checkin_ts', { ascending: false })
-      .limit(20); // Get last 20 sessions
+      .limit(slug ? 120 : 20);
+
+    if (employeeId) {
+      sessionsQuery = sessionsQuery.eq('employee_id', employeeId);
+    }
+
+    const { data: recentSessions, error } = await sessionsQuery;
 
     if (error) {
       console.error('Error fetching recent activity:', error);
@@ -74,7 +109,7 @@ export async function GET(req: NextRequest) {
     }) || [];
 
     // Get current open sessions
-    const { data: openSessions } = await supabaseAdmin
+    let openSessionsQuery = supabaseAdmin
       .from('sessions')
       .select(`
         id,
@@ -88,6 +123,12 @@ export async function GET(req: NextRequest) {
       `)
       .is('checkout_ts', null)
       .order('checkin_ts', { ascending: false });
+
+    if (employeeId) {
+      openSessionsQuery = openSessionsQuery.eq('employee_id', employeeId);
+    }
+
+    const { data: openSessions } = await openSessionsQuery;
 
     const currentlyCheckedIn = openSessions?.map(session => {
       const employee = Array.isArray(session.employees) ? session.employees[0] : session.employees;

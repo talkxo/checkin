@@ -43,7 +43,10 @@ const RecentActivity: React.FC<RecentActivityProps> = ({
       setError(null);
 
       try {
-        const response = await fetch('/api/admin/recent-activity?range=week');
+        const query = userSlug
+          ? `/api/admin/recent-activity?range=week&slug=${encodeURIComponent(userSlug)}`
+          : '/api/admin/recent-activity?range=week';
+        const response = await fetch(query);
         if (!response.ok) {
           throw new Error('Failed to fetch recent activity');
         }
