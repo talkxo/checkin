@@ -7,9 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { AlertCircle, Calendar, CheckCircle, Clock, Plus, XCircle } from 'lucide-react';
+import { AlertCircle, Briefcase, Calendar, CheckCircle, Clock, HeartPulse, Plus, Umbrella, XCircle } from 'lucide-react';
 import { formatISTDateLong, formatISTDateShort } from '@/lib/time';
 import type { LeaveBalanceResponse, LeaveRequestFormData, LeaveType } from '@/types/leave';
 
@@ -49,6 +48,27 @@ function DetailRow({ label, value }: { label: string; value: string }) {
       <dd className="min-w-0 break-words text-right text-sm font-medium text-foreground [font-variant-numeric:tabular-nums]">{value}</dd>
     </div>
   );
+}
+
+function toInputDateValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getLeaveTypeMeta(name: string) {
+  const normalized = name.toLowerCase();
+
+  if (normalized.includes('sick')) {
+    return { icon: HeartPulse, tint: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20' };
+  }
+
+  if (normalized.includes('casual')) {
+    return { icon: Umbrella, tint: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20' };
+  }
+
+  return { icon: Briefcase, tint: 'bg-primary/10 text-primary border-primary/25' };
 }
 
 interface LeaveManagementProps {
@@ -118,14 +138,20 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
     }
   };
 
-  const submitLeaveRequest = async () => {
+  const submitLeaveRequest = async (formOverride?: LeaveRequestFormData) => {
     try {
       setIsSubmitting(true);
       setError(null);
       setSuccess(null);
+      const effectiveForm = formOverride ?? requestForm;
+
+      if (!effectiveForm.leaveTypeId || !effectiveForm.startDate || !effectiveForm.endDate) {
+        setError('Please choose a leave type, start date and end date.');
+        return;
+      }
 
       const requestBody = {
-        ...requestForm,
+        ...effectiveForm,
         ...(employeeSlug && { slug: employeeSlug }),
         ...(employeeEmail && { email: employeeEmail }),
       };
@@ -246,6 +272,10 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
   const pendingRequestCount = leaveData.pendingRequests.filter((request) => request.status === 'pending').length;
   const approvedRequestCount = leaveData.pendingRequests.filter((request) => request.status === 'approved').length;
   const bonusLeavesEarned = leaveData.accrualHistory.reduce((total, accrual) => total + accrual.accrued_leaves, 0);
+  const sickLeaveType = leaveTypes.find((type) => type.name.toLowerCase().includes('sick'));
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowDateLabel = formatISTDateShort(toInputDateValue(tomorrow));
 
   return (
     <div className="space-y-6 pb-6">
@@ -266,21 +296,68 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
                 </DialogDescription>
               </DialogHeader>
 
+              <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Need tomorrow off quickly?</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Apply sick leave for {tomorrowDateLabel} in one tap.</p>
+                  </div>
+                  <HeartPulse className="mt-0.5 h-5 w-5 text-red-500 dark:text-red-400" />
+                </div>
+                <Button
+                  type="button"
+                  className="h-12 w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                  disabled={isSubmitting || !sickLeaveType}
+                  onClick={() => {
+                    if (!sickLeaveType) return;
+                    const tomorrowDate = toInputDateValue(tomorrow);
+                    submitLeaveRequest({
+                      leaveTypeId: sickLeaveType.id,
+                      startDate: tomorrowDate,
+                      endDate: tomorrowDate,
+                      reason: 'Sick leave',
+                    });
+                  }}
+                >
+                  {sickLeaveType ? `Sick Leave for Tomorrow (${tomorrowDateLabel})` : 'Sick leave type unavailable'}
+                </Button>
+              </div>
+
+              <div className="relative py-1">
+                <div className="h-px bg-border/70" />
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-border/60 bg-card px-3 py-0.5 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                  Or fill details
+                </span>
+              </div>
+
               <div className="grid gap-5 py-2">
                 <div className="grid gap-2">
                   <Label htmlFor="leaveType" className="text-sm font-medium text-foreground">Leave Type</Label>
-                  <Select value={requestForm.leaveTypeId} onValueChange={(value) => setRequestForm({ ...requestForm, leaveTypeId: value })}>
-                    <SelectTrigger className="border-input focus:border-primary focus:ring-primary">
-                      <SelectValue placeholder="Select leave type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {leaveTypes.map((type) => (
-                        <SelectItem key={type.id} value={type.id}>
-                          {type.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                    {leaveTypes.map((type) => {
+                      const selected = requestForm.leaveTypeId === type.id;
+                      const meta = getLeaveTypeMeta(type.name);
+                      const Icon = meta.icon;
+
+                      return (
+                        <button
+                          key={type.id}
+                          type="button"
+                          onClick={() => setRequestForm({ ...requestForm, leaveTypeId: type.id })}
+                          className={`flex min-h-[54px] items-center gap-3 rounded-xl border px-3 py-2 text-left transition-all ${
+                            selected
+                              ? 'border-primary bg-primary/10 text-foreground shadow-sm'
+                              : 'border-border/70 bg-background text-foreground hover:border-primary/40 hover:bg-muted/50'
+                          }`}
+                        >
+                          <span className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border ${meta.tint}`}>
+                            <Icon className="h-4 w-4" />
+                          </span>
+                          <span className="text-sm font-medium">{type.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -327,7 +404,7 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
                 </Button>
                 <Button
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
-                  onClick={submitLeaveRequest}
+                  onClick={() => submitLeaveRequest()}
                   disabled={isSubmitting || !requestForm.leaveTypeId || !requestForm.startDate || !requestForm.endDate}
                 >
                   {isSubmitting ? 'Submitting...' : 'Submit Request'}
