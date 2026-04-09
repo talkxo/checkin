@@ -525,8 +525,8 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
                 Request Leave
               </Button>
             </DialogTrigger>
-            <DialogContent className="main-typography left-0 top-0 flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 items-center justify-center overflow-y-auto rounded-none border-0 bg-background px-4 py-5 sm:px-6 sm:py-6">
-              <div className="mx-auto w-full max-w-2xl space-y-4">
+            <DialogContent className="main-typography left-0 top-0 flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 items-center justify-center overflow-y-auto rounded-none border-0 bg-background px-6 py-5 sm:px-6 sm:py-6">
+              <div className="mx-auto w-full max-w-xl space-y-4 rounded-3xl border border-border/60 bg-card p-4 shadow-sm sm:p-5">
               <DialogHeader>
                 <DialogTitle className="text-xl font-semibold text-foreground">Request Leave</DialogTitle>
               </DialogHeader>
@@ -713,9 +713,14 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
                     </Button>
                   </>
                 ) : (
-                  <Button variant="outline" onClick={() => setShowRequestDialog(false)} className="border-border text-foreground hover:bg-muted">
-                    Cancel
-                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setShowRequestDialog(false)}
+                    className="mt-2 inline-flex items-center justify-center gap-1.5 self-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                    <span>Cancel</span>
+                  </button>
                 )}
               </div>
               </div>
