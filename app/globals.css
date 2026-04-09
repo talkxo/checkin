@@ -63,6 +63,7 @@
 
   html {
     font-family: 'Source Sans Pro', system-ui, sans-serif;
+    font-size: 90%;
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     height: 100%;
@@ -111,6 +112,15 @@
 
   .admin-typography {
     font-family: 'Open Sans', system-ui, sans-serif;
+  }
+
+  .main-typography {
+    font-family: 'Open Sans', system-ui, sans-serif;
+  }
+
+  .main-typography :is(h1, h2, h3, h4, h5, h6, [role='heading'], [data-slot='card-title'], [data-slot='dialog-title']) {
+    font-family: 'Funnel Display', system-ui, sans-serif;
+    font-weight: 500;
   }
 
   .admin-typography :is(h1, h2, h3, h4, h5, h6, [role='heading'], [data-slot='card-title'], [data-slot='dialog-title']) {

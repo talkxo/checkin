@@ -246,4 +246,106 @@ export async function GET(req: NextRequest) {
   }
 }
 
+export async function PATCH(req: NextRequest) {
+  try {
+    const { requestId, slug, email } = await req.json();
+
+    if (!requestId) {
+      return NextResponse.json({ error: 'requestId required' }, { status: 400 });
+    }
+
+    if (!slug && !email) {
+      return NextResponse.json({ error: 'slug or email required' }, { status: 400 });
+    }
+
+    // Find employee for ownership check
+    let emp: any = null;
+    if (email) {
+      const { data } = await supabaseAdmin
+        .from('employees')
+        .select('id, full_name, slug')
+        .eq('email', email)
+        .maybeSingle();
+      emp = data;
+    }
+    if (!emp && slug) {
+      const { data } = await supabaseAdmin
+        .from('employees')
+        .select('id, full_name, slug')
+        .eq('slug', slug)
+        .maybeSingle();
+      emp = data;
+    }
+
+    if (!emp) {
+      return NextResponse.json({ error: 'employee not found' }, { status: 404 });
+    }
+
+    const { data: leaveRequest, error: requestError } = await supabaseAdmin
+      .from('leave_requests')
+      .select('id, employee_id, leave_type_id, total_days, status, start_date')
+      .eq('id', requestId)
+      .eq('employee_id', emp.id)
+      .maybeSingle();
+
+    if (requestError || !leaveRequest) {
+      return NextResponse.json({ error: 'Leave request not found' }, { status: 404 });
+    }
+
+    if (leaveRequest.status === 'approved') {
+      return NextResponse.json({ error: 'Approved requests cannot be cancelled' }, { status: 400 });
+    }
+
+    if (leaveRequest.status === 'cancelled') {
+      return NextResponse.json({ success: true, message: 'Request already cancelled' });
+    }
+
+    const { error: cancelError } = await supabaseAdmin
+      .from('leave_requests')
+      .update({
+        status: 'cancelled',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', requestId)
+      .eq('employee_id', emp.id);
+
+    if (cancelError) {
+      return NextResponse.json({ error: cancelError.message }, { status: 500 });
+    }
+
+    // If request was pending, remove it from pending balance.
+    if (leaveRequest.status === 'pending') {
+      const requestYear = new Date(leaveRequest.start_date).getFullYear();
+      const { data: leaveBalance, error: balanceError } = await supabaseAdmin
+        .from('leave_balances')
+        .select('id, pending_leaves')
+        .eq('employee_id', emp.id)
+        .eq('leave_type_id', leaveRequest.leave_type_id)
+        .eq('year', requestYear)
+        .maybeSingle();
+
+      if (!balanceError && leaveBalance) {
+        await supabaseAdmin
+          .from('leave_balances')
+          .update({
+            pending_leaves: Math.max(0, Number(leaveBalance.pending_leaves || 0) - Number(leaveRequest.total_days || 0)),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', leaveBalance.id);
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Leave request cancelled',
+    });
+  } catch (error) {
+    console.error('Error in cancel leave request API:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
 export const dynamic = 'force-dynamic';

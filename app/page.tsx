@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, Calendar, Bell, ChevronRight } from 'lucide-react';
+import { LogOut, Bell, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import AssistantChat from '@/components/assistant-chat';
 import PinLogin from '@/components/pin-login';
@@ -1190,15 +1190,6 @@ export default function HomePage(){
     timeZone: 'Asia/Kolkata'
   });
   
-  // Format date for Overview section (e.g., "Wed, Jul 22 2024")
-  const overviewDateString = currentTime.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'Asia/Kolkata'
-  });
-
   // Get user's first name for greeting
   const firstName = name ? name.split(' ')[0] : 'there';
 
@@ -1228,7 +1219,7 @@ export default function HomePage(){
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background">
+    <div className="main-typography min-h-screen bg-background dark:bg-background">
       <div className="max-w-md mx-auto px-4 py-6 sm:px-6 w-full">
         {showNameInput ? (
           // PIN Login Screen
@@ -1279,7 +1270,7 @@ export default function HomePage(){
               <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>
                 {greetingPrefix.text}, {firstName}! {greetingPrefix.emoji}
               </h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
+              <p className="text-sm text-muted-foreground mt-1.5">
                 {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })}
               </p>
             </div>
@@ -1507,10 +1498,6 @@ export default function HomePage(){
                   <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="bg-card rounded-2xl border border-border/50 p-4 shadow-sm dark:shadow-none space-y-3">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Overview</h3>
-                      <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {overviewDateString}
-                      </span>
                     </div>
 
                     <div className="grid grid-cols-3 gap-2">

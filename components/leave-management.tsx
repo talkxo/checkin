@@ -4,44 +4,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { AlertCircle, Briefcase, Calendar, CalendarDays, CheckCircle, Clock, HeartPulse, PartyPopper, Plus, Umbrella, X, XCircle } from 'lucide-react';
-import { formatISTDateLong, formatISTDateShort } from '@/lib/time';
+import { AlertCircle, Briefcase, Calendar, CalendarDays, CheckCircle, ChevronDown, ChevronUp, Clock, HeartPulse, PartyPopper, Plus, Umbrella, X, XCircle } from 'lucide-react';
+import { formatISTDateShort } from '@/lib/time';
 import type { LeaveBalanceResponse, LeaveRequestFormData, LeaveType } from '@/types/leave';
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-function SectionHeader({
-  eyebrow,
-  title,
-  description,
-}: {
-  eyebrow: string;
-  title: string;
-  description?: string;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">{eyebrow}</p>
-      <h2 className="text-2xl font-semibold leading-tight text-foreground">{title}</h2>
-      {description ? <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p> : null}
-    </div>
-  );
-}
-
-function SummaryTile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex min-h-[92px] flex-col justify-between rounded-2xl border border-border/60 bg-background px-3 py-3 sm:px-4 sm:py-4">
-      <p className="text-[9px] font-semibold uppercase leading-none tracking-[0.06em] text-muted-foreground sm:text-[10px] sm:tracking-[0.1em]">
-        {label}
-      </p>
-      <p className="text-3xl font-semibold leading-none text-foreground [font-variant-numeric:tabular-nums]">{value}</p>
-    </div>
-  );
-}
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
@@ -251,6 +222,12 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
   const [formError, setFormError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showSickScratchBanner, setShowSickScratchBanner] = useState(false);
+  const [isBalanceExpanded, setIsBalanceExpanded] = useState(false);
+  const [isAccrualExpanded, setIsAccrualExpanded] = useState(false);
+  const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
+  const [leaveHistory, setLeaveHistory] = useState<any[]>([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [cancellingRequestId, setCancellingRequestId] = useState<string | null>(null);
 
   const fetchLeaveData = async () => {
     try {
@@ -296,6 +273,59 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
       setLeaveTypes(data.leaveTypes);
     } catch (err) {
       console.error('Error fetching leave types:', err);
+    }
+  };
+
+  const fetchLeaveHistory = async () => {
+    if (!employeeSlug && !employeeEmail) return;
+    try {
+      setIsHistoryLoading(true);
+      const params = new URLSearchParams();
+      if (employeeSlug) params.append('slug', employeeSlug);
+      if (employeeEmail) params.append('email', employeeEmail);
+      params.append('status', 'all');
+
+      const response = await fetch(`/api/leave/request?${params.toString()}`);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch leave history');
+      }
+      setLeaveHistory(data.leaveRequests || []);
+    } catch (err) {
+      console.error('Error fetching leave history:', err);
+      setLeaveHistory([]);
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  };
+
+  const cancelLeaveRequest = async (requestId: string) => {
+    if (!requestId) return;
+    if (!confirm('Cancel this leave request?')) return;
+
+    try {
+      setCancellingRequestId(requestId);
+      setFormError(null);
+      setSuccess(null);
+
+      const response = await fetch('/api/leave/request', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestId,
+          ...(employeeSlug ? { slug: employeeSlug } : {}),
+          ...(employeeEmail ? { email: employeeEmail } : {}),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to cancel leave request');
+
+      setSuccess('Leave request cancelled.');
+      await Promise.all([fetchLeaveData(), fetchLeaveHistory()]);
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Failed to cancel leave request');
+    } finally {
+      setCancellingRequestId(null);
     }
   };
 
@@ -360,7 +390,7 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
       setShowRequestDialog(false);
       setRequestStep(1);
       setRequestForm({ leaveTypeId: '', startDate: '', endDate: '', reason: '' });
-      await fetchLeaveData();
+      await Promise.all([fetchLeaveData(), fetchLeaveHistory()]);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Failed to submit request');
     } finally {
@@ -411,6 +441,7 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
   useEffect(() => {
     fetchLeaveData();
     fetchLeaveTypes();
+    fetchLeaveHistory();
   }, [employeeSlug, employeeEmail]);
 
   if (isLoading) {
@@ -458,14 +489,13 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
     );
   }
 
-  const pendingRequestCount = leaveData.pendingRequests.filter((request) => request.status === 'pending').length;
-  const approvedRequestCount = leaveData.pendingRequests.filter((request) => request.status === 'approved').length;
-  const bonusLeavesEarned = leaveData.accrualHistory.reduce((total, accrual) => total + accrual.accrued_leaves, 0);
   const leaveBalanceByType = new Map(
     leaveData.leaveBalance.map((balance) => [normalizeLeaveTypeName(balance.leave_type_name), balance.available_leaves]),
   );
   const sickLeaveType = leaveTypes.find((type) => type.name.toLowerCase().includes('sick'));
   const sickLeaveAvailable = sickLeaveType ? leaveBalanceByType.get(normalizeLeaveTypeName(sickLeaveType.name)) ?? 0 : 0;
+  const totalUsedLeaves = leaveData.leaveBalance.reduce((sum, item) => sum + Number(item.used_leaves || 0), 0);
+  const totalBonusLeaves = leaveData.accrualHistory.reduce((sum, item) => sum + Number(item.accrued_leaves || 0), 0);
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowDateLabel = formatISTDateShort(toInputDateValue(tomorrow));
@@ -482,22 +512,21 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
 
   return (
     <div className="space-y-6 pb-6">
-      <section className="rounded-3xl border border-border/60 bg-card p-5 shadow-sm sm:p-6">
-        {showSickScratchBanner ? (
-          <div className="mb-4">
-            <ScratchGetWellBanner onClose={() => setShowSickScratchBanner(false)} />
-          </div>
-        ) : null}
+      {showSickScratchBanner ? (
+        <div className="mb-4">
+          <ScratchGetWellBanner onClose={() => setShowSickScratchBanner(false)} />
+        </div>
+      ) : null}
 
-        <div className="flex justify-end">
-          <Dialog open={showRequestDialog} onOpenChange={handleDialogOpenChange}>
+      <Dialog open={showRequestDialog} onOpenChange={handleDialogOpenChange}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="h-11 w-full border-primary/40 text-primary hover:bg-primary/10 hover:text-primary sm:w-auto">
+              <Button variant="outline" className="h-11 w-full border-primary/40 text-primary hover:bg-primary/10 hover:text-primary">
                 <Plus className="mr-2 h-4 w-4" />
                 Request Leave
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-h-[86vh] overflow-y-auto rounded-3xl border border-border/60 bg-card sm:max-w-[540px]">
+            <DialogContent className="main-typography left-0 top-0 flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 items-center justify-center overflow-y-auto rounded-none border-0 bg-background px-4 py-5 sm:px-6 sm:py-6">
+              <div className="mx-auto w-full max-w-2xl space-y-4">
               <DialogHeader>
                 <DialogTitle className="text-xl font-semibold text-foreground">Request Leave</DialogTitle>
               </DialogHeader>
@@ -661,7 +690,7 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
               {formError ? <div className="rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">{formError}</div> : null}
               {success ? <div className="rounded-xl border border-primary/25 bg-primary/10 p-3 text-sm text-foreground">{success}</div> : null}
 
-              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <div className="flex flex-col-reverse gap-3 border-t border-border/60 pt-3 sm:flex-row sm:justify-end">
                 {requestStep === 2 ? (
                   <>
                     <Button
@@ -689,130 +718,221 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
                   </Button>
                 )}
               </div>
+              </div>
             </DialogContent>
           </Dialog>
-        </div>
 
-        {success ? (
-          <div className="mt-5 space-y-2">
-            {success ? <div className="rounded-2xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm text-foreground">{success}</div> : null}
+      {success ? (
+        <div className="space-y-2">
+          {success ? <div className="rounded-2xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm text-foreground">{success}</div> : null}
+        </div>
+      ) : null}
+
+      <section className="rounded-3xl border border-border/60 bg-card p-5 shadow-sm sm:p-6">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">Balance</p>
+            <button
+              type="button"
+              onClick={() => setIsBalanceExpanded((prev) => !prev)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+              aria-expanded={isBalanceExpanded}
+            >
+              {isBalanceExpanded ? 'Hide details' : 'Show details'}
+              {isBalanceExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            </button>
           </div>
-        ) : null}
 
-        <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <SummaryTile label="Balance" value={`${getTotalAvailableLeaves()}`} />
-          <SummaryTile label="Pending" value={`${pendingRequestCount}`} />
-          <SummaryTile label="Used" value={`${approvedRequestCount}`} />
-          <SummaryTile label="Bonus" value={`${bonusLeavesEarned}`} />
-        </div>
+          {leaveData.leaveBalance.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No balance records available yet.</p>
+          ) : isBalanceExpanded ? (
+            <div className="space-y-4">
+              {leaveData.leaveBalance.map((balance) => {
+                const progress = balance.total_entitlement > 0 ? Math.min((balance.available_leaves / balance.total_entitlement) * 100, 100) : 0;
+
+                return (
+                  <article key={balance.leave_type_name} className="border-b border-border/60 pb-4 last:border-b-0 last:pb-0">
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <h3 className="text-sm font-semibold leading-tight text-foreground">{balance.leave_type_name}</h3>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {balance.used_leaves} used and {balance.pending_leaves} pending
+                          </p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Available</p>
+                          <p className="mt-1 text-2xl font-semibold leading-none text-foreground [font-variant-numeric:tabular-nums]">
+                            {balance.available_leaves}
+                          </p>
+                        </div>
+                      </div>
+
+                      <dl className="space-y-1">
+                        <DetailRow label="Used" value={`${balance.used_leaves}`} />
+                        <DetailRow label="Pending" value={`${balance.pending_leaves}`} />
+                        <DetailRow label="Total entitlement" value={`${balance.total_entitlement}`} />
+                      </dl>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Remaining balance</span>
+                          <span className="font-medium text-foreground">{Math.round(progress)}%</span>
+                        </div>
+                        <div className="h-2.5 overflow-hidden rounded-full bg-muted">
+                          <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${progress}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              So far, you have used <span className="font-medium text-foreground">{totalUsedLeaves}</span> leave
+              {totalUsedLeaves === 1 ? '' : 's'} and have <span className="font-medium text-foreground">{getTotalAvailableLeaves()}</span>{' '}
+              leave{getTotalAvailableLeaves() === 1 ? '' : 's'} available with you. You also got{' '}
+              <span className="font-medium text-foreground">{totalBonusLeaves}</span> bonus leave{totalBonusLeaves === 1 ? '' : 's'}.
+            </p>
+          )}
       </section>
 
-      {leaveData.leaveBalance.length > 0 ? (
-        <section className="rounded-3xl border border-border/60 bg-card p-5 shadow-sm sm:p-6">
-          <div className="mb-5">
-            <SectionHeader eyebrow="Balance" title="By leave type" />
-          </div>
+      <section className="rounded-3xl border border-border/60 bg-card p-4 shadow-sm sm:p-5">
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">History</p>
+          <button
+            type="button"
+            onClick={() => setIsHistoryExpanded((prev) => !prev)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"
+            aria-expanded={isHistoryExpanded}
+          >
+            {isHistoryExpanded ? 'Hide details' : 'Show details'}
+            {isHistoryExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          </button>
+        </div>
 
-          <div className="space-y-3">
-            {leaveData.leaveBalance.map((balance) => {
-              const progress = balance.total_entitlement > 0 ? Math.min((balance.available_leaves / balance.total_entitlement) * 100, 100) : 0;
-
+        {isHistoryLoading ? (
+          <p className="text-sm text-muted-foreground">Loading leave history...</p>
+        ) : leaveHistory.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No leave requests yet.</p>
+        ) : !isHistoryExpanded ? (
+          (() => {
+            const request = leaveHistory[0];
+            const canCancel = request.status === 'pending';
+            const meta = getLeaveTypeMeta(request.leave_types?.name || '');
+            const Icon = meta.icon;
+            return (
+              <div className="flex items-center gap-2.5 rounded-xl border border-border/50 px-2.5 py-2">
+                <span
+                  className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${meta.tint}`}
+                  title={request.leave_types?.name || 'Unknown'}
+                  aria-label={request.leave_types?.name || 'Unknown'}
+                >
+                  <Icon className="h-3 w-3" />
+                </span>
+                <p className="min-w-0 flex-1 text-[11px] leading-tight text-foreground">
+                  {formatISTDateShort(request.start_date)} - {formatISTDateShort(request.end_date)} ({request.total_days}d)
+                </p>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {getStatusBadge(request.status)}
+                  {canCancel ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => cancelLeaveRequest(request.id)}
+                      disabled={cancellingRequestId === request.id}
+                      className="h-6 rounded-md px-2 text-[10px]"
+                    >
+                      {cancellingRequestId === request.id ? '...' : 'Cancel'}
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })()
+        ) : (
+          <div className="space-y-2">
+            {leaveHistory.map((request) => {
+              const canCancel = request.status === 'pending';
+              const meta = getLeaveTypeMeta(request.leave_types?.name || '');
+              const Icon = meta.icon;
               return (
-                <article key={balance.leave_type_name} className="rounded-2xl border border-border/60 bg-background p-4 shadow-sm">
-                  <div className="space-y-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <h3 className="text-lg font-semibold leading-tight text-foreground">{balance.leave_type_name}</h3>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {balance.used_leaves} used and {balance.pending_leaves} pending
-                        </p>
-                      </div>
-                      <div className="shrink-0 rounded-xl border border-primary/20 bg-primary/10 px-3 py-2 text-right">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Available</p>
-                        <p className="mt-1 text-2xl font-semibold leading-none text-foreground [font-variant-numeric:tabular-nums]">
-                          {balance.available_leaves}
-                        </p>
-                      </div>
-                    </div>
-
-                    <dl className="divide-y divide-border/50 rounded-xl border border-border/50 bg-muted/20 px-3">
-                      <DetailRow label="Used" value={`${balance.used_leaves}`} />
-                      <DetailRow label="Pending" value={`${balance.pending_leaves}`} />
-                      <DetailRow label="Total entitlement" value={`${balance.total_entitlement}`} />
-                    </dl>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Remaining balance</span>
-                        <span className="font-medium text-foreground">{Math.round(progress)}%</span>
-                      </div>
-                      <div className="h-2.5 overflow-hidden rounded-full bg-muted">
-                        <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${progress}%` }} />
-                      </div>
-                    </div>
+                <div key={request.id} className="flex items-center gap-2.5 rounded-xl border border-border/50 px-2.5 py-2">
+                  <span
+                    className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${meta.tint}`}
+                    title={request.leave_types?.name || 'Unknown'}
+                    aria-label={request.leave_types?.name || 'Unknown'}
+                  >
+                    <Icon className="h-3 w-3" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] leading-tight text-foreground">
+                      {formatISTDateShort(request.start_date)} - {formatISTDateShort(request.end_date)} ({request.total_days}d)
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">Requested {formatISTDateShort(request.created_at)}</p>
                   </div>
-                </article>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {getStatusBadge(request.status)}
+                    {canCancel ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => cancelLeaveRequest(request.id)}
+                        disabled={cancellingRequestId === request.id}
+                        className="h-6 rounded-md px-2 text-[10px]"
+                      >
+                        {cancellingRequestId === request.id ? '...' : 'Cancel'}
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
               );
             })}
           </div>
-        </section>
-      ) : null}
+        )}
+      </section>
 
-      {leaveData.accrualHistory.length > 0 ? (
-        <section className="rounded-3xl border border-border/60 bg-card p-5 shadow-sm sm:p-6">
-          <div className="mb-5">
-            <SectionHeader eyebrow="History" title="Bonus leave accrual" />
+      <section className="rounded-3xl border border-border/60 bg-card p-5 shadow-sm sm:p-6">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">Accrual</p>
+            <button
+              type="button"
+              onClick={() => setIsAccrualExpanded((prev) => !prev)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+              aria-expanded={isAccrualExpanded}
+            >
+              {isAccrualExpanded ? 'Hide details' : 'Show details'}
+              {isAccrualExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            </button>
           </div>
 
-          <div className="space-y-3">
-            {leaveData.accrualHistory.map((accrual) => (
-              <article key={accrual.id} className="rounded-2xl border border-border/60 bg-background p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-base font-semibold text-foreground">
-                      {MONTH_LABELS[accrual.month - 1] || `Month ${accrual.month}`}
-                    </h3>
-                    <p className="mt-1 text-sm text-muted-foreground">Calculated {formatISTDateShort(accrual.calculation_date)}</p>
+          {leaveData.accrualHistory.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No accrual history available yet.</p>
+          ) : isAccrualExpanded ? (
+            <div className="space-y-3">
+              {leaveData.accrualHistory.map((accrual) => (
+                <article key={accrual.id} className="rounded-2xl border border-border/60 bg-background p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-semibold text-foreground">
+                        {MONTH_LABELS[accrual.month - 1] || `Month ${accrual.month}`}
+                      </h3>
+                      <p className="mt-1 text-sm text-muted-foreground">Calculated {formatISTDateShort(accrual.calculation_date)}</p>
+                    </div>
+                    <Badge className="border-primary/20 bg-primary/10 text-foreground">{accrual.accrued_leaves} leaves</Badge>
                   </div>
-                  <Badge className="border-primary/20 bg-primary/10 text-foreground">{accrual.accrued_leaves} leaves</Badge>
-                </div>
-                <dl className="mt-4 divide-y divide-border/50 rounded-xl border border-border/50 bg-muted/20 px-3">
-                  <DetailRow label="Extra office days" value={`${accrual.extra_office_days}`} />
-                  <DetailRow label="Bonus earned" value={`${accrual.accrued_leaves}`} />
-                  <DetailRow label="Calculated" value={formatISTDateShort(accrual.calculation_date)} />
-                </dl>
-              </article>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {leaveData.pendingRequests.length > 0 ? (
-        <section className="rounded-3xl border border-border/60 bg-card p-5 shadow-sm sm:p-6">
-          <div className="mb-5">
-            <SectionHeader eyebrow="Requests" title="Recent leave requests" />
-          </div>
-
-          <div className="space-y-3">
-            {leaveData.pendingRequests.map((request) => (
-              <article key={request.id} className="rounded-2xl border border-border/60 bg-background p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="text-base font-semibold text-foreground">{request.leave_types?.name || 'Unknown'}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">Submitted {formatISTDateLong(request.created_at)}</p>
-                  </div>
-                  <div className="shrink-0">{getStatusBadge(request.status)}</div>
-                </div>
-                <dl className="mt-4 divide-y divide-border/50 rounded-xl border border-border/50 bg-muted/20 px-3">
-                  <DetailRow label="Date range" value={`${formatISTDateShort(request.start_date)} - ${formatISTDateShort(request.end_date)}`} />
-                  <DetailRow label="Days" value={`${request.total_days}`} />
-                  <DetailRow label="Submitted" value={formatISTDateLong(request.created_at)} />
-                </dl>
-              </article>
-            ))}
-          </div>
-        </section>
-      ) : null}
+                  <dl className="mt-4 divide-y divide-border/50 rounded-xl border border-border/50 bg-muted/20 px-3">
+                    <DetailRow label="Extra office days" value={`${accrual.extra_office_days}`} />
+                    <DetailRow label="Bonus earned" value={`${accrual.accrued_leaves}`} />
+                    <DetailRow label="Calculated" value={formatISTDateShort(accrual.calculation_date)} />
+                  </dl>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Accrual history is hidden. Expand to view bonus accrual details.</p>
+          )}
+      </section>
     </div>
   );
 }
