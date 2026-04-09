@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import LeaveManagement from '@/components/leave-management';
 import DarkModeToggle from '@/components/dark-mode-toggle';
+import { PageShell } from '@/components/page-shell';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
@@ -83,34 +84,34 @@ export default function LeavePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/80 dark:bg-background/80 backdrop-blur-sm border-b border-border/50 dark:border-border">
-        <div className="max-w-6xl mx-auto px-4 py-4">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="sticky top-0 z-10 border-b border-border/50 bg-background/90 backdrop-blur-sm">
+        <PageShell variant="wide">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link 
+              <Link
                 href="/"
-                className="p-2 rounded-lg hover:bg-muted dark:hover:bg-muted transition-colors duration-200"
+                className="rounded-xl border border-border/50 bg-card p-2.5 transition-colors duration-200 hover:bg-muted"
                 aria-label="Go back"
               >
-                <ArrowLeft className="w-5 h-5 text-foreground dark:text-foreground" />
+                <ArrowLeft className="w-5 h-5 text-foreground" />
               </Link>
-              <h1 className="text-2xl font-semibold text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>
-                Leave Management
-              </h1>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">INSYDE</p>
+                <h1 className="mt-1 text-2xl font-semibold text-foreground">Leave</h1>
+              </div>
             </div>
             <DarkModeToggle />
           </div>
-        </div>
+        </PageShell>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6">
-        <LeaveManagement 
+      <PageShell variant="wide">
+        <LeaveManagement
           employeeSlug={employeeSlug || undefined}
           employeeEmail={employeeEmail || undefined}
         />
-      </div>
+      </PageShell>
     </div>
   );
 }

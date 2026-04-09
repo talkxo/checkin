@@ -318,31 +318,34 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
       {/* Monthly Attendance Heatmap */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-foreground dark:text-foreground">
-            {viewMode === '1month' 
-              ? selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-              : 'This Quarter'}
-          </h3>
-          <div className="flex gap-2 bg-muted dark:bg-muted rounded-lg p-1">
+          <div>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Calendar</h3>
+            {viewMode === '1month' && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+              </p>
+            )}
+          </div>
+          <div className="flex bg-muted rounded-lg p-0.5 gap-0.5">
             <button
               onClick={() => setViewMode('1month')}
-              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
                 viewMode === '1month'
-                  ? 'bg-background dark:bg-background text-foreground dark:text-foreground shadow-sm elevation-sm'
-                  : 'text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Current Month
+              Month
             </button>
             <button
               onClick={() => setViewMode('3months')}
-              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
                 viewMode === '3months'
-                  ? 'bg-background dark:bg-background text-foreground dark:text-foreground shadow-sm elevation-sm'
-                  : 'text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              This Quarter
+              Quarter
             </button>
           </div>
         </div>
@@ -350,7 +353,7 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
           {isLoadingMonthly ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-              <p className="text-sm text-muted-foreground dark:text-muted-foreground">Loading monthly data...</p>
+              <p className="text-sm text-muted-foreground">Loading monthly data...</p>
             </div>
           ) : (
             <div 
@@ -358,9 +361,9 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
               className="space-y-6"
             >
               {getMonthsToDisplay().map((month, monthIdx) => (
-              <div key={monthIdx} className="bg-card dark:bg-card rounded-xl p-5 border border-border/50 dark:border-border elevation-md">
+              <div key={monthIdx} className="bg-card rounded-xl p-4 border border-border/50">
                 {viewMode === '3months' && (
-                  <h4 className="text-md font-semibold text-foreground dark:text-foreground mb-4">
+                  <h4 className="text-xs font-medium text-muted-foreground mb-3">
                     {month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                   </h4>
                 )}
@@ -423,21 +426,16 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
                           // This ensures users see their check-in time color even when session is active
                           switch (checkinStatus) {
                             case 'early':
-                              bgColor = isWeekend ? 'bg-blue-300' : 'bg-blue-400'; // Blue for early
-                              break;
                             case 'on-time':
-                              bgColor = isWeekend ? 'bg-green-500' : 'bg-green-600'; // Green for on-time
+                              bgColor = isWeekend ? 'bg-emerald-400/70' : 'bg-emerald-500';
                               break;
                             case 'slightly-late':
-                              bgColor = isWeekend ? 'bg-yellow-400' : 'bg-yellow-500'; // Yellow for slightly late
-                              break;
                             case 'late':
-                              bgColor = isWeekend ? 'bg-orange-500' : 'bg-orange-600'; // Orange for late
+                              bgColor = isWeekend ? 'bg-amber-400/70' : 'bg-amber-500';
                               break;
                             default:
-                              // Fallback: if status is active but no check-in status, show yellow
                               if (status === 'active') {
-                                bgColor = isWeekend ? 'bg-yellow-300' : 'bg-yellow-400';
+                                bgColor = isWeekend ? 'bg-emerald-400/70' : 'bg-emerald-500';
                               } else {
                                 bgColor = isWeekend ? 'bg-muted/50' : 'bg-muted';
                               }
@@ -452,7 +450,7 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
                         return (
                           <div
                             key={dayIdx}
-                            className={`flex-1 h-9 rounded-lg transition-all duration-200 relative group cursor-pointer hover:scale-105 ${
+                            className={`flex-1 h-9 rounded-lg transition-all duration-200 relative group cursor-pointer ${
                               isWeekend ? 'opacity-60' : ''
                             } ${bgColor}`}
                             title={tooltipText}
@@ -470,6 +468,21 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
                 </div>
               </div>
             ))}
+            {/* Legend — compact 3-item */}
+            <div className="flex items-center gap-3 mt-2">
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                <span className="text-[10px] text-muted-foreground">On time</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
+                <span className="text-[10px] text-muted-foreground">Late</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-muted inline-block" />
+                <span className="text-[10px] text-muted-foreground">No data</span>
+              </div>
+            </div>
             </div>
           )}
         </div>

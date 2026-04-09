@@ -1,10 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { nowIST } from '@/lib/time';
 import { getSetting } from '@/lib/settings';
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
+    // Protect cron endpoint with a secret token
+    const authHeader = req.headers.get('authorization');
+    const expectedToken = process.env.CRON_SECRET;
+    if (!expectedToken || authHeader !== `Bearer ${expectedToken}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Get auto-checkout hours from settings (default: 12)
     const autoCheckoutHours = Number(await getSetting('auto_checkout_hours')) || 12;
     console.log(`Auto-checkout: Checking sessions with duration >= ${autoCheckoutHours} hours`);

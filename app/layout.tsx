@@ -2,6 +2,7 @@ import './globals.css';
 import React from 'react';
 import { Providers } from './providers';
 import { Source_Sans_3, Playfair_Display } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
 
 // Load Source Sans Pro
 const sourceSansPro = Source_Sans_3({
@@ -19,7 +20,15 @@ const playfairDisplay = Playfair_Display({
   display: 'swap',
 });
 
-export const metadata = { title: 'INSYDE - Attendance Management' };
+export const metadata: Metadata = {
+  title: 'INSYDE - Attendance Management',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -38,5 +47,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-
 

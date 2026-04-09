@@ -17,7 +17,7 @@ export async function callOpenRouter(messages: any[], temperature: number = 0.7)
     };
   }
 
-  console.log('OpenRouter API Key available:', OPENROUTER_API_KEY.substring(0, 10) + '...');
+  // API key presence confirmed — do not log even partial key
 
   // Use only free models with fallbacks for better reliability
   const models = [

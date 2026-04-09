@@ -273,6 +273,28 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    const dayBreakdownSerialized = sortedDays.map(d => ({
+      date: d.dateKey,
+      checkinTime: `${Math.floor(d.checkinTime / 60).toString().padStart(2, '0')}:${(d.checkinTime % 60).toString().padStart(2, '0')}`,
+      checkoutTime: d.checkoutTime !== null
+        ? `${Math.floor(d.checkoutTime / 60).toString().padStart(2, '0')}:${(d.checkoutTime % 60).toString().padStart(2, '0')}`
+        : null,
+      hoursWorked: Math.round(d.hoursWorked * 10) / 10,
+      mode: d.mode,
+      baseScore: d.baseScore,
+      hoursBonus: d.hoursBonus,
+      checkoutBonus: d.checkoutBonus,
+      modeBonus: d.modeBonus,
+      totalScore: Math.round(d.totalScore * 100) / 100,
+    }));
+
+    const windowDates: string[] = [];
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(fourteenDaysAgo);
+      d.setDate(d.getDate() + i);
+      windowDates.push(d.toISOString().split('T')[0]);
+    }
+
     return NextResponse.json({
       punctualityScore,
       maxScore: 42, // 14 days * 3 points per day
@@ -280,7 +302,11 @@ export async function GET(req: NextRequest) {
       avgCheckinTime: avgCheckinTimeFormatted,
       avgCheckinTimeMinutes: avgCheckinTime,
       todayCheckinTime: todayCheckinTime ? `${Math.floor(todayCheckinTime / 60).toString().padStart(2, '0')}:${(todayCheckinTime % 60).toString().padStart(2, '0')}` : null,
-      checkinStatus
+      checkinStatus,
+      dayBreakdown: dayBreakdownSerialized,
+      windowDates,
+      consistencyBonus: Math.round(consistencyBonus * 100) / 100,
+      streakBonus: Math.round(streakBonus * 100) / 100,
     });
 
   } catch (error) {

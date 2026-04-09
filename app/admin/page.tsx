@@ -1,610 +1,459 @@
 "use client";
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 
-// Force dynamic rendering for admin pages
-export const dynamic = 'force-dynamic';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import AdminLeaveManagement from '@/components/admin-leave-management';
-import DarkModeToggle from '@/components/dark-mode-toggle';
-import { Bar, Line } from 'react-chartjs-2';
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  PointElement,
-} from 'chart.js';
-import { AlertTriangle, Clock, Users, TrendingUp, LogOut, Download, FileSpreadsheet, UserPlus, Edit, Trash2, Eye, Brain, Lightbulb, MessageSquare, BarChart3, Calendar, ChevronDown, ChevronRight } from 'lucide-react';
+  Brain,
+  Calendar,
+  Eye,
+  LogOut,
+  MessageSquare,
+  RefreshCw,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
+import DarkModeToggle from "@/components/dark-mode-toggle";
+import AdminLeaveManagement from "@/components/admin-leave-management";
+import { WorkspaceShell } from "@/components/admin/workspace-shell";
+import { AdminOverviewWorkspace } from "@/components/admin/admin-overview-workspace";
+import { AdminAttendanceWorkspace } from "@/components/admin/admin-attendance-workspace";
+import { AdminPeopleWorkspace } from "@/components/admin/admin-people-workspace";
+import { AdminAiWorkspace } from "@/components/admin/admin-ai-workspace";
+import { EmployeeDetailDrawer } from "@/components/admin/employee-detail-drawer";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { StatusBanner } from "@/components/ui/status-banner";
+import { formatISTDateKey, formatISTDateLong, formatISTTimeShort } from "@/lib/time";
+import type {
+  AdminStats,
+  AdminTab,
+  AttendanceDateRange,
+  EmployeeSummary,
+  TeamSummary,
+  TodayData,
+  User,
+} from "@/components/admin/types";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  Title,
-  Tooltip,
-  Legend
-);
+export const dynamic = "force-dynamic";
 
-interface AdminStats {
-  totalEmployees: number;
-  activeToday: number;
-  officeCount: number;
-  remoteCount: number;
-  averageHours: number;
+const ADMIN_LATE_CUTOFF_MINUTES = 630;
+
+type AttendanceStatusFilter = "all" | "active" | "attention" | "missing";
+type AttendanceModeFilter = "all" | "office" | "remote";
+type AiFeature = "insights" | "report" | "sentiment";
+type AiRange = "today" | "week" | "month";
+
+interface NoticeState {
+  variant: "success" | "error" | "info" | "warning";
+  title?: string;
+  message: string;
 }
 
-interface UserStats {
-  id: string;
-  full_name: string;
-  totalHours: number;
-  officeHours: number;
-  remoteHours: number;
-  daysPresent: number;
-  officeDays: number;
-  remoteDays: number;
-}
+const DEFAULT_ATTENDANCE_RANGE: AttendanceDateRange = {
+  startDate: "",
+  endDate: "",
+  preset: "currentMonth",
+};
 
-interface TodayData {
-  name: string;
-  firstIn: string;
-  lastOut: string;
-  totalHours: string;
-  mode: string;
-  status: string;
-  sessions: number;
-}
-
-interface User {
-  id: string;
-  full_name: string;
-  email: string | null;
-  slug: string;
-  active: boolean;
-  created_at: string;
-}
-
-interface AttendanceDateRange {
-  startDate: string;
-  endDate: string;
-  preset: string;
-}
-
-interface EmployeeSummary {
-  employee_id: string;
-  name: string;
-  slug: string;
-  daysPresent: number;
-  officeDays: number;
-  remoteDays: number;
-  totalHours: number;
-  officeHours: number;
-  remoteHours: number;
-  averageHoursPerDay: number;
-  attendanceRate: number;
-  sessions: Array<{
-    id: string;
-    date: string;
-    checkinTime: string;
-    checkoutTime: string;
-    hoursWorked: string;
-    mode: string;
-    status: string;
-    mood?: string;
-    moodComment?: string;
-  }>;
-}
-
-interface TeamSummary {
-  totalEmployees: number;
-  totalWorkingDays: number;
-  totalHours: number;
-  averageAttendanceRate: number;
-  officePercentage: number;
-  remotePercentage: number;
-  dateRange: {
-    startDate: string;
-    endDate: string;
-  };
-}
+const defaultEditForm = { fullName: "", email: "", active: true };
 
 export default function AdminPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [timeRange, setTimeRange] = useState<'week' | 'fortnight' | 'month' | '6months' | 'year'>('week');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [activeTab, setActiveTab] = useState<AdminTab>("overview");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [notice, setNotice] = useState<NoticeState | null>(null);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+
   const [stats, setStats] = useState<AdminStats | null>(null);
-  const [userStats, setUserStats] = useState<UserStats[]>([]);
-  const [chartData, setChartData] = useState<any>(null);
   const [todayData, setTodayData] = useState<TodayData[]>([]);
+  const [pendingLeaveCount, setPendingLeaveCount] = useState(0);
   const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'ai' | 'leave'>('dashboard');
-  
-  // Session reset states
+
+  const [dateRange, setDateRange] = useState<AttendanceDateRange>(DEFAULT_ATTENDANCE_RANGE);
+  const [attendanceData, setAttendanceData] = useState<EmployeeSummary[]>([]);
+  const [teamSummary, setTeamSummary] = useState<TeamSummary | null>(null);
+  const [isLoadingAttendance, setIsLoadingAttendance] = useState(false);
+  const [attendanceSearchQuery, setAttendanceSearchQuery] = useState("");
+  const [peopleSearchQuery, setPeopleSearchQuery] = useState("");
+  const [attendanceStatusFilter, setAttendanceStatusFilter] = useState<AttendanceStatusFilter>("all");
+  const [attendanceModeFilter, setAttendanceModeFilter] = useState<AttendanceModeFilter>("all");
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({
+    key: "attendanceRate",
+    direction: "desc",
+  });
+  const [selectedEmployee, setSelectedEmployee] = useState<EmployeeSummary | null>(null);
+  const [isEmployeeDrawerOpen, setIsEmployeeDrawerOpen] = useState(false);
+
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [resetCountdown, setResetCountdown] = useState(5);
   const [isResetting, setIsResetting] = useState(false);
-  const [resetResult, setResetResult] = useState<string | null>(null);
 
-  // Attendance tracker states
-  const [dateRange, setDateRange] = useState<AttendanceDateRange>({
-    startDate: '',
-    endDate: '',
-    preset: 'currentMonth'
-  });
-  const [attendanceData, setAttendanceData] = useState<EmployeeSummary[]>([]);
-  const [teamSummary, setTeamSummary] = useState<TeamSummary | null>(null);
-  const [expandedEmployees, setExpandedEmployees] = useState<Set<string>>(new Set());
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({
-    key: 'name',
-    direction: 'asc'
-  });
-  const [isLoadingAttendance, setIsLoadingAttendance] = useState(false);
+  const [showAddUserDialog, setShowAddUserDialog] = useState(false);
+  const [showEditUserDialog, setShowEditUserDialog] = useState(false);
+  const [newUserData, setNewUserData] = useState({ fullName: "", email: "" });
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editUserData, setEditUserData] = useState(defaultEditForm);
 
-  // Load data on component mount (authentication is handled by layout)
-  useEffect(() => {
-    loadStats();
-    loadUserStats();
-    loadChartData();
-    loadTodayData();
-    loadAllUsers();
-  }, [timeRange]);
+  const [aiTimeRange, setAiTimeRange] = useState<AiRange>("week");
+  const [selectedAiFeature, setSelectedAiFeature] = useState<AiFeature>("insights");
+  const [customPrompt, setCustomPrompt] = useState("");
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState("");
 
-  // Initialize attendance tracker with current month
   useEffect(() => {
     const now = new Date();
-    const startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-    setDateRange({ startDate, endDate, preset: 'currentMonth' });
+    const todayKey = formatISTDateKey(now);
+    const [year, month] = todayKey.split("-").map(Number);
+    const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
+    const endDate = todayKey;
+    setDateRange((prev) => ({
+      startDate: prev.startDate || startDate,
+      endDate: prev.endDate || endDate,
+      preset: prev.preset || "currentMonth",
+    }));
   }, []);
 
-  // Load attendance data when date range changes
+  useEffect(() => {
+    const tab = searchParams.get("tab") as AdminTab | null;
+    const status = searchParams.get("status") as AttendanceStatusFilter | null;
+    const mode = searchParams.get("mode") as AttendanceModeFilter | null;
+    const search = searchParams.get("q");
+    const peopleSearch = searchParams.get("people_q");
+    const sortKey = searchParams.get("sort");
+    const direction = searchParams.get("dir") as "asc" | "desc" | null;
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+    const preset = searchParams.get("preset");
+
+    if (tab) setActiveTab(tab);
+    if (status) setAttendanceStatusFilter(status);
+    if (mode) setAttendanceModeFilter(mode);
+    if (search) setAttendanceSearchQuery(search);
+    if (peopleSearch) setPeopleSearchQuery(peopleSearch);
+    if (sortKey && direction) setSortConfig({ key: sortKey, direction });
+    if (startDate && endDate) {
+      setDateRange({
+        startDate,
+        endDate,
+        preset: preset || "custom",
+      });
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+    params.set("tab", activeTab);
+    params.set("status", attendanceStatusFilter);
+    params.set("mode", attendanceModeFilter);
+    params.set("sort", sortConfig.key);
+    params.set("dir", sortConfig.direction);
+    params.set("preset", dateRange.preset);
+    if (attendanceSearchQuery) params.set("q", attendanceSearchQuery);
+    else params.delete("q");
+    if (peopleSearchQuery) params.set("people_q", peopleSearchQuery);
+    else params.delete("people_q");
+    if (dateRange.startDate) params.set("startDate", dateRange.startDate);
+    if (dateRange.endDate) params.set("endDate", dateRange.endDate);
+    router.replace(`/admin?${params.toString()}`, { scroll: false });
+  }, [
+    activeTab,
+    attendanceModeFilter,
+    attendanceSearchQuery,
+    attendanceStatusFilter,
+    dateRange.endDate,
+    dateRange.preset,
+    dateRange.startDate,
+    peopleSearchQuery,
+    router,
+    sortConfig.direction,
+    sortConfig.key,
+  ]);
+
+  useEffect(() => {
+    refreshOverview();
+  }, []);
+
   useEffect(() => {
     if (dateRange.startDate && dateRange.endDate) {
       loadAttendanceData();
     }
-  }, [dateRange]);
+  }, [dateRange.startDate, dateRange.endDate]);
 
-  const loadStats = async () => {
+  useEffect(() => {
+    if (showResetDialog && resetCountdown > 0) {
+      const timer = window.setTimeout(() => setResetCountdown((prev) => prev - 1), 1000);
+      return () => window.clearTimeout(timer);
+    }
+  }, [showResetDialog, resetCountdown]);
+
+  const lastUpdatedLabel = useMemo(() => {
+    if (!lastUpdatedAt) return "just now";
+    return `${formatISTDateLong(lastUpdatedAt)} at ${formatISTTimeShort(lastUpdatedAt)}`;
+  }, [lastUpdatedAt]);
+
+  const refreshOverview = async () => {
+    setIsRefreshing(true);
     try {
-      const response = await fetch(`/api/admin/stats?range=${timeRange}`);
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
+      const [statsResponse, todayResponse, usersResponse, leaveResponse] = await Promise.all([
+        fetch("/api/admin/stats"),
+        fetch("/api/admin/today"),
+        fetch("/api/admin/users"),
+        fetch("/api/admin/leave-requests?status=pending"),
+      ]);
+
+      if (statsResponse.ok) setStats(await statsResponse.json());
+      if (todayResponse.ok) {
+        const data = await todayResponse.json();
+        setTodayData(data.attendance || []);
       }
+      if (usersResponse.ok) setAllUsers(await usersResponse.json());
+      if (leaveResponse.ok) {
+        const data = await leaveResponse.json();
+        setPendingLeaveCount((data.leaveRequests || []).length);
+      }
+      setLastUpdatedAt(new Date());
     } catch (error) {
-      console.error('Error loading stats:', error);
+      setNotice({ variant: "error", title: "Refresh failed", message: "Admin data could not be refreshed. Please try again." });
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
-  const loadUserStats = async () => {
-    try {
-      const response = await fetch(`/api/admin/user-stats?range=${timeRange}`);
-      if (response.ok) {
-        const data = await response.json();
-        setUserStats(data);
-      }
-    } catch (error) {
-      console.error('Error loading user stats:', error);
-    }
-  };
-
-  const loadChartData = async () => {
-    try {
-      const response = await fetch(`/api/admin/daily-stats?range=${timeRange}`);
-      if (response.ok) {
-        const data = await response.json();
-        setChartData(data);
-      }
-    } catch (error) {
-      console.error('Error loading chart data:', error);
-    }
-  };
-
-  const loadTodayData = async () => {
-    try {
-      const response = await fetch('/api/today/summary');
-      if (response.ok) {
-        const data = await response.json();
-        // Transform data to match TodayData interface
-        const transformedData = data.map((emp: any) => ({
-          name: emp.full_name,
-          firstIn: emp.lastIn || 'N/A',
-          lastOut: emp.lastOut || 'N/A',
-          totalHours: emp.workedHours,
-          mode: emp.mode || 'N/A',
-          status: emp.open ? 'Active' : (emp.lastIn ? 'Complete' : 'Not Started'),
-          sessions: emp.open ? 1 : 0 // Simplified session count
-        }));
-        setTodayData(transformedData);
-      }
-    } catch (error) {
-      console.error('Error loading today data:', error);
-    }
-  };
-
-  const loadAllUsers = async () => {
-    try {
-      const response = await fetch('/api/admin/users');
-      if (response.ok) {
-        const data = await response.json();
-        setAllUsers(data);
-      }
-    } catch (error) {
-      console.error('Error loading users:', error);
-    }
-  };
-
-  // Attendance tracker functions
   const loadAttendanceData = async () => {
     if (!dateRange.startDate || !dateRange.endDate) return;
-    
+
     setIsLoadingAttendance(true);
     try {
-      const response = await fetch(
-        `/api/admin/attendance-report?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setAttendanceData(data.employeeSummaries || []);
-        setTeamSummary(data.teamSummary || null);
-      }
-    } catch (error) {
-      console.error('Error loading attendance data:', error);
+      const response = await fetch(`/api/admin/attendance-report?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`);
+      if (!response.ok) throw new Error("Failed to load attendance");
+      const data = await response.json();
+      setAttendanceData(data.employeeSummaries || []);
+      setTeamSummary(data.teamSummary || null);
+      setLastUpdatedAt(new Date());
+    } catch {
+      setNotice({ variant: "error", title: "Attendance unavailable", message: "The attendance report could not be loaded for this range." });
     } finally {
       setIsLoadingAttendance(false);
     }
   };
 
-  const handleDateRangeChange = (preset: string) => {
+  const handleDateRangePresetChange = (preset: string) => {
     const now = new Date();
-    let startDate = '';
-    let endDate = '';
+    const todayKey = formatISTDateKey(now);
+    const [year, month] = todayKey.split("-").map(Number);
+    let startDate = "";
+    let endDate = "";
 
     switch (preset) {
-      case 'currentMonth':
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+      case "currentMonth":
+        startDate = `${year}-${String(month).padStart(2, "0")}-01`;
+        endDate = todayKey;
         break;
-      case 'previousMonth':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
-        endDate = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+      case "previousMonth":
+        startDate = formatISTDateKey(new Date(year, month - 2, 1));
+        endDate = formatISTDateKey(new Date(year, month - 1, 0));
         break;
-      case 'last7Days':
-        const last7 = new Date(now);
-        last7.setDate(now.getDate() - 7);
-        startDate = last7.toISOString().split('T')[0];
-        endDate = now.toISOString().split('T')[0];
+      case "last7Days":
+        startDate = formatISTDateKey(new Date(now.getTime() - 7 * 86400000));
+        endDate = todayKey;
         break;
-      case 'last30Days':
-        const last30 = new Date(now);
-        last30.setDate(now.getDate() - 30);
-        startDate = last30.toISOString().split('T')[0];
-        endDate = now.toISOString().split('T')[0];
+      case "last30Days":
+        startDate = formatISTDateKey(new Date(now.getTime() - 30 * 86400000));
+        endDate = todayKey;
         break;
-      case 'custom':
-        // Keep existing custom dates
+      default:
         return;
     }
 
     setDateRange({ startDate, endDate, preset });
   };
 
-  const handleCustomDateChange = (field: 'startDate' | 'endDate', value: string) => {
-    setDateRange(prev => ({
-      ...prev,
-      [field]: value,
-      preset: 'custom'
-    }));
-  };
-
-  const toggleEmployeeExpansion = (employeeId: string) => {
-    const newExpanded = new Set(expandedEmployees);
-    if (newExpanded.has(employeeId)) {
-      newExpanded.delete(employeeId);
-    } else {
-      newExpanded.add(employeeId);
-    }
-    setExpandedEmployees(newExpanded);
+  const handleCustomDateChange = (field: "startDate" | "endDate", value: string) => {
+    setDateRange((prev) => ({ ...prev, [field]: value, preset: "custom" }));
   };
 
   const handleSort = (key: string) => {
-    setSortConfig(prev => ({
+    setSortConfig((prev) => ({
       key,
-      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
     }));
   };
 
-  const getFilteredAndSortedData = () => {
-    let filtered = attendanceData.filter(emp => 
-      emp.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  const filteredAttendance = useMemo(() => {
+    const lateCutoff = ADMIN_LATE_CUTOFF_MINUTES;
+
+    const filtered = attendanceData.filter((employee) => {
+      const matchesSearch = employee.name.toLowerCase().includes(attendanceSearchQuery.toLowerCase());
+      const matchesMode =
+        attendanceModeFilter === "all" ||
+        (attendanceModeFilter === "office" && employee.officeDays > 0) ||
+        (attendanceModeFilter === "remote" && employee.remoteDays > 0);
+
+      const hasActiveSession = employee.sessions.some((session) => session.status === "Active");
+      const hasLateSession = employee.sessions.some((session) => {
+        const [hour, minute] = session.checkinTime.split(":").map(Number);
+        return !Number.isNaN(hour) && hour * 60 + minute >= lateCutoff;
+      });
+      const needsAttendanceAttention =
+        employee.elapsedWorkingDays >= 3
+          ? employee.missedDays >= 2 || employee.attendanceRate < 75
+          : employee.missedDays >= 1;
+      const matchesStatus =
+        attendanceStatusFilter === "all" ||
+        (attendanceStatusFilter === "active" && hasActiveSession) ||
+        (attendanceStatusFilter === "attention" && (hasLateSession || needsAttendanceAttention)) ||
+        (attendanceStatusFilter === "missing" && employee.daysPresent === 0 && employee.missedDays > 0);
+
+      return matchesSearch && matchesMode && matchesStatus;
+    });
 
     filtered.sort((a, b) => {
-      const aVal = a[sortConfig.key as keyof EmployeeSummary];
-      const bVal = b[sortConfig.key as keyof EmployeeSummary];
-      
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        return sortConfig.direction === 'asc' 
-          ? aVal.localeCompare(bVal)
-          : bVal.localeCompare(aVal);
+      const aValue = a[sortConfig.key as keyof EmployeeSummary];
+      const bValue = b[sortConfig.key as keyof EmployeeSummary];
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return sortConfig.direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
       }
-      
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return sortConfig.direction === "asc" ? aValue - bValue : bValue - aValue;
       }
-      
       return 0;
     });
 
     return filtered;
+  }, [attendanceData, attendanceModeFilter, attendanceSearchQuery, attendanceStatusFilter, sortConfig.direction, sortConfig.key]);
+
+  const handleOpenEmployee = (employee: EmployeeSummary) => {
+    setSelectedEmployee(employee);
+    setIsEmployeeDrawerOpen(true);
   };
 
-  const handleExportCSV = async () => {
-    try {
-      const response = await fetch('/api/admin/today-export');
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `attendance_${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      } else {
-        alert('Failed to export CSV');
-      }
-    } catch (error) {
-      console.error('Export error:', error);
-      alert('Failed to export CSV');
-    }
-  };
-
-  // TODO: Implement proper Google Sheets API integration
-  // For now, this is disabled to avoid confusion with CSV export
-  const handleExportGoogleSheets = async () => {
-    // This function is temporarily disabled
-    alert('Google Sheets export is temporarily disabled. Please use CSV export instead.');
-  };
-
-  // Attendance tracker export functions
-  const exportTeamSummary = () => {
-    if (!teamSummary || !attendanceData.length) return;
-
-    const headers = [
-      'Employee Name',
-      'Days Present',
-      'Office Days',
-      'Remote Days',
-      'Total Hours',
-      'Office Hours',
-      'Remote Hours',
-      'Average Hours/Day',
-      'Attendance Rate %'
-    ];
-
+  const handleExportFilteredAttendance = () => {
+    if (!filteredAttendance.length) return;
+    const headers = ["Employee Name", "Attendance Rate", "Days Present", "Average Hours / Day", "Office Days", "Remote Days"];
     const csvContent = [
-      headers.join(','),
-      ...attendanceData.map(emp => [
-        `"${emp.name}"`,
-        emp.daysPresent,
-        emp.officeDays,
-        emp.remoteDays,
-        emp.totalHours,
-        emp.officeHours,
-        emp.remoteHours,
-        emp.averageHoursPerDay,
-        emp.attendanceRate
-      ].join(','))
-    ].join('\n');
+      headers.join(","),
+      ...filteredAttendance.map((employee) =>
+        [
+          `"${employee.name}"`,
+          employee.attendanceRate,
+          employee.daysPresent,
+          employee.averageHoursPerDay,
+          employee.officeDays,
+          employee.remoteDays,
+        ].join(",")
+      ),
+    ].join("\n");
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `team-attendance-${dateRange.startDate}-to-${dateRange.endDate}.csv`;
-    document.body.appendChild(a);
-    a.click();
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `attendance-${dateRange.startDate}-to-${dateRange.endDate}.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
     window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
   };
 
-  const exportEmployeeDetail = (employee: EmployeeSummary) => {
-    const headers = [
-      'Date',
-      'Check-in Time',
-      'Check-out Time',
-      'Hours Worked',
-      'Mode',
-      'Status',
-      'Mood',
-      'Mood Comment'
-    ];
-
-    const csvContent = [
-      headers.join(','),
-      ...employee.sessions.map(session => [
-        session.date,
-        `"${session.checkinTime}"`,
-        `"${session.checkoutTime}"`,
-        `"${session.hoursWorked}"`,
-        session.mode,
-        session.status,
-        session.mood || '',
-        `"${session.moodComment || ''}"`
-      ].join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${employee.name.replace(/\s+/g, '-')}-attendance-${dateRange.startDate}-to-${dateRange.endDate}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-  };
-
-  // Session reset functions
-  const handleResetSessions = () => {
-    setShowResetDialog(true);
-    setResetCountdown(5);
-    setResetResult(null);
-  };
-
-  const confirmReset = () => {
-    if (resetCountdown > 0) return;
-    
-    setIsResetting(true);
-    fetch('/api/admin/reset-sessions', { method: 'POST' })
-      .then(response => response.json())
-      .then(data => {
-        if (data.error) {
-          setResetResult(`Error: ${data.error}`);
-        } else {
-          setResetResult(`Success: ${data.message}`);
-          // Reload stats after reset
-          loadStats();
-          loadUserStats();
-          loadTodayData();
-        }
-      })
-      .catch(error => {
-        setResetResult(`Error: ${error.message}`);
-      })
-      .finally(() => {
-        setIsResetting(false);
-        setTimeout(() => {
-          setShowResetDialog(false);
-          setResetResult(null);
-        }, 3000);
-      });
-  };
-
-  const cancelReset = () => {
-    setShowResetDialog(false);
-    setResetCountdown(5);
-    setResetResult(null);
+  const handleOpenAttendanceFromOverview = (filters?: {
+    status?: AttendanceStatusFilter;
+    mode?: AttendanceModeFilter;
+  }) => {
+    setActiveTab("attendance");
+    if (filters?.status) setAttendanceStatusFilter(filters.status);
+    if (filters?.mode) setAttendanceModeFilter(filters.mode);
   };
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('/api/admin/logout', {
-        method: 'POST'
-      });
-      
-      if (response.ok) {
-        // Redirect to login page
-        window.location.href = '/admin/login';
-      } else {
-        console.error('Logout failed');
-        // Fallback: redirect anyway
-        window.location.href = '/admin/login';
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Fallback: redirect anyway
-      window.location.href = '/admin/login';
+      const response = await fetch("/api/admin/logout", { method: "POST" });
+      if (!response.ok) throw new Error("Logout failed");
+      router.push("/admin/login");
+    } catch {
+      setNotice({ variant: "error", title: "Logout failed", message: "The admin session could not be ended cleanly." });
     }
   };
 
-  // User management states
-  const [showAddUserDialog, setShowAddUserDialog] = useState(false);
-  const [showEditUserDialog, setShowEditUserDialog] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [newUserData, setNewUserData] = useState({ fullName: '', email: '' });
-  const [editUserData, setEditUserData] = useState({ fullName: '', email: '', active: true });
+  const handleResetSessions = async () => {
+    if (resetCountdown > 0) return;
+    setIsResetting(true);
+    try {
+      const response = await fetch("/api/admin/reset-sessions", { method: "POST" });
+      const data = await response.json();
+      if (!response.ok || data.error) throw new Error(data.error || "Failed to reset sessions");
+      setShowResetDialog(false);
+      setResetCountdown(5);
+      setNotice({ variant: "success", title: "Sessions reset", message: data.message || "All active sessions were checked out." });
+      await refreshOverview();
+      await loadAttendanceData();
+    } catch (error) {
+      setNotice({
+        variant: "error",
+        title: "Reset failed",
+        message: error instanceof Error ? error.message : "The session reset did not complete.",
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
-  // AI states
-  const [aiInsights, setAiInsights] = useState<string>('');
-  const [aiReport, setAiReport] = useState<string>('');
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [selectedAiFeature, setSelectedAiFeature] = useState<string>('');
-  const [aiTimeRange, setAiTimeRange] = useState<'today' | 'week' | 'month'>('today');
-  const [historicalData, setHistoricalData] = useState<any[]>([]);
-  const [moodData, setMoodData] = useState<any[]>([]);
-  const [sentimentAnalysis, setSentimentAnalysis] = useState<string>('');
-
-  // User management functions
   const handleAddUser = async () => {
     try {
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newUserData)
+      const response = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newUserData),
       });
-
-      if (response.ok) {
-        setShowAddUserDialog(false);
-        setNewUserData({ fullName: '', email: '' });
-        loadAllUsers();
-        alert('User added successfully!');
-      } else {
-        const error = await response.json();
-        alert(`Error: ${error.error}`);
-      }
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to add user");
+      setShowAddUserDialog(false);
+      setNewUserData({ fullName: "", email: "" });
+      setNotice({ variant: "success", title: "User added", message: `${data.full_name} is now available in the roster.` });
+      await refreshOverview();
     } catch (error) {
-      alert('Failed to add user');
+      setNotice({ variant: "error", title: "User add failed", message: error instanceof Error ? error.message : "Could not add user." });
     }
   };
 
   const handleEditUser = async () => {
     if (!editingUser) return;
-
     try {
-      const response = await fetch('/api/admin/users', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: editingUser.id,
-          ...editUserData
-        })
+      const response = await fetch("/api/admin/users", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editingUser.id, ...editUserData }),
       });
-
-      if (response.ok) {
-        setShowEditUserDialog(false);
-        setEditingUser(null);
-        setEditUserData({ fullName: '', email: '', active: true });
-        loadAllUsers();
-        alert('User updated successfully!');
-      } else {
-        const error = await response.json();
-        alert(`Error: ${error.error}`);
-      }
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to update user");
+      setShowEditUserDialog(false);
+      setEditingUser(null);
+      setEditUserData(defaultEditForm);
+      setNotice({ variant: "success", title: "User updated", message: `${data.full_name} has been updated.` });
+      await refreshOverview();
     } catch (error) {
-      alert('Failed to update user');
+      setNotice({ variant: "error", title: "Update failed", message: error instanceof Error ? error.message : "Could not update user." });
     }
   };
 
-  const handleDeactivateUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to deactivate this user?')) return;
-
+  const confirmDeactivateUser = async (user: User) => {
     try {
-      const response = await fetch(`/api/admin/users?id=${userId}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        loadAllUsers();
-        alert('User deactivated successfully!');
-      } else {
-        const error = await response.json();
-        alert(`Error: ${error.error}`);
-      }
+      const response = await fetch(`/api/admin/users?id=${user.id}`, { method: "DELETE" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to deactivate user");
+      setNotice({ variant: "success", title: "User deactivated", message: `${data.full_name} is now inactive.` });
+      await refreshOverview();
     } catch (error) {
-      alert('Failed to deactivate user');
+      setNotice({ variant: "error", title: "Deactivation failed", message: error instanceof Error ? error.message : "Could not deactivate user." });
     }
   };
 
@@ -612,1248 +461,290 @@ export default function AdminPage() {
     setEditingUser(user);
     setEditUserData({
       fullName: user.full_name,
-      email: user.email || '',
-      active: user.active
+      email: user.email || "",
+      active: user.active,
     });
     setShowEditUserDialog(true);
   };
 
-  // AI functions
-  const loadHistoricalData = async (range: 'today' | 'week' | 'month') => {
-    try {
-      const response = await fetch(`/api/admin/historical-data?range=${range}`);
-      if (response.ok) {
-        const data = await response.json();
-        setHistoricalData(data.attendanceData);
-        return data.attendanceData;
-      }
-    } catch (error) {
-      console.error('Error loading historical data:', error);
-    }
-    return [];
+  const loadHistoricalData = async (range: AiRange) => {
+    const response = await fetch(`/api/admin/historical-data?range=${range}`);
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.attendanceData || [];
   };
 
-  const loadMoodData = async (range: 'today' | 'week' | 'month') => {
-    try {
-      const response = await fetch(`/api/admin/mood-data?range=${range}`);
-      if (response.ok) {
-        const data = await response.json();
-        setMoodData(data.moodData);
-        return data.moodData;
-      }
-    } catch (error) {
-      console.error('Error loading mood data:', error);
-    }
-    return [];
+  const loadMoodData = async (range: AiRange) => {
+    const response = await fetch(`/api/admin/mood-data?range=${range}`);
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.moodData || [];
   };
 
-  const generateAiInsights = async () => {
+  const generateAiOutput = async () => {
     setIsAiLoading(true);
-    setSelectedAiFeature('insights');
     try {
-      // Load data based on selected time range
-      const dataToAnalyze = aiTimeRange === 'today' ? todayData : await loadHistoricalData(aiTimeRange);
-      
-      const response = await fetch('/api/ai/insights', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          attendanceData: dataToAnalyze,
-          timeRange: aiTimeRange === 'today' ? 'Today' : aiTimeRange === 'week' ? 'This Week' : 'This Month'
-        })
-      });
-
-      if (response.ok) {
+      if (selectedAiFeature === "sentiment") {
+        const moodData = await loadMoodData(aiTimeRange);
+        const response = await fetch("/api/ai/sentiment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            moodData,
+            timeRange: aiTimeRange === "today" ? "Today" : aiTimeRange === "week" ? "This Week" : "This Month",
+          }),
+        });
         const data = await response.json();
-        setAiInsights(data.insights);
+        setAiResult(data.sentiment || "No sentiment analysis returned.");
       } else {
-        setAiInsights('Failed to generate insights. Please try again.');
+        const attendancePayload = aiTimeRange === "today" ? todayData : await loadHistoricalData(aiTimeRange);
+        const endpoint = selectedAiFeature === "report" ? "/api/ai/report" : "/api/ai/insights";
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            attendanceData: attendancePayload,
+            timeRange: aiTimeRange === "today" ? "Today" : aiTimeRange === "week" ? "This Week" : "This Month",
+            prompt: customPrompt || undefined,
+          }),
+        });
+        const data = await response.json();
+        setAiResult(data.report || data.insights || "No analysis returned.");
       }
-    } catch (error) {
-      setAiInsights('Error generating insights. Please try again.');
+    } catch {
+      setAiResult("The AI workspace could not generate an answer. Please retry with a narrower scope.");
     } finally {
       setIsAiLoading(false);
     }
   };
 
-  const generateAiReport = async () => {
-    setIsAiLoading(true);
-    setSelectedAiFeature('report');
-    try {
-      // Load data based on selected time range
-      const dataToAnalyze = aiTimeRange === 'today' ? todayData : await loadHistoricalData(aiTimeRange);
-      
-      const response = await fetch('/api/ai/report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          attendanceData: dataToAnalyze,
-          timeRange: aiTimeRange === 'today' ? 'Today' : aiTimeRange === 'week' ? 'This Week' : 'This Month'
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAiReport(data.report);
-      } else {
-        setAiReport('Failed to generate report. Please try again.');
-      }
-    } catch (error) {
-      setAiReport('Error generating report. Please try again.');
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
-
-  const generateSentimentAnalysis = async () => {
-    setIsAiLoading(true);
-    setSelectedAiFeature('sentiment');
-    try {
-      // Load mood data based on selected time range
-      const moodDataToAnalyze = await loadMoodData(aiTimeRange);
-      
-      if (moodDataToAnalyze.length === 0) {
-        setSentimentAnalysis('No mood data available for the selected time range.');
-        return;
-      }
-      
-      const response = await fetch('/api/ai/sentiment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          moodData: moodDataToAnalyze,
-          timeRange: aiTimeRange === 'today' ? 'Today' : aiTimeRange === 'week' ? 'This Week' : 'This Month'
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSentimentAnalysis(data.sentiment);
-      } else {
-        setSentimentAnalysis('Failed to generate sentiment analysis. Please try again.');
-      }
-    } catch (error) {
-      setSentimentAnalysis('Error generating sentiment analysis. Please try again.');
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
-
-  // Countdown effect
-  useEffect(() => {
-    if (showResetDialog && resetCountdown > 0) {
-      const timer = setTimeout(() => {
-        setResetCountdown(prev => prev - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [showResetDialog, resetCountdown]);
-
-
+  const tabs = [
+    { id: "overview" as const, label: "Overview", icon: Eye },
+    { id: "attendance" as const, label: "Attendance", icon: ShieldCheck },
+    { id: "people" as const, label: "People", icon: Users, count: allUsers.length },
+    { id: "ai" as const, label: "Assistive AI", icon: Brain },
+    { id: "leave" as const, label: "Leave & Exceptions", icon: Calendar, count: pendingLeaveCount },
+  ];
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background">
-      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <div className="w-8 h-8 flex items-center justify-center">
-              <img 
-                src="https://pqkph3lzaffmetri.public.blob.vercel-storage.com/1764957051530-Inside-Icon.png" 
-                alt="insyde" 
-                className="w-8 h-8 object-contain"
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+        <WorkspaceShell
+          title="Operational Workspace"
+          subtitle="Operate attendance, people, and leave with clearer prioritization and fewer dead ends."
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          actions={
+            <>
+              <Button variant="outline" size="sm" onClick={() => router.push("/admin-chat")} className="rounded-xl">
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Chat Mode
+              </Button>
+              <Button variant="outline" size="sm" onClick={refreshOverview} className="rounded-xl">
+                <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+              <DarkModeToggle />
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="rounded-xl text-muted-foreground hover:text-foreground">
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </Button>
+            </>
+          }
+        >
+          {notice ? (
+            <StatusBanner
+              variant={notice.variant}
+              title={notice.title}
+              message={notice.message}
+              className="mb-6"
+            />
+          ) : null}
+
+          {activeTab === "overview" ? (
+            <AdminOverviewWorkspace
+              stats={stats}
+              todayData={todayData}
+              pendingLeaveCount={pendingLeaveCount}
+              lastUpdatedLabel={lastUpdatedLabel}
+              loading={isRefreshing}
+              onRefresh={refreshOverview}
+              onOpenAttendance={handleOpenAttendanceFromOverview}
+              onOpenLeave={() => setActiveTab("leave")}
+            />
+          ) : null}
+
+          {activeTab === "attendance" ? (
+            <AdminAttendanceWorkspace
+              teamSummary={teamSummary}
+              employees={attendanceData}
+              filteredEmployees={filteredAttendance}
+              loading={isLoadingAttendance}
+              searchQuery={attendanceSearchQuery}
+              onSearchQueryChange={setAttendanceSearchQuery}
+              statusFilter={attendanceStatusFilter}
+              onStatusFilterChange={setAttendanceStatusFilter}
+              modeFilter={attendanceModeFilter}
+              onModeFilterChange={setAttendanceModeFilter}
+              dateRange={dateRange}
+              onDateRangePresetChange={handleDateRangePresetChange}
+              onDateChange={handleCustomDateChange}
+              sortConfig={sortConfig}
+              onSort={handleSort}
+              onRefresh={loadAttendanceData}
+              onExport={handleExportFilteredAttendance}
+              onOpenEmployee={handleOpenEmployee}
+              lastUpdatedLabel={lastUpdatedLabel}
+            />
+          ) : null}
+
+          {activeTab === "people" ? (
+            <AdminPeopleWorkspace
+              users={allUsers}
+              searchQuery={peopleSearchQuery}
+              onSearchQueryChange={setPeopleSearchQuery}
+              onAddUser={() => setShowAddUserDialog(true)}
+              onEditUser={openEditDialog}
+              onDeactivateUser={confirmDeactivateUser}
+            />
+          ) : null}
+
+          {activeTab === "ai" ? (
+            <AdminAiWorkspace
+              aiTimeRange={aiTimeRange}
+              selectedAiFeature={selectedAiFeature}
+              customPrompt={customPrompt}
+              onCustomPromptChange={setCustomPrompt}
+              onAiTimeRangeChange={setAiTimeRange}
+              onSelectedAiFeatureChange={setSelectedAiFeature}
+              onGenerate={generateAiOutput}
+              isLoading={isAiLoading}
+              result={aiResult}
+            />
+          ) : null}
+
+          {activeTab === "leave" ? (
+            <div className="space-y-4">
+              <StatusBanner
+                variant={pendingLeaveCount > 0 ? "warning" : "info"}
+                title="Leave & Exceptions"
+                message={
+                  pendingLeaveCount > 0
+                    ? `${pendingLeaveCount} pending leave request${pendingLeaveCount > 1 ? "s" : ""} need attention. Session reset is available in the guarded action below.`
+                    : "No pending leave requests right now. Use this workspace to review balances and exceptions."
+                }
+                action={
+                  <Button variant="outline" onClick={() => { setShowResetDialog(true); setResetCountdown(5); }} className="rounded-xl">
+                    Reset Sessions
+                  </Button>
+                }
+              />
+              <AdminLeaveManagement />
+            </div>
+          ) : null}
+        </WorkspaceShell>
+      </div>
+
+      <EmployeeDetailDrawer employee={selectedEmployee} open={isEmployeeDrawerOpen} onOpenChange={setIsEmployeeDrawerOpen} />
+
+      <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <DialogContent className="rounded-3xl border-border/60">
+          <DialogHeader>
+            <DialogTitle>Reset Active Sessions</DialogTitle>
+            <DialogDescription>
+              This checks out every currently active session. Use it only for exception handling.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-muted-foreground">
+            Confirmation unlocks in {resetCountdown} second{resetCountdown !== 1 ? "s" : ""}.
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowResetDialog(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleResetSessions} disabled={resetCountdown > 0 || isResetting}>
+              {isResetting ? "Resetting…" : resetCountdown > 0 ? `Confirm (${resetCountdown}s)` : "Confirm Reset"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
+        <DialogContent className="rounded-3xl border-border/60">
+          <DialogHeader>
+            <DialogTitle>Add User</DialogTitle>
+            <DialogDescription>Create a new employee record for attendance and leave tracking.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-foreground">Full Name</label>
+              <Input
+                value={newUserData.fullName}
+                onChange={(event) => setNewUserData((prev) => ({ ...prev, fullName: event.target.value }))}
+                className="mt-2 rounded-xl border-border/60"
               />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground dark:text-foreground">Admin Dashboard</h1>
-              <p className="text-sm text-muted-foreground dark:text-muted-foreground">Attendance analytics and insights</p>
+              <label className="text-sm font-medium text-foreground">Email</label>
+              <Input
+                type="email"
+                value={newUserData.email}
+                onChange={(event) => setNewUserData((prev) => ({ ...prev, email: event.target.value }))}
+                className="mt-2 rounded-xl border-border/60"
+              />
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <DarkModeToggle />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => window.location.href = '/admin-chat'}
-              className="text-muted-foreground dark:text-muted-foreground hover:text-foreground"
-            >
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Chat Mode
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="text-muted-foreground dark:text-muted-foreground hover:text-foreground"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
-          </div>
-        </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddUserDialog(false)}>Cancel</Button>
+            <Button onClick={handleAddUser} disabled={!newUserData.fullName.trim()}>Add User</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        {/* Tab Navigation */}
-        <div className="flex gap-1 border-b border-border/50 dark:border-border mb-6 overflow-x-auto">
-          <button
-            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px] whitespace-nowrap ${
-              activeTab === 'dashboard'
-                ? 'border-primary text-foreground dark:text-foreground'
-                : 'border-transparent text-muted-foreground dark:text-muted-foreground hover:text-foreground'
-            }`}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            <Eye className="w-4 h-4 inline mr-2" />
-            Dashboard
-          </button>
-          <button
-            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px] whitespace-nowrap ${
-              activeTab === 'users'
-                ? 'border-primary text-foreground dark:text-foreground'
-                : 'border-transparent text-muted-foreground dark:text-muted-foreground hover:text-foreground'
-            }`}
-            onClick={() => setActiveTab('users')}
-          >
-            <Users className="w-4 h-4 inline mr-2" />
-            User Management
-          </button>
-          <button
-            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px] whitespace-nowrap ${
-              activeTab === 'ai'
-                ? 'border-primary text-foreground dark:text-foreground'
-                : 'border-transparent text-muted-foreground dark:text-muted-foreground hover:text-foreground'
-            }`}
-            onClick={() => setActiveTab('ai')}
-          >
-            <Brain className="w-4 h-4 inline mr-2" />
-            AI Insights
-          </button>
-          <button
-            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px] whitespace-nowrap ${
-              activeTab === 'leave'
-                ? 'border-primary text-foreground dark:text-foreground'
-                : 'border-transparent text-muted-foreground dark:text-muted-foreground hover:text-foreground'
-            }`}
-            onClick={() => setActiveTab('leave')}
-          >
-            <Calendar className="w-4 h-4 inline mr-2" />
-            Leave Management
-          </button>
-        </div>
-
-        {/* Reset Dialog */}
-        {showResetDialog && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 max-w-md w-full elevation-xl">
-              <div className="mb-4 pb-3 border-b border-border/50 dark:border-border">
-                <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-destructive" />
-                  Reset All Sessions
-                </h3>
-              </div>
-              <div className="space-y-4">
-                {resetResult ? (
-                  <div className="text-center">
-                    <p className={resetResult.startsWith('Success') ? 'text-green-600 dark:text-green-400' : 'text-destructive'}>
-                      {resetResult}
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="text-center space-y-2">
-                      <p className="text-foreground dark:text-foreground">
-                        This will check out all currently active sessions. This action cannot be undone.
-                      </p>
-                      <p className="text-sm text-muted-foreground dark:text-muted-foreground">
-                        Are you sure you want to continue?
-                      </p>
-                    </div>
-                    
-                    <div className="flex gap-3">
-                      <Button
-                        variant="destructive"
-                        onClick={confirmReset}
-                        disabled={resetCountdown > 0 || isResetting}
-                        className="flex-1"
-                      >
-                        {isResetting ? (
-                          <>
-                            <Clock className="w-4 h-4 mr-2 animate-spin" />
-                            Resetting...
-                          </>
-                        ) : resetCountdown > 0 ? (
-                          `Confirm (${resetCountdown}s)`
-                        ) : (
-                          'Confirm Reset'
-                        )}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={cancelReset}
-                        disabled={isResetting}
-                        className="flex-1"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </div>
+      <Dialog open={showEditUserDialog} onOpenChange={setShowEditUserDialog}>
+        <DialogContent className="rounded-3xl border-border/60">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>Update basic user details and active state.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-foreground">Full Name</label>
+              <Input
+                value={editUserData.fullName}
+                onChange={(event) => setEditUserData((prev) => ({ ...prev, fullName: event.target.value }))}
+                className="mt-2 rounded-xl border-border/60"
+              />
             </div>
-          </div>
-        )}
-
-        {/* Tab Content */}
-        <div className="min-h-[400px]">
-          <AnimatePresence mode="wait">
-            {activeTab === 'dashboard' && (
-              <motion.div
-                key="dashboard"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-6"
-              >
-                {/* Date Range Selector */}
-                <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
-                  <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50 dark:border-border">
-                    <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-                      <Calendar className="w-5 h-5" />
-                      Attendance Tracker
-                    </h3>
-                  </div>
-                  <div className="space-y-4">
-                    {/* Preset Options */}
-                    <div>
-                      <label className="text-sm font-medium text-foreground dark:text-foreground mb-2 block">Quick Select</label>
-                    <div className="flex gap-2 flex-wrap">
-                      {[
-                        { key: 'currentMonth', label: 'Current Month' },
-                        { key: 'previousMonth', label: 'Previous Month' },
-                        { key: 'last7Days', label: 'Last 7 Days' },
-                        { key: 'last30Days', label: 'Last 30 Days' }
-                      ].map((preset) => (
-                        <Button
-                          key={preset.key}
-                          variant={dateRange.preset === preset.key ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => handleDateRangeChange(preset.key)}
-                        >
-                          {preset.label}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                    {/* Custom Date Range */}
-                    <div>
-                      <label className="text-sm font-medium text-foreground dark:text-foreground mb-2 block">Custom Range</label>
-                      <div className="flex gap-4 items-center flex-wrap">
-                        <div>
-                          <label className="text-xs text-muted-foreground dark:text-muted-foreground">Start Date</label>
-                          <Input
-                            type="date"
-                            value={dateRange.startDate}
-                            onChange={(e) => handleCustomDateChange('startDate', e.target.value)}
-                            className="w-40 bg-background dark:bg-background border-border dark:border-border"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs text-muted-foreground dark:text-muted-foreground">End Date</label>
-                          <Input
-                            type="date"
-                            value={dateRange.endDate}
-                            onChange={(e) => handleCustomDateChange('endDate', e.target.value)}
-                            className="w-40 bg-background dark:bg-background border-border dark:border-border"
-                          />
-                        </div>
-                        <Button
-                          onClick={loadAttendanceData}
-                          disabled={!dateRange.startDate || !dateRange.endDate || isLoadingAttendance}
-                          className="mt-6"
-                        >
-                          {isLoadingAttendance ? (
-                            <>
-                              <Clock className="w-4 h-4 mr-2 animate-spin" />
-                              Loading...
-                            </>
-                          ) : (
-                            'Apply'
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Selected Date Range Display */}
-                    {dateRange.startDate && dateRange.endDate && (
-                      <div className="text-sm text-muted-foreground dark:text-muted-foreground bg-muted dark:bg-muted p-3 rounded-lg">
-                        <strong className="text-foreground dark:text-foreground">Selected Period:</strong> {dateRange.startDate} to {dateRange.endDate}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Team Summary */}
-                {teamSummary && (
-                  <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
-                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50 dark:border-border">
-                      <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-                        <BarChart3 className="w-5 h-5" />
-                        Team Summary
-                      </h3>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={exportTeamSummary}
-                        disabled={!attendanceData.length}
-                        className="text-muted-foreground dark:text-muted-foreground hover:text-foreground"
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Export Team Summary
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-primary">{teamSummary.totalEmployees}</p>
-                        <p className="text-sm text-muted-foreground dark:text-muted-foreground">Employees</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-primary">{teamSummary.totalWorkingDays}</p>
-                        <p className="text-sm text-muted-foreground dark:text-muted-foreground">Working Days</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-primary">{teamSummary.totalHours.toFixed(1)}h</p>
-                        <p className="text-sm text-muted-foreground dark:text-muted-foreground">Total Hours</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-primary">{teamSummary.averageAttendanceRate.toFixed(1)}%</p>
-                        <p className="text-sm text-muted-foreground dark:text-muted-foreground">Avg Attendance</p>
-                      </div>
-                    </div>
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="text-center p-3 bg-muted dark:bg-muted rounded-lg">
-                        <p className="text-lg font-semibold text-foreground dark:text-foreground">{teamSummary.officePercentage.toFixed(1)}%</p>
-                        <p className="text-sm text-muted-foreground dark:text-muted-foreground">Office Work</p>
-                      </div>
-                      <div className="text-center p-3 bg-muted dark:bg-muted rounded-lg">
-                        <p className="text-lg font-semibold text-foreground dark:text-foreground">{teamSummary.remotePercentage.toFixed(1)}%</p>
-                        <p className="text-sm text-muted-foreground dark:text-muted-foreground">Remote Work</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Employee Attendance Table */}
-                {attendanceData.length > 0 && (
-                  <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
-                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50 dark:border-border">
-                      <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-                        <Users className="w-5 h-5" />
-                        Employee Attendance
-                      </h3>
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Search employees..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-64 bg-background dark:bg-background border-border dark:border-border"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="cursor-pointer text-foreground dark:text-foreground hover:text-primary transition-colors" onClick={() => handleSort('name')}>
-                          Name {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                        </TableHead>
-                        <TableHead className="cursor-pointer text-foreground dark:text-foreground hover:text-primary transition-colors" onClick={() => handleSort('daysPresent')}>
-                          Days Present {sortConfig.key === 'daysPresent' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                        </TableHead>
-                        <TableHead className="cursor-pointer text-foreground dark:text-foreground hover:text-primary transition-colors" onClick={() => handleSort('officeDays')}>
-                          Office Days {sortConfig.key === 'officeDays' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                        </TableHead>
-                        <TableHead className="cursor-pointer text-foreground dark:text-foreground hover:text-primary transition-colors" onClick={() => handleSort('remoteDays')}>
-                          Remote Days {sortConfig.key === 'remoteDays' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                        </TableHead>
-                        <TableHead className="cursor-pointer text-foreground dark:text-foreground hover:text-primary transition-colors" onClick={() => handleSort('totalHours')}>
-                          Total Hours {sortConfig.key === 'totalHours' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                        </TableHead>
-                        <TableHead className="cursor-pointer text-foreground dark:text-foreground hover:text-primary transition-colors" onClick={() => handleSort('averageHoursPerDay')}>
-                          Avg Hours/Day {sortConfig.key === 'averageHoursPerDay' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                        </TableHead>
-                        <TableHead className="cursor-pointer text-foreground dark:text-foreground hover:text-primary transition-colors" onClick={() => handleSort('attendanceRate')}>
-                          Attendance % {sortConfig.key === 'attendanceRate' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                        </TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {getFilteredAndSortedData().map((employee) => (
-                        <>
-                          <TableRow 
-                            key={employee.employee_id}
-                            className="cursor-pointer hover:bg-muted/30 dark:hover:bg-muted/30 transition-colors"
-                            onClick={() => toggleEmployeeExpansion(employee.employee_id)}
-                          >
-                            <TableCell className="font-medium flex items-center gap-2 text-foreground dark:text-foreground">
-                              {expandedEmployees.has(employee.employee_id) ? (
-                                <ChevronDown className="w-4 h-4 text-muted-foreground dark:text-muted-foreground" />
-                              ) : (
-                                <ChevronRight className="w-4 h-4 text-muted-foreground dark:text-muted-foreground" />
-                              )} {employee.name}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="default">{employee.daysPresent}</Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="default">{employee.officeDays}</Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">{employee.remoteDays}</Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{employee.totalHours.toFixed(1)}h</Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{employee.averageHoursPerDay.toFixed(1)}h</Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={employee.attendanceRate >= 80 ? 'default' : employee.attendanceRate >= 60 ? 'secondary' : 'destructive'}>
-                                {employee.attendanceRate.toFixed(1)}%
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  exportEmployeeDetail(employee);
-                                }}
-                              >
-                                <Download className="w-4 h-4 mr-1" />
-                                Export
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                          
-                          {/* Expanded Row - Daily Breakdown */}
-                          {expandedEmployees.has(employee.employee_id) && (
-                            <TableRow>
-                              <TableCell colSpan={8} className="p-0">
-                                <div className="bg-muted dark:bg-muted p-4">
-                                  <h4 className="font-medium text-foreground dark:text-foreground mb-3">Daily Sessions for {employee.name}</h4>
-                                  <Table>
-                                    <TableHeader>
-                                      <TableRow>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead>Check-in</TableHead>
-                                        <TableHead>Check-out</TableHead>
-                                        <TableHead>Hours</TableHead>
-                                        <TableHead>Mode</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Mood</TableHead>
-                                      </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                      {employee.sessions.map((session) => (
-                                        <TableRow key={session.id}>
-                                          <TableCell>{session.date}</TableCell>
-                                          <TableCell>{session.checkinTime}</TableCell>
-                                          <TableCell>{session.checkoutTime}</TableCell>
-                                          <TableCell>{session.hoursWorked}</TableCell>
-                                          <TableCell>
-                                            <Badge variant={session.mode === 'office' ? 'default' : 'secondary'}>
-                                              {session.mode}
-                                            </Badge>
-                                          </TableCell>
-                                          <TableCell>
-                                            <Badge variant={session.status === 'Complete' ? 'default' : 'secondary'}>
-                                              {session.status}
-                                            </Badge>
-                                          </TableCell>
-                                          <TableCell>
-                                            {session.mood && (
-                                              <Badge variant="outline">{session.mood}</Badge>
-                                            )}
-                                          </TableCell>
-                                        </TableRow>
-                                      ))}
-                                    </TableBody>
-                                  </Table>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </>
-                      ))}
-                      </TableBody>
-                    </Table>
-                    </div>
-                  </div>
-                )}
-
-                {/* No Data State */}
-                {!isLoadingAttendance && attendanceData.length === 0 && dateRange.startDate && dateRange.endDate && (
-                  <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-12 elevation-md text-center">
-                    <Users className="w-12 h-12 text-muted-foreground dark:text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-foreground dark:text-foreground mb-2">No Attendance Data</h3>
-                    <p className="text-muted-foreground dark:text-muted-foreground">No attendance records found for the selected date range.</p>
-                  </div>
-                )}
-              </motion.div>
-            )}
-
-            {activeTab === 'users' && (
-              <motion.div
-                key="users"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-6"
-              >
-                <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
-                  <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50 dark:border-border">
-                    <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-                      <Users className="w-5 h-5" />
-                      User Management
-                    </h3>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={handleResetSessions}
-                        disabled={isResetting}
-                      >
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Reset All Sessions
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => setShowAddUserDialog(true)}
-                        className="flex items-center gap-2"
-                      >
-                        <UserPlus className="w-4 h-4" />
-                        Add User
-                      </Button>
-                    </div>
-                  </div>
-                  <div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Slug</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {allUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium text-foreground dark:text-foreground">{user.full_name}</TableCell>
-                      <TableCell className="text-foreground dark:text-foreground">{user.email || 'N/A'}</TableCell>
-                      <TableCell className="font-mono text-sm text-muted-foreground dark:text-muted-foreground">{user.slug}</TableCell>
-                      <TableCell>
-                        <Badge variant={user.active ? 'default' : 'secondary'}>
-                          {user.active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(user.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openEditDialog(user)}
-                          >
-                            <Edit className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeactivateUser(user.id)}
-                            disabled={!user.active}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                    </TableBody>
-                  </Table>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {activeTab === 'ai' && (
-              <motion.div
-                key="ai"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-6"
-              >
-                {/* Welcome Section */}
-                <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
-                  <div className="mb-4">
-                    <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2 mb-2">
-                      <Brain className="w-6 h-6" />
-                      AI-Powered HR Insights
-                    </h3>
-                    <p className="text-muted-foreground dark:text-muted-foreground">
-                      Get intelligent insights about your team's engagement, well-being, and productivity patterns
-                    </p>
-                  </div>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md card-hover cursor-pointer" onClick={() => { setAiTimeRange('today'); setSelectedAiFeature('insights'); }}>
-                    <div className="text-center">
-                      <div className="flex items-center justify-center w-12 h-12 bg-muted dark:bg-muted rounded-full mx-auto mb-3">
-                        <Clock className="w-6 h-6 text-primary" />
-                      </div>
-                      <h3 className="font-semibold text-foreground dark:text-foreground mb-2">Daily Check-in</h3>
-                      <p className="text-sm text-muted-foreground dark:text-muted-foreground mb-4">Quick insights for today's team status</p>
-                      <Button size="sm" className="w-full">
-                        Analyze Today
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md card-hover cursor-pointer" onClick={() => { setAiTimeRange('week'); setSelectedAiFeature('insights'); }}>
-                    <div className="text-center">
-                      <div className="flex items-center justify-center w-12 h-12 bg-muted dark:bg-muted rounded-full mx-auto mb-3">
-                        <TrendingUp className="w-6 h-6 text-primary" />
-                      </div>
-                      <h3 className="font-semibold text-foreground dark:text-foreground mb-2">Weekly Review</h3>
-                      <p className="text-sm text-muted-foreground dark:text-muted-foreground mb-4">Comprehensive weekly team analysis</p>
-                      <Button size="sm" variant="outline" className="w-full">
-                        Review This Week
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md card-hover cursor-pointer" onClick={() => { setAiTimeRange('month'); setSelectedAiFeature('report'); }}>
-                    <div className="text-center">
-                      <div className="flex items-center justify-center w-12 h-12 bg-muted dark:bg-muted rounded-full mx-auto mb-3">
-                        <BarChart3 className="w-6 h-6 text-primary" />
-                      </div>
-                      <h3 className="font-semibold text-foreground dark:text-foreground mb-2">Monthly Report</h3>
-                      <p className="text-sm text-muted-foreground dark:text-muted-foreground mb-4">Executive summary and recommendations</p>
-                      <Button size="sm" variant="outline" className="w-full">
-                        Generate Report
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Analysis Configuration */}
-                <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
-                  <div className="mb-4 pb-3 border-b border-border/50 dark:border-border">
-                    <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-                      <Lightbulb className="w-5 h-5" />
-                      Configure Analysis
-                    </h3>
-                  </div>
-                  <div className="space-y-6">
-                    {/* Time Range Selection */}
-                    <div>
-                      <label className="text-sm font-medium text-foreground dark:text-foreground mb-3 block">
-                        Select Time Range
-                      </label>
-                  <div className="flex gap-2 flex-wrap">
-                    {[
-                      { key: 'today', label: 'Today', icon: Clock, description: 'Current day insights' },
-                      { key: 'week', label: 'This Week', icon: TrendingUp, description: 'Weekly patterns' },
-                      { key: 'month', label: 'This Month', icon: BarChart3, description: 'Monthly trends' }
-                    ].map((range) => (
-                      <div
-                        key={range.key}
-                        className={`flex-1 min-w-[120px] p-4 border rounded-lg cursor-pointer transition-all ${
-                          aiTimeRange === range.key 
-                            ? 'border-purple-500 bg-purple-50' 
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                        onClick={() => setAiTimeRange(range.key as any)}
-                      >
-                        <div className="flex items-center gap-2 mb-2">
-                          <range.icon className="w-4 h-4" />
-                          <span className="font-medium">{range.label}</span>
-                        </div>
-                        <p className="text-xs text-gray-600">{range.description}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                    {/* Analysis Type Selection */}
-                    <div>
-                      <label className="text-sm font-medium text-foreground dark:text-foreground mb-3 block">
-                        Choose Analysis Type
-                      </label>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div
-                          className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                            selectedAiFeature === 'insights' 
-                              ? 'border-primary bg-primary/10' 
-                              : 'border-border dark:border-border hover:border-primary/50'
-                          }`}
-                          onClick={() => setSelectedAiFeature('insights')}
-                        >
-                          <div className="flex items-center gap-2 mb-2">
-                            <Lightbulb className="w-5 h-5 text-primary" />
-                            <span className="font-medium text-foreground dark:text-foreground">Engagement Insights</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground dark:text-muted-foreground">
-                            Work-life balance, team dynamics, and well-being patterns
-                          </p>
-                        </div>
-
-                        <div
-                          className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                            selectedAiFeature === 'report' 
-                              ? 'border-primary bg-primary/10' 
-                              : 'border-border dark:border-border hover:border-primary/50'
-                          }`}
-                          onClick={() => setSelectedAiFeature('report')}
-                        >
-                          <div className="flex items-center gap-2 mb-2">
-                            <BarChart3 className="w-5 h-5 text-primary" />
-                            <span className="font-medium text-foreground dark:text-foreground">Executive Report</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground dark:text-muted-foreground">
-                            Professional summary with actionable recommendations
-                          </p>
-                        </div>
-
-                        <div
-                          className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                            selectedAiFeature === 'sentiment' 
-                              ? 'border-primary bg-primary/10' 
-                              : 'border-border dark:border-border hover:border-primary/50'
-                          }`}
-                          onClick={() => setSelectedAiFeature('sentiment')}
-                        >
-                          <div className="flex items-center gap-2 mb-2">
-                            <MessageSquare className="w-5 h-5 text-primary" />
-                            <span className="font-medium text-foreground dark:text-foreground">Mood Analysis</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground dark:text-muted-foreground">
-                            Employee sentiment and well-being indicators
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Generate Button */}
-                    <div className="flex justify-center">
-                      <Button
-                        onClick={() => {
-                          if (selectedAiFeature === 'insights') generateAiInsights();
-                          else if (selectedAiFeature === 'report') generateAiReport();
-                          else if (selectedAiFeature === 'sentiment') generateSentimentAnalysis();
-                        }}
-                        disabled={isAiLoading || !selectedAiFeature}
-                        size="lg"
-                        className="px-8"
-                      >
-                        {isAiLoading ? (
-                          <>
-                            <Clock className="w-4 h-4 mr-2 animate-spin" />
-                            {selectedAiFeature === 'insights' && 'Analyzing Engagement...'}
-                            {selectedAiFeature === 'report' && 'Generating Report...'}
-                            {selectedAiFeature === 'sentiment' && 'Analyzing Mood...'}
-                          </>
-                        ) : (
-                          <>
-                            <Brain className="w-4 h-4 mr-2" />
-                            Generate {selectedAiFeature === 'insights' ? 'Insights' : selectedAiFeature === 'report' ? 'Report' : 'Analysis'}
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* AI Results Display */}
-                {(aiInsights || aiReport || sentimentAnalysis) && (
-                  <div className="space-y-6">
-                    {/* Results Header */}
-                    <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
-                      <div className="mb-2">
-                        <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2 mb-2">
-                          <Brain className="w-5 h-5" />
-                          AI Analysis Complete
-                        </h3>
-                        <p className="text-muted-foreground dark:text-muted-foreground">
-                          Your AI-powered insights are ready. Review the analysis below and take action on the recommendations.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* AI Insights Display */}
-                    {aiInsights && (
-                      <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
-                        <div className="mb-4 pb-3 border-b border-border/50 dark:border-border">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-                              <Lightbulb className="w-5 h-5" />
-                              Employee Engagement Insights
-                            </h3>
-                            <Badge variant="outline" className="text-muted-foreground dark:text-muted-foreground">
-                              {aiTimeRange === 'today' ? 'Today' : aiTimeRange === 'week' ? 'This Week' : 'This Month'}
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="bg-muted dark:bg-muted p-4 rounded-lg border border-border/50 dark:border-border">
-                          <div className="prose prose-sm max-w-none">
-                            <div className="whitespace-pre-wrap text-foreground dark:text-foreground">{aiInsights}</div>
-                          </div>
-                        </div>
-                        <div className="mt-4 flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(aiInsights)}>
-                            Copy Insights
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => {
-                            const blob = new Blob([aiInsights], { type: 'text/plain' });
-                            const url = window.URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `engagement-insights-${aiTimeRange}-${new Date().toISOString().split('T')[0]}.txt`;
-                            a.click();
-                            window.URL.revokeObjectURL(url);
-                          }}>
-                            Export
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* AI Report Display */}
-                    {aiReport && (
-                      <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
-                        <div className="mb-4 pb-3 border-b border-border/50 dark:border-border">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-                              <BarChart3 className="w-5 h-5" />
-                              Executive Report
-                            </h3>
-                            <Badge variant="outline" className="text-muted-foreground dark:text-muted-foreground">
-                              {aiTimeRange === 'today' ? 'Today' : aiTimeRange === 'week' ? 'This Week' : 'This Month'}
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="bg-muted dark:bg-muted p-4 rounded-lg border border-border/50 dark:border-border">
-                          <div className="prose prose-sm max-w-none">
-                            <div className="whitespace-pre-wrap text-foreground dark:text-foreground">{aiReport}</div>
-                          </div>
-                        </div>
-                        <div className="mt-4 flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(aiReport)}>
-                            Copy Report
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => {
-                            const blob = new Blob([aiReport], { type: 'text/plain' });
-                            const url = window.URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `executive-report-${aiTimeRange}-${new Date().toISOString().split('T')[0]}.txt`;
-                            a.click();
-                            window.URL.revokeObjectURL(url);
-                          }}>
-                            Export
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Sentiment Analysis Display */}
-                    {sentimentAnalysis && (
-                      <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
-                        <div className="mb-4 pb-3 border-b border-border/50 dark:border-border">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-                              <MessageSquare className="w-5 h-5" />
-                              Mood & Well-being Analysis
-                            </h3>
-                            <Badge variant="outline" className="text-muted-foreground dark:text-muted-foreground">
-                              {aiTimeRange === 'today' ? 'Today' : aiTimeRange === 'week' ? 'This Week' : 'This Month'}
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="bg-muted dark:bg-muted p-4 rounded-lg border border-border/50 dark:border-border">
-                          <div className="prose prose-sm max-w-none">
-                            <div className="whitespace-pre-wrap text-foreground dark:text-foreground">{sentimentAnalysis}</div>
-                          </div>
-                        </div>
-                        <div className="mt-4 flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(sentimentAnalysis)}>
-                            Copy Analysis
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => {
-                            const blob = new Blob([sentimentAnalysis], { type: 'text/plain' });
-                            const url = window.URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `mood-analysis-${aiTimeRange}-${new Date().toISOString().split('T')[0]}.txt`;
-                            a.click();
-                            window.URL.revokeObjectURL(url);
-                          }}>
-                            Export
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Action Items */}
-                    <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
-                      <div className="mb-4 pb-3 border-b border-border/50 dark:border-border">
-                        <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-                          <Lightbulb className="w-5 h-5" />
-                          Next Steps
-                        </h3>
-                      </div>
-                      <div className="space-y-3">
-                        <p className="text-sm text-muted-foreground dark:text-muted-foreground">
-                          Based on your AI analysis, consider these actions:
-                        </p>
-                        <ul className="space-y-2 text-sm text-foreground dark:text-foreground">
-                          <li className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-primary rounded-full"></div>
-                            Review individual employee patterns and reach out for support if needed
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-primary rounded-full"></div>
-                            Share insights with your team during one-on-ones or team meetings
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-primary rounded-full"></div>
-                            Consider policy adjustments based on well-being recommendations
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-primary rounded-full"></div>
-                            Schedule follow-up analysis to track improvements over time
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Help & Tips */}
-                <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 elevation-md">
-                  <div className="mb-4 pb-3 border-b border-border/50 dark:border-border">
-                    <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-                      <MessageSquare className="w-5 h-5" />
-                      How to Use AI Insights
-                    </h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <h4 className="font-semibold text-foreground dark:text-foreground">Quick Start Guide</h4>
-                      <div className="space-y-3 text-sm text-muted-foreground dark:text-muted-foreground">
-                        <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 bg-muted dark:bg-muted rounded-full flex items-center justify-center text-xs font-semibold text-foreground dark:text-foreground">1</div>
-                          <div>
-                            <p className="font-medium text-foreground dark:text-foreground">Choose a quick action</p>
-                            <p className="text-xs">Click "Daily Check-in", "Weekly Review", or "Monthly Report" for common use cases</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 bg-muted dark:bg-muted rounded-full flex items-center justify-center text-xs font-semibold text-foreground dark:text-foreground">2</div>
-                          <div>
-                            <p className="font-medium text-foreground dark:text-foreground">Or customize your analysis</p>
-                            <p className="text-xs">Select time range and analysis type for specific insights</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 bg-muted dark:bg-muted rounded-full flex items-center justify-center text-xs font-semibold text-foreground dark:text-foreground">3</div>
-                          <div>
-                            <p className="font-medium text-foreground dark:text-foreground">Review and act</p>
-                            <p className="text-xs">Export insights, copy to clipboard, or share with your team</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <h4 className="font-semibold text-foreground dark:text-foreground">AI Features</h4>
-                      <div className="space-y-3 text-sm text-muted-foreground dark:text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <Lightbulb className="w-4 h-4 text-primary" />
-                          <span className="text-foreground dark:text-foreground"><strong>Engagement Insights:</strong> Work-life balance and team dynamics</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <BarChart3 className="w-4 h-4 text-primary" />
-                          <span className="text-foreground dark:text-foreground"><strong>Executive Reports:</strong> Professional summaries and recommendations</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MessageSquare className="w-4 h-4 text-primary" />
-                          <span className="text-foreground dark:text-foreground"><strong>Mood Analysis:</strong> Employee well-being and sentiment patterns</span>
-                        </div>
-                      </div>
-                      <div className="text-xs text-muted-foreground dark:text-muted-foreground mt-3">
-                        Powered by Moonshot AI's Kimi K2 model via OpenRouter API
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {activeTab === 'leave' && (
-              <motion.div
-                key="leave"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-6"
-              >
-                <div className="mb-4">
-                  <h2 className="text-2xl font-bold text-foreground dark:text-foreground">Leave Management</h2>
-                  <p className="text-muted-foreground dark:text-muted-foreground">Manage employee leave requests and balances</p>
-                </div>
-                
-                {/* Leave Management Component */}
-                <AdminLeaveManagement />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Add User Dialog */}
-        {showAddUserDialog && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 max-w-md w-full elevation-xl">
-              <div className="mb-4 pb-3 border-b border-border/50 dark:border-border">
-                <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-                  <UserPlus className="w-5 h-5" />
-                  Add New User
-                </h3>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-foreground dark:text-foreground">Full Name *</label>
-                  <Input
-                    placeholder="Enter full name"
-                    value={newUserData.fullName}
-                    onChange={(e) => setNewUserData({ ...newUserData, fullName: e.target.value })}
-                    className="bg-background dark:bg-background border-border dark:border-border mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-foreground dark:text-foreground">Email (Optional)</label>
-                  <Input
-                    type="email"
-                    placeholder="Enter email address"
-                    value={newUserData.email}
-                    onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
-                    className="bg-background dark:bg-background border-border dark:border-border mt-1"
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <Button
-                    onClick={handleAddUser}
-                    disabled={!newUserData.fullName.trim()}
-                    className="flex-1"
-                  >
-                    Add User
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setShowAddUserDialog(false);
-                      setNewUserData({ fullName: '', email: '' });
-                    }}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
+            <div>
+              <label className="text-sm font-medium text-foreground">Email</label>
+              <Input
+                type="email"
+                value={editUserData.email}
+                onChange={(event) => setEditUserData((prev) => ({ ...prev, email: event.target.value }))}
+                className="mt-2 rounded-xl border-border/60"
+              />
             </div>
+            <label className="flex items-center gap-3 rounded-2xl border border-border/60 px-4 py-3">
+              <input
+                type="checkbox"
+                checked={editUserData.active}
+                onChange={(event) => setEditUserData((prev) => ({ ...prev, active: event.target.checked }))}
+                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+              />
+              <span className="text-sm text-foreground">Active User</span>
+            </label>
           </div>
-        )}
-
-        {/* Edit User Dialog */}
-        {showEditUserDialog && editingUser && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-6 max-w-md w-full elevation-xl">
-              <div className="mb-4 pb-3 border-b border-border/50 dark:border-border">
-                <h3 className="text-lg font-semibold text-foreground dark:text-foreground flex items-center gap-2">
-                  <Edit className="w-5 h-5" />
-                  Edit User
-                </h3>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-foreground dark:text-foreground">Full Name *</label>
-                  <Input
-                    placeholder="Enter full name"
-                    value={editUserData.fullName}
-                    onChange={(e) => setEditUserData({ ...editUserData, fullName: e.target.value })}
-                    className="bg-background dark:bg-background border-border dark:border-border mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-foreground dark:text-foreground">Email (Optional)</label>
-                  <Input
-                    type="email"
-                    placeholder="Enter email address"
-                    value={editUserData.email}
-                    onChange={(e) => setEditUserData({ ...editUserData, email: e.target.value })}
-                    className="bg-background dark:bg-background border-border dark:border-border mt-1"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="active"
-                    checked={editUserData.active}
-                    onChange={(e) => setEditUserData({ ...editUserData, active: e.target.checked })}
-                    className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                  />
-                  <label htmlFor="active" className="text-sm font-medium text-foreground dark:text-foreground">
-                    Active User
-                  </label>
-                </div>
-                <div className="flex gap-3">
-                  <Button
-                    onClick={handleEditUser}
-                    disabled={!editUserData.fullName.trim()}
-                    className="flex-1"
-                  >
-                    Update User
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setShowEditUserDialog(false);
-                      setEditingUser(null);
-                      setEditUserData({ fullName: '', email: '', active: true });
-                    }}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+          <DialogFooter>
+            {editingUser?.active ? (
+              <Button variant="outline" className="mr-auto text-destructive" onClick={() => editingUser && confirmDeactivateUser(editingUser)}>
+                Deactivate
+              </Button>
+            ) : null}
+            <Button variant="outline" onClick={() => setShowEditUserDialog(false)}>Cancel</Button>
+            <Button onClick={handleEditUser} disabled={!editUserData.fullName.trim()}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

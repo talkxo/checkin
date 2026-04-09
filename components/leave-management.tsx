@@ -1,22 +1,55 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import React, { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Calendar, Plus, Clock, CheckCircle, XCircle, AlertCircle, TrendingUp, CalendarDays, FileText, Info } from 'lucide-react';
-import type { 
-  LeaveBalanceResponse, 
-  LeaveType, 
-  LeaveRequestFormData,
-  LeaveRequest 
-} from '@/types/leave';
+import { Textarea } from '@/components/ui/textarea';
+import { AlertCircle, Calendar, CheckCircle, Clock, Plus, XCircle } from 'lucide-react';
+import { formatISTDateLong, formatISTDateShort } from '@/lib/time';
+import type { LeaveBalanceResponse, LeaveRequestFormData, LeaveType } from '@/types/leave';
+
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function SectionHeader({
+  eyebrow,
+  title,
+  description,
+}: {
+  eyebrow: string;
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">{eyebrow}</p>
+      <h2 className="text-2xl font-semibold leading-tight text-foreground">{title}</h2>
+      {description ? <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p> : null}
+    </div>
+  );
+}
+
+function SummaryTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-border/60 bg-background px-4 py-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
+      <p className="mt-3 text-3xl font-semibold leading-none text-foreground [font-variant-numeric:tabular-nums]">{value}</p>
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-2">
+      <dt className="text-sm text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 break-words text-right text-sm font-medium text-foreground [font-variant-numeric:tabular-nums]">{value}</dd>
+    </div>
+  );
+}
 
 interface LeaveManagementProps {
   employeeSlug?: string;
@@ -33,18 +66,16 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
     leaveTypeId: '',
     startDate: '',
     endDate: '',
-    reason: ''
+    reason: '',
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Fetch leave data
   const fetchLeaveData = async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      // If no identifier is available yet, don't call the API
       if (!employeeSlug && !employeeEmail) {
         setIsLoading(false);
         return;
@@ -73,7 +104,6 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
     }
   };
 
-  // Fetch leave types
   const fetchLeaveTypes = async () => {
     try {
       const response = await fetch('/api/leave/types');
@@ -88,7 +118,6 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
     }
   };
 
-  // Submit leave request
   const submitLeaveRequest = async () => {
     try {
       setIsSubmitting(true);
@@ -98,13 +127,13 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
       const requestBody = {
         ...requestForm,
         ...(employeeSlug && { slug: employeeSlug }),
-        ...(employeeEmail && { email: employeeEmail })
+        ...(employeeEmail && { email: employeeEmail }),
       };
 
       const response = await fetch('/api/leave/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
@@ -116,8 +145,6 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
       setSuccess('Leave request submitted successfully!');
       setShowRequestDialog(false);
       setRequestForm({ leaveTypeId: '', startDate: '', endDate: '', reason: '' });
-      
-      // Refresh leave data
       await fetchLeaveData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit request');
@@ -126,35 +153,44 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
     }
   };
 
-  // Calculate total available leaves
   const getTotalAvailableLeaves = () => {
     if (!leaveData?.leaveBalance) return 0;
     return leaveData.leaveBalance.reduce((total, balance) => total + balance.available_leaves, 0);
   };
 
-  // Get status badge for leave request
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="secondary" className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-700"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+        return (
+          <Badge variant="secondary" className="border-yellow-200 bg-yellow-100 text-yellow-800 dark:border-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-200">
+            <Clock className="mr-1 h-3 w-3" />
+            Pending
+          </Badge>
+        );
       case 'approved':
-        return <Badge variant="secondary" className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-green-200 dark:border-green-700"><CheckCircle className="w-3 h-3 mr-1" />Approved</Badge>;
+        return (
+          <Badge variant="secondary" className="border-green-200 bg-green-100 text-green-800 dark:border-green-700 dark:bg-green-900/30 dark:text-green-200">
+            <CheckCircle className="mr-1 h-3 w-3" />
+            Approved
+          </Badge>
+        );
       case 'rejected':
-        return <Badge variant="secondary" className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 border-red-200 dark:border-red-700"><XCircle className="w-3 h-3 mr-1" />Rejected</Badge>;
+        return (
+          <Badge variant="secondary" className="border-red-200 bg-red-100 text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200">
+            <XCircle className="mr-1 h-3 w-3" />
+            Rejected
+          </Badge>
+        );
       case 'cancelled':
-        return <Badge variant="outline" className="border-border dark:border-border text-muted-foreground dark:text-muted-foreground"><AlertCircle className="w-3 h-3 mr-1" />Cancelled</Badge>;
+        return (
+          <Badge variant="outline" className="border-border text-muted-foreground">
+            <AlertCircle className="mr-1 h-3 w-3" />
+            Cancelled
+          </Badge>
+        );
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
-  };
-
-  // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
   };
 
   useEffect(() => {
@@ -165,9 +201,9 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="bg-card dark:bg-card rounded-2xl elevation-lg p-8 text-center fade-in border border-border/50 dark:border-border">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-foreground dark:text-foreground">Loading your leave information...</p>
+        <div className="rounded-3xl border border-border/60 bg-card p-8 text-center shadow-sm">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary" />
+          <p className="text-foreground">Loading your leave information...</p>
         </div>
       </div>
     );
@@ -175,14 +211,14 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
 
   if (error) {
     return (
-      <div className="max-w-2xl mx-auto">
-        <Card className="border-destructive/50 dark:border-destructive/50 bg-destructive/10 dark:bg-destructive/10">
+      <div className="mx-auto max-w-2xl">
+        <Card className="rounded-3xl border-destructive/50 bg-destructive/10">
           <CardContent className="p-6">
-            <div className="flex items-center space-x-3 text-destructive dark:text-destructive">
-              <AlertCircle className="w-6 h-6" />
+            <div className="flex items-start gap-3 text-destructive">
+              <AlertCircle className="mt-0.5 h-6 w-6" />
               <div>
                 <h3 className="font-semibold">Error Loading Leave Data</h3>
-                <p className="text-sm mt-1">{error}</p>
+                <p className="mt-1 text-sm">{error}</p>
               </div>
             </div>
           </CardContent>
@@ -193,53 +229,48 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
 
   if (!leaveData) {
     return (
-      <div className="max-w-2xl mx-auto">
-        <Card className="bg-card dark:bg-card border border-border/50 dark:border-border">
+      <div className="mx-auto max-w-2xl">
+        <Card className="rounded-3xl border border-border/60 bg-card">
           <CardContent className="p-8 text-center">
-            <div className="w-16 h-16 bg-muted dark:bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-              <Calendar className="w-8 h-8 text-muted-foreground dark:text-muted-foreground" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+              <Calendar className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground dark:text-foreground mb-2">No Leave Data Available</h3>
-            <p className="text-muted-foreground dark:text-muted-foreground">Your leave information could not be loaded. Please try again later.</p>
+            <h3 className="mb-2 text-lg font-semibold text-foreground">No Leave Data Available</h3>
+            <p className="text-muted-foreground">Your leave information could not be loaded. Please try again later.</p>
           </CardContent>
         </Card>
       </div>
     );
   }
 
+  const pendingRequestCount = leaveData.pendingRequests.filter((request) => request.status === 'pending').length;
+  const approvedRequestCount = leaveData.pendingRequests.filter((request) => request.status === 'approved').length;
+  const bonusLeavesEarned = leaveData.accrualHistory.reduce((total, accrual) => total + accrual.accrued_leaves, 0);
+
   return (
-    <div className="space-y-6">
-      {/* Header Section */}
-      <div className="bg-card dark:bg-card rounded-2xl elevation-md p-6 slide-up border border-border/50 dark:border-border">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>Manage Leaves</h1>
-            <p className="text-muted-foreground dark:text-muted-foreground mt-1">
-              Hi, {leaveData.employee.full_name.split(' ')[0]}! 👋
-            </p>
-          </div>
+    <div className="space-y-6 pb-6">
+      <section className="rounded-3xl border border-border/60 bg-card p-5 shadow-sm sm:p-6">
+        <div className="flex justify-end">
           <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
             <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-3 rounded-xl elevation-md hover:elevation-lg transition-all duration-200 md:px-6 md:py-3 flex items-center justify-center min-w-[48px] md:min-w-[140px]">
-                <Plus className="w-5 h-5 md:w-5 md:h-5" />
-                <span className="hidden md:inline ml-2">Request Leave</span>
+              <Button variant="outline" className="h-11 w-full border-primary/40 text-primary hover:bg-primary/10 hover:text-primary sm:w-auto">
+                <Plus className="mr-2 h-4 w-4" />
+                Request Leave
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] rounded-2xl bg-card dark:bg-card border border-border/50 dark:border-border">
+            <DialogContent className="rounded-3xl border border-border/60 bg-card sm:max-w-[540px]">
               <DialogHeader>
-                <DialogTitle className="text-xl font-semibold text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>Request Leave</DialogTitle>
-                <DialogDescription className="text-muted-foreground dark:text-muted-foreground">
+                <DialogTitle className="text-xl font-semibold text-foreground">Request Leave</DialogTitle>
+                <DialogDescription className="text-muted-foreground">
                   Submit a new leave request. Make sure you have sufficient balance.
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-6 py-4">
+
+              <div className="grid gap-5 py-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="leaveType" className="text-sm font-medium text-foreground dark:text-foreground">Leave Type</Label>
-                  <Select
-                    value={requestForm.leaveTypeId}
-                    onValueChange={(value) => setRequestForm({ ...requestForm, leaveTypeId: value })}
-                  >
-                    <SelectTrigger className="border-input dark:border-input focus:border-primary focus:ring-primary">
+                  <Label htmlFor="leaveType" className="text-sm font-medium text-foreground">Leave Type</Label>
+                  <Select value={requestForm.leaveTypeId} onValueChange={(value) => setRequestForm({ ...requestForm, leaveTypeId: value })}>
+                    <SelectTrigger className="border-input focus:border-primary focus:ring-primary">
                       <SelectValue placeholder="Select leave type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -251,56 +282,52 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="grid gap-2">
-                    <Label htmlFor="startDate" className="text-sm font-medium text-foreground dark:text-foreground">Start Date</Label>
+                    <Label htmlFor="startDate" className="text-sm font-medium text-foreground">Start Date</Label>
                     <Input
                       id="startDate"
                       type="date"
-                      className="border-input dark:border-input focus:border-primary focus:ring-primary"
+                      className="border-input focus:border-primary focus:ring-primary"
                       value={requestForm.startDate}
                       onChange={(e) => setRequestForm({ ...requestForm, startDate: e.target.value })}
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="endDate" className="text-sm font-medium text-foreground dark:text-foreground">End Date</Label>
+                    <Label htmlFor="endDate" className="text-sm font-medium text-foreground">End Date</Label>
                     <Input
                       id="endDate"
                       type="date"
-                      className="border-input dark:border-input focus:border-primary focus:ring-primary"
+                      className="border-input focus:border-primary focus:ring-primary"
                       value={requestForm.endDate}
                       onChange={(e) => setRequestForm({ ...requestForm, endDate: e.target.value })}
                     />
                   </div>
                 </div>
+
                 <div className="grid gap-2">
-                  <Label htmlFor="reason" className="text-sm font-medium text-foreground dark:text-foreground">Reason (Optional)</Label>
+                  <Label htmlFor="reason" className="text-sm font-medium text-foreground">Reason (Optional)</Label>
                   <Textarea
                     id="reason"
-                    className="border-input dark:border-input focus:border-primary focus:ring-primary min-h-[100px] resize-none"
+                    className="min-h-[120px] resize-none border-input focus:border-primary focus:ring-primary"
                     value={requestForm.reason}
                     onChange={(e) => setRequestForm({ ...requestForm, reason: e.target.value })}
                     placeholder="Brief reason for leave..."
                   />
                 </div>
               </div>
-              {error && (
-                <div className="bg-destructive/10 dark:bg-destructive/10 border border-destructive/50 dark:border-destructive/50 rounded-lg p-3 text-destructive dark:text-destructive text-sm">{error}</div>
-              )}
-              {success && (
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-green-600 dark:text-green-400 text-sm">{success}</div>
-              )}
-              <div className="flex justify-end space-x-3">
-                <Button 
-                  variant="outline"
-                  onClick={() => setShowRequestDialog(false)}
-                  className="border-border dark:border-border text-foreground dark:text-foreground hover:bg-muted dark:hover:bg-muted"
-                >
+
+              {error ? <div className="rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">{error}</div> : null}
+              {success ? <div className="rounded-xl border border-primary/25 bg-primary/10 p-3 text-sm text-foreground">{success}</div> : null}
+
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <Button variant="outline" onClick={() => setShowRequestDialog(false)} className="border-border text-foreground hover:bg-muted">
                   Cancel
                 </Button>
-                <Button 
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                  onClick={submitLeaveRequest} 
+                <Button
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  onClick={submitLeaveRequest}
                   disabled={isSubmitting || !requestForm.leaveTypeId || !requestForm.startDate || !requestForm.endDate}
                 >
                   {isSubmitting ? 'Submitting...' : 'Submit Request'}
@@ -309,215 +336,128 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
             </DialogContent>
           </Dialog>
         </div>
-      </div>
 
-      {/* Leave Balance Overview */}
-      <div className="bg-card dark:bg-card rounded-2xl elevation-md p-6 slide-up border border-border/50 dark:border-border">
-        <div className="flex items-center space-x-3 mb-4">
-          <div className="w-8 h-8 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center">
-            <TrendingUp className="w-4 h-4 text-primary dark:text-primary" />
+        {(error || success) ? (
+          <div className="mt-5 space-y-2">
+            {error ? <div className="rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div> : null}
+            {success ? <div className="rounded-2xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm text-foreground">{success}</div> : null}
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>Leave Balance Overview</h2>
-            <p className="text-sm text-muted-foreground dark:text-muted-foreground">Your current leave balance for {leaveData.year}</p>
-          </div>
+        ) : null}
+
+        <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <SummaryTile label="Available" value={`${getTotalAvailableLeaves()}`} />
+          <SummaryTile label="Pending" value={`${pendingRequestCount}`} />
+          <SummaryTile label="Approved" value={`${approvedRequestCount}`} />
+          <SummaryTile label="Bonus" value={`${bonusLeavesEarned}`} />
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {leaveData.leaveBalance.map((balance) => (
-            <div key={balance.leave_type_name} className="bg-muted/30 dark:bg-muted/20 border border-border/50 dark:border-border rounded-xl p-4 hover:elevation-md transition-all duration-200">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-foreground dark:text-foreground">
-                  {balance.leave_type_name}
-                </span>
-                <div className="w-6 h-6 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center">
-                  <CalendarDays className="w-3 h-3 text-primary dark:text-primary" />
+      </section>
+
+      {leaveData.leaveBalance.length > 0 ? (
+        <section className="rounded-3xl border border-border/60 bg-card p-5 shadow-sm sm:p-6">
+          <div className="mb-5">
+            <SectionHeader eyebrow="Balance" title="By leave type" />
+          </div>
+
+          <div className="space-y-3">
+            {leaveData.leaveBalance.map((balance) => {
+              const progress = balance.total_entitlement > 0 ? Math.min((balance.available_leaves / balance.total_entitlement) * 100, 100) : 0;
+
+              return (
+                <article key={balance.leave_type_name} className="rounded-2xl border border-border/60 bg-background p-4 shadow-sm">
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <h3 className="text-lg font-semibold leading-tight text-foreground">{balance.leave_type_name}</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {balance.used_leaves} used and {balance.pending_leaves} pending
+                        </p>
+                      </div>
+                      <div className="shrink-0 rounded-xl border border-primary/20 bg-primary/10 px-3 py-2 text-right">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Available</p>
+                        <p className="mt-1 text-2xl font-semibold leading-none text-foreground [font-variant-numeric:tabular-nums]">
+                          {balance.available_leaves}
+                        </p>
+                      </div>
+                    </div>
+
+                    <dl className="divide-y divide-border/50 rounded-xl border border-border/50 bg-muted/20 px-3">
+                      <DetailRow label="Used" value={`${balance.used_leaves}`} />
+                      <DetailRow label="Pending" value={`${balance.pending_leaves}`} />
+                      <DetailRow label="Total entitlement" value={`${balance.total_entitlement}`} />
+                    </dl>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Remaining balance</span>
+                        <span className="font-medium text-foreground">{Math.round(progress)}%</span>
+                      </div>
+                      <div className="h-2.5 overflow-hidden rounded-full bg-muted">
+                        <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${progress}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
+      {leaveData.accrualHistory.length > 0 ? (
+        <section className="rounded-3xl border border-border/60 bg-card p-5 shadow-sm sm:p-6">
+          <div className="mb-5">
+            <SectionHeader eyebrow="History" title="Bonus leave accrual" />
+          </div>
+
+          <div className="space-y-3">
+            {leaveData.accrualHistory.map((accrual) => (
+              <article key={accrual.id} className="rounded-2xl border border-border/60 bg-background p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold text-foreground">
+                      {MONTH_LABELS[accrual.month - 1] || `Month ${accrual.month}`}
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">Calculated {formatISTDateShort(accrual.calculation_date)}</p>
+                  </div>
+                  <Badge className="border-primary/20 bg-primary/10 text-foreground">{accrual.accrued_leaves} leaves</Badge>
                 </div>
-              </div>
-              <div className="text-2xl font-bold text-foreground dark:text-foreground mb-2">
-                {balance.available_leaves}
-              </div>
-              <div className="text-xs text-muted-foreground dark:text-muted-foreground mb-3">
-                {balance.used_leaves} used • {balance.pending_leaves} pending
-              </div>
-              <div className="w-full bg-muted dark:bg-muted rounded-full h-2 overflow-hidden">
-                <div
-                  className="bg-primary h-2 rounded-full transition-all duration-500"
-                  style={{
-                    width: `${balance.total_entitlement > 0 ? (balance.available_leaves / balance.total_entitlement) * 100 : 0}%`
-                  }}
-                ></div>
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        <div className="mt-4 pt-4 border-t border-border/50 dark:border-border">
-          <div className="flex items-center justify-between bg-muted/50 dark:bg-muted/30 rounded-xl p-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Calendar className="w-4 h-4 text-primary-foreground" />
-              </div>
-              <div>
-                <span className="text-base font-semibold text-foreground dark:text-foreground">Total Available</span>
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground">All leave types combined</p>
-              </div>
-            </div>
-            <span className="text-2xl font-bold text-primary dark:text-primary">
-              {getTotalAvailableLeaves()} days
-            </span>
+                <dl className="mt-4 divide-y divide-border/50 rounded-xl border border-border/50 bg-muted/20 px-3">
+                  <DetailRow label="Extra office days" value={`${accrual.extra_office_days}`} />
+                  <DetailRow label="Bonus earned" value={`${accrual.accrued_leaves}`} />
+                  <DetailRow label="Calculated" value={formatISTDateShort(accrual.calculation_date)} />
+                </dl>
+              </article>
+            ))}
           </div>
-        </div>
-      </div>
+        </section>
+      ) : null}
 
-      {/* Bonus Leave Accrual History */}
-      {leaveData.accrualHistory.length > 0 && (
-        <div className="bg-card dark:bg-card rounded-2xl elevation-md p-6 slide-up border border-border/50 dark:border-border">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>Bonus Leave Accrual History</h2>
-              <p className="text-sm text-muted-foreground dark:text-muted-foreground">Track your bonus leaves earned from extra office attendance</p>
-            </div>
+      {leaveData.pendingRequests.length > 0 ? (
+        <section className="rounded-3xl border border-border/60 bg-card p-5 shadow-sm sm:p-6">
+          <div className="mb-5">
+            <SectionHeader eyebrow="Requests" title="Recent leave requests" />
           </div>
-          
-          <div className="overflow-hidden rounded-xl border border-border/50 dark:border-border">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50 dark:bg-muted/30">
-                  <TableHead className="font-semibold text-foreground dark:text-foreground">Month</TableHead>
-                  <TableHead className="font-semibold text-foreground dark:text-foreground">Extra Office Days</TableHead>
-                  <TableHead className="font-semibold text-foreground dark:text-foreground">Bonus Leaves Earned</TableHead>
-                  <TableHead className="font-semibold text-foreground dark:text-foreground">Calculation Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {leaveData.accrualHistory.map((accrual) => (
-                  <TableRow key={accrual.id} className="hover:bg-muted/30 dark:hover:bg-muted/20 transition-colors">
-                    <TableCell className="font-medium text-foreground dark:text-foreground">
-                      {new Date(2024, accrual.month - 1).toLocaleDateString('en-IN', { month: 'long' })}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground dark:text-muted-foreground">{accrual.extra_office_days} days</TableCell>
-                    <TableCell>
-                      <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-green-200 dark:border-green-700">
-                        {accrual.accrued_leaves} leaves
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground dark:text-muted-foreground">{formatDate(accrual.calculation_date)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-      )}
 
-      {/* Recent Leave Requests */}
-      {leaveData.pendingRequests.length > 0 && (
-        <div className="bg-card dark:bg-card rounded-2xl elevation-md p-6 slide-up border border-border/50 dark:border-border">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-8 h-8 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center">
-              <FileText className="w-4 h-4 text-primary dark:text-primary" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>Recent Leave Requests</h2>
-              <p className="text-sm text-muted-foreground dark:text-muted-foreground">Your recent leave requests and their status</p>
-            </div>
+          <div className="space-y-3">
+            {leaveData.pendingRequests.map((request) => (
+              <article key={request.id} className="rounded-2xl border border-border/60 bg-background p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="text-base font-semibold text-foreground">{request.leave_types?.name || 'Unknown'}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">Submitted {formatISTDateLong(request.created_at)}</p>
+                  </div>
+                  <div className="shrink-0">{getStatusBadge(request.status)}</div>
+                </div>
+                <dl className="mt-4 divide-y divide-border/50 rounded-xl border border-border/50 bg-muted/20 px-3">
+                  <DetailRow label="Date range" value={`${formatISTDateShort(request.start_date)} - ${formatISTDateShort(request.end_date)}`} />
+                  <DetailRow label="Days" value={`${request.total_days}`} />
+                  <DetailRow label="Submitted" value={formatISTDateLong(request.created_at)} />
+                </dl>
+              </article>
+            ))}
           </div>
-          
-          <div className="overflow-hidden rounded-xl border border-border/50 dark:border-border">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50 dark:bg-muted/30">
-                  <TableHead className="font-semibold text-foreground dark:text-foreground">Leave Type</TableHead>
-                  <TableHead className="font-semibold text-foreground dark:text-foreground">Date Range</TableHead>
-                  <TableHead className="font-semibold text-foreground dark:text-foreground">Days</TableHead>
-                  <TableHead className="font-semibold text-foreground dark:text-foreground">Status</TableHead>
-                  <TableHead className="font-semibold text-foreground dark:text-foreground">Submitted</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {leaveData.pendingRequests.map((request) => (
-                  <TableRow key={request.id} className="hover:bg-muted/30 dark:hover:bg-muted/20 transition-colors">
-                    <TableCell className="font-medium text-foreground dark:text-foreground">
-                      {request.leave_types?.name || 'Unknown'}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground dark:text-muted-foreground">
-                      {formatDate(request.start_date)} - {formatDate(request.end_date)}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground dark:text-muted-foreground">{request.total_days} days</TableCell>
-                    <TableCell>{getStatusBadge(request.status)}</TableCell>
-                    <TableCell className="text-muted-foreground dark:text-muted-foreground">{formatDate(request.created_at)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-      )}
-
-      {/* Info Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="border-border/50 dark:border-border hover:elevation-md transition-shadow duration-200 bg-card dark:bg-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3 mb-3">
-              <div className="w-6 h-6 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center">
-                <Info className="w-3 h-3 text-primary dark:text-primary" />
-              </div>
-              <h3 className="text-base font-semibold text-foreground dark:text-foreground">How Bonus Leaves Work</h3>
-            </div>
-            <div className="space-y-2 text-sm text-muted-foreground dark:text-muted-foreground">
-              <div className="flex items-start space-x-2">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                <p>For every 3 extra office days, you earn 1 bonus leave</p>
-              </div>
-              <div className="flex items-start space-x-2">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                <p>Maximum 15 bonus leaves per calendar year</p>
-              </div>
-              <div className="flex items-start space-x-2">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                <p>Only completed office sessions are counted</p>
-              </div>
-              <div className="flex items-start space-x-2">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                <p>Accrual is calculated monthly</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="border-border/50 dark:border-border hover:elevation-md transition-shadow duration-200 bg-card dark:bg-card">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3 mb-3">
-              <div className="w-6 h-6 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center">
-                <Calendar className="w-3 h-3 text-primary dark:text-primary" />
-              </div>
-              <h3 className="text-base font-semibold text-foreground dark:text-foreground">Leave Request Process</h3>
-            </div>
-            <div className="space-y-2 text-sm text-muted-foreground dark:text-muted-foreground">
-              <div className="flex items-start space-x-2">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                <p>Submit request with sufficient balance</p>
-              </div>
-              <div className="flex items-start space-x-2">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                <p>Requests are reviewed by management</p>
-              </div>
-              <div className="flex items-start space-x-2">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                <p>Approved leaves are deducted from balance</p>
-              </div>
-              <div className="flex items-start space-x-2">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                <p>Weekend days are automatically excluded</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        </section>
+      ) : null}
     </div>
   );
 }

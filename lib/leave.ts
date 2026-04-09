@@ -57,6 +57,8 @@ export async function getEmployeeLeaveBalance(slug: string, year: number = new D
       `)
       .eq('employee_id', emp.id)
       .in('status', ['pending', 'approved'])
+      .gte('start_date', `${year}-01-01`)
+      .lte('start_date', `${year}-12-31`)
       .order('created_at', { ascending: false });
 
     if (requestsError) {

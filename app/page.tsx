@@ -1,8 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, Calendar, Bell } from 'lucide-react';
-import Link from 'next/link';
+import { LogOut, Calendar, Bell, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import AssistantChat from '@/components/assistant-chat';
 import PinLogin from '@/components/pin-login';
@@ -12,6 +11,31 @@ import OverviewCard from '@/components/overview-card';
 import RecentActivity from '@/components/recent-activity';
 import AttendanceHistory from '@/components/attendance-history';
 import DarkModeToggle from '@/components/dark-mode-toggle';
+import PresenceStrip from '@/components/presence-strip';
+import TodayPresenceCard from '@/components/today-presence-card';
+import WFHPlannerTab from '@/components/wfh-planner-tab';
+import WeekStrip from '@/components/week-strip';
+import LeaveManagement from '@/components/leave-management';
+import { fireCheckInConfetti, fireCheckOutConfetti, fireOnTimeEmojis, fireLateCheckInPuff } from '@/lib/use-reward';
+import { getMondayOfWeek } from '@/lib/time';
+import ScoreBreakdownModal from '@/components/score-breakdown-modal';
+
+// Feature flags — set to true to re-enable
+const FEATURE_AI_ENABLED = false;
+
+// Helper to check if today is a work day (Mon-Fri)
+const isWorkDay = (date: Date) => {
+  const day = date.getDay();
+  return day >= 1 && day <= 5;
+};
+
+// Helper for push notification subscription
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+}
 
 // Helper function to format IST times consistently
 const formatISTTime = (timestamp: string) => {
@@ -70,7 +94,23 @@ export default function HomePage(){
     noFillDays: number;
     avgCheckinTime: string;
     checkinStatus: 'early' | 'late' | 'on-time' | null;
+    dayBreakdown?: Array<{
+      date: string;
+      checkinTime: string;
+      checkoutTime: string | null;
+      hoursWorked: number;
+      mode: string;
+      baseScore: number;
+      hoursBonus: number;
+      checkoutBonus: number;
+      modeBonus: number;
+      totalScore: number;
+    }>;
+    consistencyBonus?: number;
+    streakBonus?: number;
+    windowDates?: string[];
   } | null>(null);
+  const [breakdownModal, setBreakdownModal] = useState<'deepScore' | 'noFill' | null>(null);
   const [todaySummary, setTodaySummary] = useState<any[]>([]);
   const [yesterdaySummary, setYesterdaySummary] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,7 +123,12 @@ export default function HomePage(){
   const [isLocationLoading, setIsLocationLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [activeTab, setActiveTab] = useState<'control' | 'snapshot' | 'assistant'>('control');
+  const [activeTab, setActiveTab] = useState<'control' | 'team' | 'leave'>('control');
+  const [streak, setStreak] = useState(0);
+  const [weeklyPlanFilled, setWeeklyPlanFilled] = useState(true);
+  const [weeklyPlanDays, setWeeklyPlanDays] = useState<string[]>([]);
+  const [checkInSuccess, setCheckInSuccess] = useState(false);
+  const [lateCheckIn, setLateCheckIn] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [aiNotification, setAiNotification] = useState<string>('');
   const [greetingMessage, setGreetingMessage] = useState<string>('Time to do what you do best');
@@ -93,6 +138,13 @@ export default function HomePage(){
   const [autoCheckoutWarning, setAutoCheckoutWarning] = useState(false);
   const [showPinChange, setShowPinChange] = useState(false);
   const [pendingEmployee, setPendingEmployee] = useState<any>(null);
+  const plannerEmployeeId =
+    me?.id ||
+    me?.employee?.id ||
+    currentSession?.session?.employee_id ||
+    selectedEmployee?.id ||
+    (typeof window !== 'undefined' ? localStorage.getItem('employeeId') : null) ||
+    undefined;
   
   // Reminder state
   const [remindersEnabled, setRemindersEnabled] = useState(() => {
@@ -125,11 +177,11 @@ export default function HomePage(){
     }
 
     // Start AI response generation when hold begins
-    if (holdProgress === 0) {
-      const context = hasOpen 
+    if (FEATURE_AI_ENABLED && holdProgress === 0) {
+      const context = hasOpen
         ? `User is about to check out. Current session: ${me?.workedMinutes || 0} minutes worked.`
         : `User is about to check in. Mode: ${mode}.`;
-      
+
       generateSmartNotification(context);
     }
 
@@ -189,7 +241,7 @@ export default function HomePage(){
     if (!me) return;
     
     try {
-      console.log('Generating AI notification for context:', context.substring(0, 100) + '...');
+      if (process.env.NODE_ENV === 'development') console.log('Generating AI notification for context:', context.substring(0, 100) + '...');
       
       const response = await fetch('/api/ai/notification', {
         method: 'POST',
@@ -202,7 +254,7 @@ export default function HomePage(){
 
       if (response.ok) {
         const data = await response.json();
-        console.log('AI notification received:', data.notification?.substring(0, 100) + '...');
+        if (process.env.NODE_ENV === 'development') console.log('AI notification received:', data.notification?.substring(0, 100) + '...');
         setAiNotification(data.notification);
         // Don't auto-clear AI notifications - let user see them
       } else {
@@ -238,19 +290,21 @@ export default function HomePage(){
           }
           
           setCurrentSession(sessionData);
-          console.log('Setting name from session:', savedName);
           setName(savedName);
           setIsLoggedIn(true);
           setShowNameInput(false);
-          
+          setSelectedEmployee(sessionData.employee);
+          // Set me immediately from session so tabs work before API resolves
+          setMe((prev: any) => prev || { id: sessionData.employee.id, full_name: sessionData.employee.full_name || savedName, slug: sessionData.employee.slug });
+
           // Ensure UI leaves loading state immediately
           setIsLoading(false);
-          
+
           // Check if session is still open (non-blocking)
           checkSessionStatus(sessionData.employee.slug).catch(err => {
             console.error('Error checking session status:', err);
           });
-          
+
           // Fetch personal logs consistently on restore (non-blocking)
           const slug = sessionData.employee.slug;
           fetchMySummary(slug, true).catch(err => console.error('Error fetching summary:', err));
@@ -266,12 +320,8 @@ export default function HomePage(){
         }
       } else if (savedName) {
         // User is logged in but no active session
-        console.log('=== SESSION RESTORE DEBUG ===');
-        console.log('Restored savedName from localStorage:', savedName);
-        
         // Try to get the slug from localStorage
         const savedSlug = typeof window !== 'undefined' ? localStorage.getItem('userSlug') : null;
-        console.log('Restored savedSlug from localStorage:', savedSlug);
         
         setName(savedName);
         setIsLoggedIn(true);
@@ -282,10 +332,10 @@ export default function HomePage(){
         
         // If we have a slug, try to reconstruct the selectedEmployee object and check session
         if (savedSlug) {
-          setSelectedEmployee({
-            full_name: savedName,
-            slug: savedSlug
-          });
+          const savedId = localStorage.getItem('employeeId');
+          const restoredEmployee = { id: savedId, full_name: savedName, slug: savedSlug };
+          setSelectedEmployee(restoredEmployee);
+          setMe((prev: any) => prev || restoredEmployee);
           // Check if there's an open session (non-blocking)
           checkSessionStatus(savedSlug).catch(err => console.error('Error checking session status:', err));
           fetchMySummary(savedSlug, true).catch(err => console.error('Error fetching summary:', err));
@@ -389,11 +439,11 @@ export default function HomePage(){
     }
 
     // Start AI response generation when hold begins
-    if (holdProgress === 0) {
-      const context = hasOpen 
+    if (FEATURE_AI_ENABLED && holdProgress === 0) {
+      const context = hasOpen
         ? `User is about to check out. Current session: ${me?.workedMinutes || 0} minutes worked.`
         : `User is about to check in. Mode: ${mode}.`;
-      
+
       generateSmartNotification(context);
     }
 
@@ -418,22 +468,15 @@ export default function HomePage(){
 
   const checkSessionStatus = async (slug: string) => {
     try {
-      console.log('=== SESSION STATUS DEBUG ===');
-      console.log('Checking session status for slug:', slug);
-      
       const r = await fetch(`/api/session/open?slug=${slug}`);
       const data = await r.json();
-      
-      console.log('Session status response:', data);
-      
+
       if (data.ok && data.session) {
         setCurrentSession(data);
         setHasOpen(true);
-        console.log('Found open session:', data.session);
       } else {
         setHasOpen(false);
         setCurrentSession(null);
-        console.log('No open session found');
       }
     } catch (e) {
       console.error('Error checking session status:', e);
@@ -459,31 +502,22 @@ export default function HomePage(){
 
   const fetchMySummary = async (identifier: string, useSlug: boolean = false) => {
     try {
-      console.log('=== FETCH SUMMARY DEBUG ===');
-      console.log('Identifier:', identifier);
-      console.log('Use slug:', useSlug);
-      
       // Auto-detect if identifier looks like a slug (contains hyphens, lowercase)
       const looksLikeSlug = identifier.includes('-') && identifier === identifier.toLowerCase();
       const shouldUseSlug = useSlug || looksLikeSlug;
-      
-      console.log('Identifier looks like slug:', looksLikeSlug);
-      console.log('Should use slug:', shouldUseSlug);
-      
+
       const param = shouldUseSlug ? `slug=${identifier}` : `fullName=${encodeURIComponent(identifier)}`;
-      console.log('API URL param:', param);
-      
+
       const r = await fetch(`/api/summary/me?${param}`);
-      console.log('Response status:', r.status);
-      
-      if (!r.ok) {
-        console.log('Response not ok, status:', r.status);
-        return;
-      }
-      
+
+      if (!r.ok) return;
+
       const data = await r.json();
-      console.log('Summary data:', data);
-      setMe(data);
+      setMe({
+        ...data,
+        ...data.employee,
+        employeeId: data.employee?.id,
+      });
     } catch (e) {
       console.error('Error fetching my summary:', e);
     }
@@ -498,28 +532,24 @@ export default function HomePage(){
       const r = await fetch(`/api/summary/me?${param}&offsetDays=-1`);
       if (!r.ok) return;
       const data = await r.json();
-      setMeYesterday(data);
+      setMeYesterday({
+        ...data,
+        ...data.employee,
+        employeeId: data.employee?.id,
+      });
     } catch (e) {
       console.error('Error fetching my summary (yesterday):', e);
     }
   };
 
   const fetchLeaveBalance = async (slug: string) => {
-    if (!slug) {
-      console.warn('fetchLeaveBalance: No slug provided');
-      return;
-    }
+    if (!slug) return;
     try {
-      console.log('Fetching leave balance for slug:', slug);
       const r = await fetch(`/api/leave/balance?slug=${slug}`);
       if (r.ok) {
         const data = await r.json();
-        console.log('Leave balance data:', data);
         setLeaveBalance(data);
       } else {
-        const errorData = await r.json().catch(() => ({ error: 'Unknown error' }));
-        console.warn('Leave balance API error:', r.status, errorData);
-        // Set to null so UI shows "--" instead of "Loading..."
         setLeaveBalance(null);
       }
     } catch (e) {
@@ -529,17 +559,13 @@ export default function HomePage(){
   };
 
   const fetchMonthlyStats = async (slug: string) => {
-    if (!slug) {
-      console.warn('fetchMonthlyStats: No slug provided');
-      return;
-    }
+    if (!slug) return;
     try {
       const r = await fetch(`/api/monthly/stats?slug=${slug}`);
       if (r.ok) {
         const data = await r.json();
         setMonthlyStats(data);
       } else {
-        console.warn('Monthly stats API error:', r.status);
         setMonthlyStats(null);
       }
     } catch (e) {
@@ -549,17 +575,13 @@ export default function HomePage(){
   };
 
   const fetchPunctualityStats = async (slug: string) => {
-    if (!slug) {
-      console.warn('fetchPunctualityStats: No slug provided');
-      return;
-    }
+    if (!slug) return;
     try {
       const r = await fetch(`/api/stats/punctuality?slug=${slug}`);
       if (r.ok) {
         const data = await r.json();
         setPunctualityStats(data);
       } else {
-        console.warn('Deep score stats API error:', r.status);
         setPunctualityStats(null);
       }
     } catch (e) {
@@ -615,21 +637,13 @@ export default function HomePage(){
     }
     
     try {
-      console.log('=== CHECKIN DEBUG ===');
-      console.log('Sending checkin request with:', { fullName: name, mode: checkMode });
-      console.log('Name variable value:', name);
-      console.log('Selected employee:', selectedEmployee);
-      
       // Get slug from localStorage if selectedEmployee is null
       const storedSlug = localStorage.getItem('userSlug');
-      console.log('Stored slug from localStorage:', storedSlug);
-      
+
       // Use slug for checkin if available, otherwise use full name
       const checkinData = (selectedEmployee?.slug || storedSlug)
         ? { slug: selectedEmployee?.slug || storedSlug, mode: checkMode }
         : { fullName: name, mode: checkMode };
-      
-      console.log('Final checkin data:', checkinData);
       
       const r = await fetch('/api/checkin', { 
         method: 'POST', 
@@ -654,11 +668,45 @@ export default function HomePage(){
           setMsg(message);
           
           // Trigger AI notification for check-in
-          setTimeout(() => {
-            generateSmartNotification(`User just checked in and is working in ${checkMode} mode`);
-          }, 1000);
+          if (FEATURE_AI_ENABLED) {
+            setTimeout(() => {
+              generateSmartNotification(`User just checked in and is working in ${checkMode} mode`);
+            }, 1000);
+          }
+
+          // Reward animation — intensity based on punctuality
+          const checkinHour = new Date(j.session.checkin_ts).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Kolkata' });
+          const [h, m] = checkinHour.split(':').map(Number);
+          const checkinMinutes = h * 60 + m;
+          const isOnTime = checkinMinutes <= 10 * 60 + 45; // 10:45 AM IST threshold
+
+          if (isOnTime) {
+            fireCheckInConfetti();
+            setTimeout(() => fireOnTimeEmojis(), 200);
+            if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 50]);
+            setLateCheckIn(false);
+          } else {
+            fireLateCheckInPuff();
+            if (navigator.vibrate) navigator.vibrate([40]);
+            setLateCheckIn(true);
+            setTimeout(() => setLateCheckIn(false), 1200);
+          }
+          setCheckInSuccess(true);
+          setTimeout(() => setCheckInSuccess(false), 1200);
+
+          // Push notification (Feature 2)
+          fetch('/api/push/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              employeeId: me?.id,
+              title: 'Checked in',
+              body: `You checked in at ${formatISTTimeShort(j.session.checkin_ts)}`,
+              tag: 'checkin',
+            }),
+          }).catch(() => {});
         }
-        
+
         fetchMySummary(j.employee.slug);
         fetchTodaySummary();
         // Refresh my summary immediately so last in/out badges update without full reload
@@ -712,7 +760,23 @@ export default function HomePage(){
         }
         setSelectedMood('');
         setMoodComment('');
-        
+
+        // Reward animation (Feature 4)
+        fireCheckOutConfetti();
+        if (navigator.vibrate) navigator.vibrate([80]);
+
+        // Push notification (Feature 2)
+        fetch('/api/push/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            employeeId: me?.id,
+            title: 'Checked out',
+            body: 'See you tomorrow!',
+            tag: 'checkout',
+          }),
+        }).catch(() => {});
+
         // Refresh summaries (non-blocking)
         fetchTodaySummary();
         if (slug) {
@@ -766,20 +830,13 @@ export default function HomePage(){
   };
 
   const handleEmployeeSelect = (employee: any) => {
-    console.log('=== EMPLOYEE SELECT DEBUG ===');
-    console.log('Selected employee:', employee);
-    console.log('Full name:', employee.full_name);
-    console.log('Slug:', employee.slug);
-    
     setName(employee.full_name);
     setSelectedEmployee(employee);
     setSuggestions([]);
     // Auto-submit when employee is selected
     setTimeout(() => {
       localStorage.setItem('userName', employee.full_name);
-      localStorage.setItem('userSlug', employee.slug); // Store slug separately
-      console.log('Stored in localStorage:', employee.full_name);
-      console.log('Stored slug in localStorage:', employee.slug);
+      localStorage.setItem('userSlug', employee.slug);
       setIsLoggedIn(true);
       setShowNameInput(false);
       fetchMySummary(employee.slug, true); // Use slug for API calls
@@ -794,9 +851,6 @@ export default function HomePage(){
   };
 
   const handlePinLoginSuccess = async (employee: any, pinChangeRequired?: boolean) => {
-    console.log('=== PIN LOGIN SUCCESS ===');
-    console.log('Employee data:', employee);
-    console.log('PIN change required:', pinChangeRequired);
     
     // If PIN change is required, show modal instead of logging in
     if (pinChangeRequired) {
@@ -813,22 +867,26 @@ export default function HomePage(){
     // Set employee data
     setSelectedEmployee(employee);
     setName(employee.full_name);
-    
+
+    // Set me immediately from login data so tabs work before API calls resolve
+    setMe((prev: any) => prev || { id: employee.id, full_name: employee.full_name, slug: employee.slug, email: employee.email });
+
     // Store in localStorage
     localStorage.setItem('userName', employee.full_name);
     localStorage.setItem('userSlug', employee.slug);
-    
+    if (employee.id) localStorage.setItem('employeeId', employee.id);
+
     // Update state
     setIsLoggedIn(true);
     setShowNameInput(false);
-    
-    // Fetch user data
+
+    // Fetch user data (will overwrite me with richer data if available)
     fetchMySummary(employee.slug, true);
     fetchMySummaryYesterday(employee.slug, true);
     fetchLeaveBalance(employee.slug);
     fetchMonthlyStats(employee.slug);
     fetchPunctualityStats(employee.slug);
-    
+
     // Check for existing session
     checkSessionStatus(employee.slug);
   };
@@ -860,6 +918,56 @@ export default function HomePage(){
 
   useEffect(()=>{ if(typeof window!== 'undefined') localStorage.setItem('mode', mode); },[mode]);
   useEffect(()=>{ fetchTodaySummary(); fetchYesterdaySummary(); },[]);
+
+  // Push notification registration (Feature 2)
+  useEffect(() => {
+    if (!isLoggedIn || !me?.id) return;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+    const registerPush = async () => {
+      try {
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') return;
+
+        const existing = await reg.pushManager.getSubscription();
+        const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+        if (!vapidKey) return;
+
+        const sub = existing || await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidKey),
+        });
+
+        await fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subscription: sub.toJSON(), employeeId: me.id }),
+        });
+      } catch (err) {
+        console.warn('Push registration failed:', err);
+      }
+    };
+
+    registerPush();
+  }, [isLoggedIn, me?.id]);
+
+  // WFH plan fetch (Feature 3)
+  useEffect(() => {
+    if (!isLoggedIn || !me?.id) return;
+    const weekStart = getMondayOfWeek(new Date());
+    fetch(`/api/wfh-schedule?week=${weekStart}&employeeId=${me.id}`)
+      .then(r => r.json())
+      .then(({ data }) => {
+        if (data?.length > 0) {
+          setWeeklyPlanFilled(true);
+          setWeeklyPlanDays(data[0].wfh_days || []);
+        } else {
+          setWeeklyPlanFilled(false);
+        }
+      })
+      .catch(() => {});
+  }, [isLoggedIn, me?.id]);
 
   // Check-in and Check-out Reminder Notifications
   useEffect(() => {
@@ -962,14 +1070,10 @@ export default function HomePage(){
         const autoCheckoutHours = Number(localStorage.getItem('autoCheckoutHours')) || 12;
         const warningThreshold = autoCheckoutHours - (10 / 60); // 10 minutes before
 
-        console.log(`Auto-checkout check: ${hoursElapsed.toFixed(2)} hours elapsed, threshold: ${autoCheckoutHours} hours`);
-
         if (hoursElapsed >= autoCheckoutHours) {
           // Auto-checkout - perform checkout directly without mood UI
-          console.log('Auto-checkout triggered: session exceeded', autoCheckoutHours, 'hours');
           const success = await performCheckout(undefined, `Auto-checked out after ${hoursElapsed.toFixed(2)} hours`, true);
           if (success) {
-            console.log('Auto-checkout successful');
             if ('Notification' in window && Notification.permission === 'granted') {
               new Notification('Auto-Checkout', {
                 body: `You've been automatically checked out after ${autoCheckoutHours} hours.`,
@@ -977,8 +1081,6 @@ export default function HomePage(){
                 tag: 'auto-checkout'
               });
             }
-          } else {
-            console.error('Auto-checkout failed - performCheckout returned false');
           }
         } else if (hoursElapsed >= warningThreshold) {
           // Show warning 10 minutes before (only set once)
@@ -1028,14 +1130,27 @@ export default function HomePage(){
 
   // Get user's first name for greeting
   const firstName = name ? name.split(' ')[0] : 'there';
+
+  // Dynamic greeting based on time of day
+  const greetingPrefix = (() => {
+    const hour = new Date().toLocaleString('en-GB', { hour: 'numeric', hour12: false, timeZone: 'Asia/Kolkata' });
+    const h = parseInt(hour);
+    if (h < 6)  return { text: "Burning the midnight oil", emoji: "🌙" };
+    if (h < 10) return { text: "Rise and shine", emoji: "☀️" };
+    if (h < 12) return { text: "Good morning", emoji: "👋" };
+    if (h < 14) return { text: "Hope lunch was good", emoji: "🍱" };
+    if (h < 17) return { text: "Afternoon hustle", emoji: "⚡" };
+    if (h < 20) return { text: "Evening check-in", emoji: "🌇" };
+    return { text: "Working late tonight", emoji: "🦉" };
+  })();
   
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background dark:bg-background flex items-center justify-center p-8">
-        <div className="bg-card dark:bg-card rounded-2xl elevation-lg p-8 text-center fade-in">
+        <div className="bg-card rounded-2xl border border-border/50 p-8 text-center shadow-sm">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-foreground dark:text-foreground">Loading...</p>
+          <p className="text-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -1063,62 +1178,42 @@ export default function HomePage(){
                   className="w-8 h-8 object-contain"
                 />
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => {
                     const newState = !remindersEnabled;
                     setRemindersEnabled(newState);
                     localStorage.setItem('remindersEnabled', String(newState));
                   }}
-                  className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  className="p-2 rounded-lg hover:bg-muted/80 transition-colors duration-200 focus:outline-none"
                   aria-label={remindersEnabled ? 'Disable reminders' : 'Enable reminders'}
                   title={remindersEnabled ? 'Reminders ON (10AM & 6:30PM)' : 'Reminders OFF'}
                 >
-                  <Bell className={`w-5 h-5 transition-colors ${remindersEnabled ? 'text-foreground' : 'text-foreground/40'}`} />
+                  <Bell className={`w-4 h-4 transition-colors ${remindersEnabled ? 'text-foreground' : 'text-foreground/40'}`} />
+                </button>
+                <DarkModeToggle />
+                <button
+                  onClick={handleLogout}
+                  className="p-2 rounded-lg hover:bg-muted/80 transition-colors duration-200 focus:outline-none text-muted-foreground hover:text-foreground"
+                  aria-label="Logout"
+                  title="Logout"
+                >
+                  <LogOut className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
             {/* Greeting Section */}
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>
-                What's up, {firstName}!
+            <div>
+              <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>
+                {greetingPrefix.text}, {firstName}! {greetingPrefix.emoji}
               </h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })}
+              </p>
             </div>
 
-            {/* Tab Navigation - Mobile Style */}
-            <div className="flex gap-1 border-b border-border/50 dark:border-border mb-6 overflow-x-auto">
-              <button
-                className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px] whitespace-nowrap ${
-                  activeTab === 'control'
-                    ? 'border-primary text-foreground dark:text-foreground'
-                    : 'border-transparent text-muted-foreground dark:text-muted-foreground hover:text-foreground'
-                }`}
-                onClick={() => setActiveTab('control')}
-              >
-                My Control
-              </button>
-              <button
-                className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px] whitespace-nowrap ${
-                  activeTab === 'snapshot'
-                    ? 'border-primary text-foreground dark:text-foreground'
-                    : 'border-transparent text-muted-foreground dark:text-muted-foreground hover:text-foreground'
-                }`}
-                onClick={() => setActiveTab('snapshot')}
-              >
-                Snapshot
-              </button>
-              <button
-                className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px] whitespace-nowrap ${
-                  activeTab === 'assistant'
-                    ? 'border-primary text-foreground dark:text-foreground'
-                    : 'border-transparent text-muted-foreground dark:text-muted-foreground hover:text-foreground'
-                }`}
-                onClick={() => setActiveTab('assistant')}
-              >
-                Assistant
-              </button>
-            </div>
+            {/* Top tabs removed — navigation moved to bottom nav bar */}
 
             {/* Tab Content */}
             <div className="min-h-[400px]">
@@ -1127,73 +1222,123 @@ export default function HomePage(){
                   // User Control Tab
                   <motion.div
                     key="control"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial="hidden"
+                    animate="visible"
                     exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.2 }}
+                    variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.07 } } }}
                     className="space-y-6"
                   >
-                  {/* Location Button and Check In Button */}
-                  <div>
-                    <div className="space-y-4">
-                      {/* Location Button and Check In Button Side by Side */}
-                      <div className="w-full flex gap-3 items-center">
-                        {/* Square Location Button */}
-                        <button
-                          className="h-16 w-16 rounded-lg border border-border/50 dark:border-border bg-background dark:bg-background flex items-center justify-center cursor-pointer transition-all duration-200 hover:bg-muted dark:hover:bg-muted flex-shrink-0 elevation-sm button-press"
-                          disabled={isLocationLoading}
-                        >
-                          {isLocationLoading ? (
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
-                          ) : (
-                            <i className={`fas ${mode === 'office' ? 'fa-building' : 'fa-home'} text-lg text-muted-foreground dark:text-muted-foreground`}></i>
-                          )}
-                        </button>
-                        
-                        {/* Full-width Hold Button */}
-                        <button
-                          className={`flex-1 h-16 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300 select-none relative overflow-hidden button-press elevation-lg ${
-                            isHolding ? 'scale-[0.98]' : 'hover:scale-[1.01]'
-                          }`}
-                          style={{
-                            background: holdProgress > 0 
-                              ? `linear-gradient(90deg, ${hasOpen ? '#dc2626' : '#90EE90'} ${holdProgress}%, ${hasOpen ? '#b91c1c' : '#7ED957'} ${holdProgress}%)`
-                              : `linear-gradient(135deg, ${hasOpen ? '#dc2626' : '#90EE90'}, ${hasOpen ? '#b91c1c' : '#7ED957'})`,
-                            boxShadow: holdProgress > 0 
-                              ? `0 0 20px rgba(${hasOpen ? '220, 38, 38' : '144, 238, 144'}, 0.5)` 
-                              : hasOpen 
-                                ? '0 10px 25px rgba(220, 38, 38, 0.3)' 
-                                : '0 10px 25px rgba(144, 238, 144, 0.3)'
-                          }}
-                          onMouseDown={handleHoldStart}
-                          onMouseUp={handleHoldEnd}
-                          onMouseLeave={handleHoldEnd}
-                          onTouchStart={handleHoldStart}
-                          onTouchEnd={handleHoldEnd}
-                        >
-                          <div className="text-white text-center select-none flex items-center space-x-3">
-                            <i className={`fas ${hasOpen ? 'fa-sign-out-alt' : 'fa-sign-in-alt'} text-2xl`}></i>
-                            <span className="font-semibold text-lg">
-                              {hasOpen 
-                                ? 'Check Out' 
-                                : `Check In at ${currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`}
-                            </span>
-                          </div>
-                        </button>
+                  {/* Weekend Warning */}
+                  {!isWorkDay(new Date()) && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center gap-2 text-sm bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 rounded-lg px-3 py-2"
+                    >
+                      <span>&#x26A0;&#xFE0F;</span>
+                      <span>Today is {new Date().toLocaleDateString('en-IN', { weekday: 'long' })}. Checking in on a non-working day?</span>
+                    </motion.div>
+                  )}
+
+                  {/* WFH Plan nudge — stays until week is filled */}
+                  {!weeklyPlanFilled && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="border border-primary/30 bg-primary/5 rounded-xl px-4 py-3 flex items-center justify-between gap-3"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Plan your week</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Let the team know your remote days.</p>
                       </div>
-                      {holdProgress > 0 && (
-                        <p className="text-sm text-muted-foreground dark:text-muted-foreground text-center mt-2">
-                          Hold to confirm ({Math.round(holdProgress)}%)
-                        </p>
-                      )}
+                      <button
+                        onClick={() => setActiveTab('team')}
+                        className="shrink-0 p-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                        aria-label="Fill in plan"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </motion.div>
+                  )}
+
+                  {/* Action Card — Mode Toggle + Check-in Button */}
+                  <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="rounded-2xl bg-card border border-border/50 p-4 shadow-sm dark:shadow-none space-y-3">
+                    {/* Office / Remote Pill Toggle */}
+                    <div className="flex items-center bg-muted rounded-lg p-0.5 gap-0.5 w-fit">
+                      <button
+                        onClick={() => { setMode('office'); localStorage.setItem('mode', 'office'); }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                          mode === 'office'
+                            ? 'bg-background text-foreground shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        <i className="fas fa-building text-xs" />
+                        Office
+                      </button>
+                      <button
+                        onClick={() => { setMode('remote'); localStorage.setItem('mode', 'remote'); }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                          mode === 'remote'
+                            ? 'bg-background text-foreground shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        <i className="fas fa-home text-xs" />
+                        Remote
+                      </button>
                     </div>
-                  </div>
+
+                    {/* Check In / Check Out Button */}
+                    <motion.button
+                      animate={
+                        checkInSuccess && !lateCheckIn
+                          ? { scale: [1, 1.08, 1] }
+                          : checkInSuccess && lateCheckIn
+                            ? { x: [0, -4, 4, -3, 3, 0] }
+                            : !isHolding && !hasOpen
+                              ? { boxShadow: ['0 0 0 0 rgba(92, 250, 173, 0)', '0 0 0 8px rgba(92, 250, 173, 0.15)', '0 0 0 0 rgba(92, 250, 173, 0)'] }
+                              : {}
+                      }
+                      transition={checkInSuccess ? { duration: 0.4 } : { duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                      className={`w-full h-14 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300 select-none relative overflow-hidden ${
+                        isHolding ? 'scale-[0.98]' : 'hover:scale-[1.01]'
+                      } ${checkInSuccess && !lateCheckIn ? 'ring-2 ring-green-400 ring-offset-2 ring-offset-background' : ''} ${checkInSuccess && lateCheckIn ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-background' : ''}`}
+                      style={{
+                        background: holdProgress > 0
+                          ? `linear-gradient(90deg, ${hasOpen ? '#dc2626' : '#90EE90'} ${holdProgress}%, ${hasOpen ? '#b91c1c' : '#7ED957'} ${holdProgress}%)`
+                          : `linear-gradient(135deg, ${hasOpen ? '#dc2626' : '#90EE90'}, ${hasOpen ? '#b91c1c' : '#7ED957'})`,
+                        boxShadow: holdProgress > 0
+                          ? `0 0 15px rgba(${hasOpen ? '220, 38, 38' : '144, 238, 144'}, 0.4)`
+                          : 'none'
+                      }}
+                      onMouseDown={handleHoldStart}
+                      onMouseUp={handleHoldEnd}
+                      onMouseLeave={handleHoldEnd}
+                      onTouchStart={handleHoldStart}
+                      onTouchEnd={handleHoldEnd}
+                    >
+                      <div className="text-white text-center select-none flex items-center space-x-3">
+                        <i className={`fas ${hasOpen ? 'fa-sign-out-alt' : 'fa-sign-in-alt'} text-xl`}></i>
+                        <span className="font-semibold text-base">
+                          {hasOpen
+                            ? 'Check Out'
+                            : `Check In at ${formatISTTimeShort(currentTime.toISOString())}`}
+                        </span>
+                      </div>
+                    </motion.button>
+                    {holdProgress > 0 && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        Hold to confirm ({Math.round(holdProgress)}%)
+                      </p>
+                    )}
+                  </motion.div>
 
                   {/* Mood Check-in Modal */}
                   {showMoodCheck && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                      <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">How was your day?</h3>
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                      <div className="bg-card rounded-2xl p-6 max-w-sm w-full border border-border/50 shadow-lg">
+                        <h3 className="text-lg font-semibold text-foreground mb-4 text-center">How was your day?</h3>
                         
                         <div className="grid grid-cols-5 gap-3 mb-4">
                           {[
@@ -1270,252 +1415,187 @@ export default function HomePage(){
                     </div>
                   )}
 
-                  {/* AI Output Display */}
-                  {(aiNotification || msg) && (
-                    <div className="text-left">
-                      <div className="text-sm bg-card dark:bg-card border border-border/50 dark:border-border rounded-xl p-4 min-h-[60px] relative elevation-md">
-                        {aiNotification ? (
-                          <div>
-                            <div className="font-medium mb-1 text-foreground dark:text-foreground flex justify-between items-center">
-                              <span>✨</span>
-                              <button 
-                                onClick={() => setAiNotification('')}
-                                className="text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground text-xs transition-colors"
-                              >
-                                ✕
-                              </button>
-                            </div>
-                            <div className="text-foreground dark:text-foreground">{aiNotification}</div>
-                          </div>
-                        ) : (
-                          <div className="text-foreground dark:text-foreground">{msg}</div>
-                        )}
-                      </div>
-                    </div>
+                  {/* System message */}
+                  {msg && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="text-sm text-foreground bg-muted/60 border border-border/50 rounded-xl px-4 py-3"
+                    >
+                      {msg}
+                    </motion.div>
                   )}
 
-                  {/* Divider below action area - Minimal */}
-                  <div className="my-8 h-px bg-border" />
+                  {/* Today's Presence Strip */}
+                  <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
+                    <PresenceStrip />
+                  </motion.div>
 
-                  {/* Overview Section */}
-                  <div className="mt-8">
-                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50 dark:border-border">
-                      <h3 className="text-lg font-semibold text-foreground dark:text-foreground">Overview</h3>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground dark:text-muted-foreground">
-                        <Calendar className="w-4 h-4" />
-                        <span>{overviewDateString}</span>
-                      </div>
+                  {/* Stats Section — Raised card */}
+                  <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="bg-card rounded-2xl border border-border/50 p-4 shadow-sm dark:shadow-none space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Overview</h3>
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {overviewDateString}
+                      </span>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3">
-                      {/* Deep Score Card */}
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        onClick={() => punctualityStats?.dayBreakdown && setBreakdownModal('deepScore')}
+                        className={`text-left rounded-xl transition-opacity ${punctualityStats?.dayBreakdown ? 'cursor-pointer hover:opacity-80 active:opacity-70' : 'cursor-default'}`}
                       >
                         <OverviewCard
                           type="checkin"
-                          time={punctualityStats?.punctualityScore !== undefined 
+                          time={punctualityStats?.punctualityScore !== undefined
                             ? punctualityStats.punctualityScore.toFixed(2)
                             : '--'}
                           secondaryText={punctualityStats?.maxScore ? `/${punctualityStats.maxScore}` : undefined}
                           status="na"
                           message="Deep Score"
+                          tooltip="Your punctuality score this quarter. Higher = more on-time check-ins. Max is 42."
                         />
-                      </motion.div>
+                      </button>
 
-                      {/* No-Fill Days Card */}
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.15 }}
+                      <button
+                        onClick={() => punctualityStats?.windowDates && setBreakdownModal('noFill')}
+                        className={`text-left rounded-xl transition-opacity ${punctualityStats?.windowDates ? 'cursor-pointer hover:opacity-80 active:opacity-70' : 'cursor-default'}`}
                       >
                         <OverviewCard
                           type="break"
-                          time={punctualityStats?.noFillDays !== undefined 
+                          time={punctualityStats?.noFillDays !== undefined
                             ? `${punctualityStats.noFillDays}`
                             : '--'}
                           status="na"
                           message="No-Fill Days"
+                          tooltip="Working days this month where no check-in was recorded."
                         />
-                      </motion.div>
+                      </button>
 
-                      {/* Average Time Card */}
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                      >
-                        <OverviewCard
-                          type="overtime"
-                          time={punctualityStats?.avgCheckinTime || '--'}
-                          status={punctualityStats?.checkinStatus || 'na'}
-                          message="Average Time"
-                        />
-                      </motion.div>
-                    </div>
-
-                    {/* Attendance History Section - Monthly Calendar View */}
-                    <div className="mt-6">
-                      <AttendanceHistory
-                        userSlug={selectedEmployee?.slug || (typeof window !== 'undefined' ? localStorage.getItem('userSlug') : null) || undefined}
-                        onDateSelect={(date) => {
-                          // Optional: handle date selection
-                          console.log('Date selected:', date);
-                        }}
+                      <OverviewCard
+                        type="overtime"
+                        time={punctualityStats?.avgCheckinTime || '--'}
+                        status={punctualityStats?.checkinStatus || 'na'}
+                        message="Avg Time"
+                        tooltip="Your average check-in time this month."
                       />
                     </div>
-                  </div>
                   </motion.div>
-                ) : activeTab === 'assistant' ? (
-                  // Assistant Tab
-                  <motion.div
-                    key="assistant"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <AssistantChat 
-                      isVisible={true} 
-                      userSlug={selectedEmployee?.slug}
+
+                  {/* Calendar Section */}
+                  <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
+                    <AttendanceHistory
+                      userSlug={selectedEmployee?.slug || (typeof window !== 'undefined' ? localStorage.getItem('userSlug') : null) || undefined}
+                      onDateSelect={() => {}}
                     />
                   </motion.div>
-                ) : (
-                  // Snapshot Tab
+                  </motion.div>
+                ) : activeTab === 'team' ? (
+                  // Team Tab — Plan + Pulse merged
                   <motion.div
-                    key="snapshot"
-                    initial={{ opacity: 0, y: 20 }}
+                    key="team"
+                    initial="hidden"
+                    animate="visible"
+                    exit={{ opacity: 0, y: -20 }}
+                    variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.07 } } }}
+                    className="space-y-6"
+                  >
+                    {/* 1. Your remote plan (interactive) */}
+                    <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
+                      <WFHPlannerTab
+                        employeeId={plannerEmployeeId}
+                        onScheduleSaved={(days) => {
+                          setWeeklyPlanFilled(true);
+                          setWeeklyPlanDays(days);
+                        }}
+                      />
+                    </motion.div>
+
+                    {/* 2. Who's in today — Raised card */}
+                    <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="bg-card rounded-2xl border border-border/50 p-4 shadow-sm dark:shadow-none space-y-2">
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Today</h3>
+                      <TodayPresenceCard />
+                    </motion.div>
+
+                    {/* 3. Personal streak — Raised card */}
+                    <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="bg-card rounded-2xl border border-border/50 px-4 py-3 shadow-sm dark:shadow-none flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Current streak</p>
+                        <p className="text-xs text-muted-foreground">
+                          {streak === 0 ? 'Build momentum with your next check-in.' : 'Consecutive days with a check-in.'}
+                        </p>
+                      </div>
+                      <div className="shrink-0 rounded-xl bg-muted/50 dark:bg-muted/30 px-3 py-2 text-center">
+                        <p className="text-2xl font-semibold leading-none text-foreground">{streak}</p>
+                        <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Days</p>
+                      </div>
+                    </motion.div>
+
+                    {/* 4. Recent sessions — Raised card */}
+                    <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="bg-card rounded-2xl border border-border/50 p-4 shadow-sm dark:shadow-none space-y-2">
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Recent Sessions</h3>
+                      <RecentActivity
+                        hideHeading
+                        userSlug={selectedEmployee?.slug || (typeof window !== 'undefined' ? localStorage.getItem('userSlug') : null) || undefined}
+                      />
+                    </motion.div>
+                  </motion.div>
+                ) : activeTab === 'leave' ? (
+                  // Leave Tab
+                  <motion.div
+                    key="leave"
+                    initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.2 }}
-                    className="space-y-6"
                   >
-                  {/* Recent Activity Section */}
-                  <div>
-                    <RecentActivity userSlug={selectedEmployee?.slug || (typeof window !== 'undefined' ? localStorage.getItem('userSlug') : null) || undefined} />
-                  </div>
-
-                  {/* Today's Attendance - Notion Style Accordion */}
-                  <div className="notion-card-hover p-0">
-                    <button
-                      onClick={() => setIsTodayAttendanceOpen(!isTodayAttendanceOpen)}
-                      className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
-                    >
-                      <h3 className="text-lg font-semibold text-gray-900">Today's Attendance</h3>
-                      <svg
-                        className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
-                          isTodayAttendanceOpen ? 'transform rotate-180' : ''
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                    {isTodayAttendanceOpen && (
-                      <div className="px-4 pb-4 border-t border-gray-200">
-                        {todaySummary.length === 0 ? (
-                          <div className="text-center py-8">
-                            <p className="text-gray-500">No check-ins yet.</p>
-                          </div>
-                        ) : (
-                          <div className="overflow-x-auto mt-4">
-                      <table className="w-full min-w-[600px]">
-                        <thead>
-                          <tr className="border-b border-border">
-                            <th className="px-3 py-2 text-left text-sm font-medium text-muted-foreground">Name</th>
-                            <th className="px-3 py-2 text-left text-sm font-medium text-muted-foreground">In</th>
-                            <th className="px-3 py-2 text-left text-sm font-medium text-muted-foreground">Out</th>
-                            <th className="px-3 py-2 text-left text-sm font-medium text-muted-foreground">Hours</th>
-                            <th className="px-3 py-2 text-left text-sm font-medium text-muted-foreground">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {todaySummary.map((emp: any) => (
-                            <tr key={emp.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                              <td className="px-3 py-2 font-medium text-foreground text-sm">{emp.full_name}</td>
-                              <td className="px-3 py-2">
-                                {emp.lastIn ? (
-                                  <span className="notion-badge notion-badge-success text-xs">
-                                    {emp.lastIn}
-                                  </span>
-                                ) : (
-                                  <span className="text-muted-foreground">—</span>
-                                )}
-                              </td>
-                              <td className="px-3 py-2">
-                                {emp.lastOut ? (
-                                  <span className="notion-badge notion-badge-outline text-xs">
-                                    {emp.lastOut}
-                                  </span>
-                                ) : (
-                                  <span className="text-muted-foreground">—</span>
-                                )}
-                              </td>
-                              <td className="px-3 py-2">
-                                <span className="notion-badge notion-badge-info text-xs">
-                                  {emp.workedHours}
-                                </span>
-                              </td>
-                              <td className="px-3 py-2">
-                                {emp.open ? (
-                                  <span className="notion-badge notion-badge-danger text-xs">
-                                    Active
-                                  </span>
-                                ) : emp.lastIn ? (
-                                  <span className="notion-badge notion-badge-success text-xs">
-                                    Complete
-                                  </span>
-                                ) : (
-                                  <span className="notion-badge notion-badge-outline text-xs">
-                                    Not Started
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Removed Yesterday's Attendance from Snapshot as requested */}
+                    <LeaveManagement
+                      employeeSlug={selectedEmployee?.slug || (typeof window !== 'undefined' ? localStorage.getItem('userSlug') : null) || undefined}
+                      employeeEmail={(typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null) || undefined}
+                    />
                   </motion.div>
-                )}
+                ) : null}
               </AnimatePresence>
             </div>
 
-            {/* Footer Actions */}
-            {isLoggedIn && (
-              <div className="mt-8 pt-6 border-t border-border/50 dark:border-border flex items-center justify-between">
-                <Link 
-                  href="/leave"
-                  className="text-sm text-muted-foreground dark:text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Manage Leaves
-                </Link>
-                <div className="flex items-center gap-3">
-                  <DarkModeToggle />
-                  <Button 
-                    variant="ghost"
-                    onClick={handleLogout}
-                    className="text-muted-foreground dark:text-muted-foreground hover:text-foreground"
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Logout
-                  </Button>
-                </div>
-              </div>
-            )}
+            {/* Bottom padding for fixed nav */}
+            <div className="pb-20" />
           </div>
         )}
       </div>
+
+      {/* Bottom Navigation Bar */}
+      {isLoggedIn && (
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border/40">
+          <div className="max-w-md mx-auto flex items-center justify-around px-6 py-2">
+            {[
+              { id: 'control' as const, icon: 'fa-house-chimney', label: 'Home' },
+              { id: 'team' as const, icon: 'fa-users', label: 'Team' },
+              { id: 'leave' as const, icon: 'fa-calendar-days', label: 'Leave' },
+            ].map((tab) => (
+              <button key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative flex flex-col items-center gap-1 px-5 py-1.5 rounded-xl transition-all ${
+                  activeTab === tab.id
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}>
+                <i className={`fas ${tab.icon} text-[17px]`} />
+                <span className="text-[10px] font-medium">{tab.label}</span>
+                {activeTab === tab.id && (
+                  <motion.div
+                    layoutId="nav-indicator"
+                    className="absolute -bottom-1 w-5 h-0.5 rounded-full bg-gradient-brand"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+        </nav>
+      )}
 
       {/* PIN Change Modal */}
       {showPinChange && pendingEmployee && (
@@ -1525,8 +1605,20 @@ export default function HomePage(){
           onPinChanged={handlePinChanged}
         />
       )}
+
+      {/* Score Breakdown Modal */}
+      <ScoreBreakdownModal
+        open={breakdownModal !== null}
+        onClose={() => setBreakdownModal(null)}
+        type={breakdownModal ?? 'deepScore'}
+        punctualityScore={punctualityStats?.punctualityScore}
+        maxScore={punctualityStats?.maxScore}
+        noFillDays={punctualityStats?.noFillDays}
+        dayBreakdown={punctualityStats?.dayBreakdown}
+        consistencyBonus={punctualityStats?.consistencyBonus}
+        streakBonus={punctualityStats?.streakBonus}
+        windowDates={punctualityStats?.windowDates}
+      />
     </div>
   );
 }
-
-

@@ -66,6 +66,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // --- DEV-ONLY: hardcoded test user (no Supabase required) ---
+    if (process.env.NODE_ENV === 'development' && username.toLowerCase() === 'test' && pin === '1234') {
+      resetRateLimit(ip);
+      return NextResponse.json({
+        success: true,
+        employee: {
+          id: '00000000-0000-0000-0000-000000000001',
+          full_name: 'Test User',
+          slug: 'test-user',
+          email: 'test@localhost',
+        },
+        pin_change_required: false,
+      });
+    }
+
     // Lookup employee by username (can be full_name, slug, or email)
     let employee = null;
 

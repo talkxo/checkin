@@ -11,8 +11,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Username and password are required' }, { status: 400 });
     }
 
-    // Simple username/password validation
-    if (username === 'admin' && password === 'admin123') {
+    // Validate credentials from environment variables
+    const validUsername = process.env.ADMIN_USERNAME;
+    const validPassword = process.env.ADMIN_PASSWORD;
+
+    if (!validUsername || !validPassword) {
+      console.error('Admin credentials not configured in environment variables');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+
+    if (username === validUsername && password === validPassword) {
       // Create and set session
       const session = createAdminSession();
       await setAdminSession(session);

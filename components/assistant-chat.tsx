@@ -177,10 +177,11 @@ export default function AssistantChat({ isVisible, userSlug }: AssistantChatProp
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: true 
+      hour12: true,
+      timeZone: 'Asia/Kolkata'
     });
   };
 

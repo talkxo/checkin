@@ -18,3 +18,5 @@ yarn-error.log*
 # Dist
 build
 dist
+# CSV files (may contain sensitive data)
+*.csv

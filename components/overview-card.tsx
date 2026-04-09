@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import StatusBadge from './status-badge';
-import { Check, ArrowUpRight, Minus, Clock } from 'lucide-react';
+import { Check, ArrowUpRight, Minus, Clock, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type OverviewCardProps = {
   type: 'checkin' | 'checkout' | 'break' | 'overtime';
@@ -9,6 +10,7 @@ type OverviewCardProps = {
   secondaryText?: string;
   status?: 'on-time' | 'early' | 'slightly-late' | 'late' | 'absent' | 'leave' | 'na';
   message: string;
+  tooltip?: string;
   icon?: React.ReactNode;
   updateDate?: string;
   className?: string;
@@ -23,10 +25,11 @@ const defaultIcons = {
 
 const OverviewCard: React.FC<OverviewCardProps> = ({
   type,
-  time = '--:--',
+  time = '--',
   secondaryText,
   status,
   message,
+  tooltip,
   icon,
   updateDate,
   className = ''
@@ -35,15 +38,14 @@ const OverviewCard: React.FC<OverviewCardProps> = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      whileHover={{ scale: 1.02, y: -2 }}
-      className={`bg-card dark:bg-card rounded-xl border border-border/50 dark:border-border p-3 elevation-md card-hover flex flex-col h-full transition-all duration-300 ${className}`}
+      className={`rounded-xl bg-muted/30 dark:bg-muted/20 p-3 flex flex-col h-full ${className}`}
     >
       {/* Icon at top */}
       <div className="mb-2">
-        <div className="text-foreground dark:text-foreground flex-shrink-0 opacity-80">
+        <div className="text-foreground flex-shrink-0 opacity-60">
           {displayIcon}
         </div>
       </div>
@@ -51,9 +53,9 @@ const OverviewCard: React.FC<OverviewCardProps> = ({
       {/* Main value */}
       <div className="mb-2 min-h-[1.75rem]">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-lg font-bold text-foreground dark:text-foreground leading-none">{time}</span>
+          <span className="text-lg font-bold text-foreground leading-none">{time}</span>
           {secondaryText && (
-            <span className="text-[10px] text-muted-foreground dark:text-muted-foreground font-normal leading-none">{secondaryText}</span>
+            <span className="text-[10px] text-muted-foreground font-normal leading-none">{secondaryText}</span>
           )}
           {status && status !== 'na' && (
             <div className="flex-shrink-0">
@@ -63,12 +65,28 @@ const OverviewCard: React.FC<OverviewCardProps> = ({
         </div>
       </div>
 
-      {/* Label/Message text at bottom */}
-      <p className="text-[10px] text-muted-foreground dark:text-muted-foreground leading-tight mt-auto">{message}</p>
+      {/* Label + optional tooltip at bottom */}
+      <div className="flex items-center gap-1 mt-auto">
+        <p className="text-[10px] text-muted-foreground leading-tight">{message}</p>
+        {tooltip && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="text-muted-foreground/60 hover:text-foreground transition-colors">
+                  <Info className="w-2.5 h-2.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p className="text-xs max-w-[180px]">{tooltip}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
 
       {/* Update date for overtime card */}
       {updateDate && (
-        <p className="text-[10px] text-muted-foreground dark:text-muted-foreground mt-1">{updateDate}</p>
+        <p className="text-[10px] text-muted-foreground mt-1">{updateDate}</p>
       )}
     </motion.div>
   );

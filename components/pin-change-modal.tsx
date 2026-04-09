@@ -151,7 +151,7 @@ export default function PinChangeModal({
               type="password"
               inputMode="numeric"
               pattern="[0-9]*"
-              className="w-full px-4 py-3 text-center text-lg border-2 rounded-lg transition-colors duration-200 focus:outline-none focus:border-purple-500 border-gray-300 tracking-widest font-mono"
+              className="w-full px-4 py-3 text-center text-lg border-2 rounded-lg transition-colors duration-200 focus:outline-none focus:border-primary border-border tracking-widest font-mono"
               placeholder="••••"
               value={currentPin}
               onChange={(e) => handleCurrentPinChange(e.target.value)}
@@ -174,7 +174,7 @@ export default function PinChangeModal({
               type="password"
               inputMode="numeric"
               pattern="[0-9]*"
-              className="w-full px-4 py-3 text-center text-lg border-2 rounded-lg transition-colors duration-200 focus:outline-none focus:border-purple-500 border-gray-300 tracking-widest font-mono"
+              className="w-full px-4 py-3 text-center text-lg border-2 rounded-lg transition-colors duration-200 focus:outline-none focus:border-primary border-border tracking-widest font-mono"
               placeholder="••••"
               value={newPin}
               onChange={(e) => handleNewPinChange(e.target.value)}
@@ -197,7 +197,7 @@ export default function PinChangeModal({
               type="password"
               inputMode="numeric"
               pattern="[0-9]*"
-              className="w-full px-4 py-3 text-center text-lg border-2 rounded-lg transition-colors duration-200 focus:outline-none focus:border-purple-500 border-gray-300 tracking-widest font-mono"
+              className="w-full px-4 py-3 text-center text-lg border-2 rounded-lg transition-colors duration-200 focus:outline-none focus:border-primary border-border tracking-widest font-mono"
               placeholder="••••"
               value={confirmPin}
               onChange={(e) => handleConfirmPinChange(e.target.value)}
@@ -223,7 +223,7 @@ export default function PinChangeModal({
           <Button
             onClick={handleSubmit}
             disabled={currentPin.length !== 4 || newPin.length !== 4 || confirmPin.length !== 4 || isLoading}
-            className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            className="w-full py-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           >
             {isLoading ? (
               <span className="flex items-center justify-center">

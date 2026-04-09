@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +26,8 @@ interface LeaveRequestWithDetails extends LeaveRequest {
   };
 }
 
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManagementProps) {
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequestWithDetails[]>([]);
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
@@ -42,7 +44,7 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [editingBalances, setEditingBalances] = useState<any>({});
   const [isUpdatingBalances, setIsUpdatingBalances] = useState(false);
-  const [activeTab, setActiveTab] = useState<'requests' | 'employees'>('requests');
+  const [activeTab, setActiveTab] = useState<'requests' | 'employees' | 'accrual'>('requests');
 
   // Fetch all leave requests
   const fetchLeaveRequests = async () => {
@@ -136,7 +138,17 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
         throw new Error(data.error || 'Failed to process monthly accrual');
       }
 
-      setSuccess('Monthly leave accrual processed successfully!');
+      await fetchEmployeeLeaveBalances();
+
+      const processedMonthLabel =
+        typeof data.month === 'number' && data.month >= 1 && data.month <= 12
+          ? MONTH_NAMES[data.month - 1]
+          : 'selected';
+      const earnedCount = Array.isArray(data.summary) ? data.summary.length : 0;
+
+      setSuccess(
+        `Monthly leave accrual processed for ${processedMonthLabel} ${data.year}. ${earnedCount} employee${earnedCount === 1 ? '' : 's'} earned bonus leave.`
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process accrual');
     } finally {
@@ -202,6 +214,8 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
               results.push({
                 employee: data.employee,
                 leaveBalance: data.leaveBalance,
+                accrualHistory: data.accrualHistory || [],
+                pendingRequests: data.pendingRequests || [],
                 year: data.year
               });
             }
@@ -304,6 +318,25 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
     }
   }, [employees]);
 
+  const accrualRows = useMemo(() => {
+    return employeeLeaveBalances
+      .flatMap((employeeData) =>
+        (employeeData.accrualHistory || []).map((accrual: any, index: number) => ({
+          key: `${employeeData.employee.id}-${accrual.month}-${index}`,
+          employeeName: employeeData.employee.full_name,
+          employeeSlug: employeeData.employee.slug,
+          month: accrual.month || 0,
+          extraOfficeDays: accrual.extra_office_days || 0,
+          accruedLeaves: accrual.accrued_leaves || 0,
+          calculationDate: accrual.calculation_date || '',
+        }))
+      )
+      .sort((a, b) => {
+        if (a.month !== b.month) return b.month - a.month;
+        return a.employeeName.localeCompare(b.employeeName);
+      });
+  }, [employeeLeaveBalances]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -337,13 +370,14 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
           <Users className="w-4 h-4 mr-2" />
           Employee Leave Balances
         </Button>
-      </div>
-
-      {/* Monthly Accrual Button */}
-      <div className="flex justify-end">
-        <Button onClick={triggerMonthlyAccrual} disabled={isProcessing}>
+        <Button
+          variant={activeTab === 'accrual' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setActiveTab('accrual')}
+          className="flex-1"
+        >
           <RefreshCw className="w-4 h-4 mr-2" />
-          Process Monthly Accrual
+          Accrual History
         </Button>
       </div>
 
@@ -568,6 +602,75 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
             {employeeLeaveBalances.length === 0 && (
               <div className="text-center py-8 text-muted-foreground dark:text-muted-foreground">
                 No employee leave balances found.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {activeTab === 'accrual' && (
+        <Card className="bg-card dark:bg-card border border-border/50 dark:border-border elevation-md">
+          <CardHeader>
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div>
+                <CardTitle className="text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>Accrual History</CardTitle>
+                <CardDescription className="text-muted-foreground dark:text-muted-foreground">
+                  Monthwise bonus leave accruals across employees for {new Date().getFullYear()}.
+                </CardDescription>
+              </div>
+              <Button onClick={triggerMonthlyAccrual} disabled={isProcessing}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Process Monthly Accrual
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <p className="text-sm text-muted-foreground dark:text-muted-foreground">
+                Review who earned bonus leave and how many extra office days were counted.
+              </p>
+              <Button variant="outline" onClick={fetchEmployeeLeaveBalances}>
+                Refresh
+              </Button>
+            </div>
+
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Employee</TableHead>
+                  <TableHead>Month</TableHead>
+                  <TableHead>Extra Office Days</TableHead>
+                  <TableHead>Bonus Leaves Earned</TableHead>
+                  <TableHead>Calculated On</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {accrualRows.map((row) => (
+                  <TableRow key={row.key}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium text-foreground dark:text-foreground">{row.employeeName}</div>
+                        <div className="text-sm text-muted-foreground dark:text-muted-foreground">{row.employeeSlug}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-foreground dark:text-foreground">
+                      {MONTH_NAMES[(row.month || 1) - 1] || `Month ${row.month}`}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground dark:text-muted-foreground">{row.extraOfficeDays} days</TableCell>
+                    <TableCell>
+                      <span className="font-medium text-primary dark:text-primary">{row.accruedLeaves} leaves</span>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground dark:text-muted-foreground">
+                      {row.calculationDate ? formatDate(row.calculationDate) : 'N/A'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            {accrualRows.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground dark:text-muted-foreground">
+                No accrual history recorded yet.
               </div>
             )}
           </CardContent>
