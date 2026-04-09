@@ -6,11 +6,11 @@ import { Ghost } from 'lucide-react';
 export default function LeaveLoader() {
   return (
     <div className="flex flex-col items-center justify-center p-8">
-      <div className="relative flex flex-col items-center justify-end h-20 w-20">
+      <div className="relative flex flex-col items-center justify-end h-24 w-24">
         {/* The Ghost */}
         <motion.div
           animate={{
-            y: [0, -12, 0],
+            y: [0, -14, 0],
             rotate: [-5, 5, -5],
           }}
           transition={{
@@ -21,10 +21,10 @@ export default function LeaveLoader() {
           className="relative z-10"
         >
           <Ghost 
-            className="w-10 h-10" 
+            className="w-12 h-12" 
             stroke="#2dd4bf"
             strokeWidth={0.5}
-            style={{ filter: "drop-shadow(0px 4px 6px rgba(45, 212, 191, 0.4))" }}
+            style={{ filter: "drop-shadow(0px 5px 8px rgba(45, 212, 191, 0.4))" }}
           />
         </motion.div>
 
@@ -39,7 +39,7 @@ export default function LeaveLoader() {
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          className="absolute bottom-2 w-7 h-1.5 bg-foreground/20 rounded-full blur-[1px]"
+          className="absolute bottom-2 w-8 h-2 bg-foreground/20 rounded-full blur-[1px]"
         />
       </div>
 
