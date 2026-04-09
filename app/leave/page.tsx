@@ -6,7 +6,7 @@ import DarkModeToggle from '@/components/dark-mode-toggle';
 import { PageShell } from '@/components/page-shell';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-
+import LeaveLoader from '@/components/leave-loader';
 export default function LeavePage() {
   const [employeeSlug, setEmployeeSlug] = useState<string | null>(null);
   const [employeeEmail, setEmployeeEmail] = useState<string | null>(null);
@@ -30,8 +30,8 @@ export default function LeavePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background dark:bg-background flex items-center justify-center p-8">
-        <img src="/loader.gif" alt="Loading..." className="w-[150px] h-[150px] object-contain" />
+      <div className="min-h-screen bg-background dark:bg-background flex flex-col items-center justify-center p-8">
+        <LeaveLoader />
       </div>
     );
   }

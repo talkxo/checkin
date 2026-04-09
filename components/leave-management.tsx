@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { AlertCircle, Briefcase, Calendar, CalendarDays, CheckCircle, ChevronDown, ChevronUp, Clock, HeartPulse, PartyPopper, Plus, Umbrella, X, XCircle } from 'lucide-react';
 import { formatISTDateShort } from '@/lib/time';
 import type { LeaveBalanceResponse, LeaveRequestFormData, LeaveType } from '@/types/leave';
-
+import LeaveLoader from '@/components/leave-loader';
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function DetailRow({ label, value }: { label: string; value: string }) {
@@ -448,8 +448,8 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <img src="/loader.gif" alt="Loading..." className="w-[150px] h-[150px] object-contain" />
+      <div className="flex flex-col items-center justify-center p-8">
+        <LeaveLoader />
       </div>
     );
   }
