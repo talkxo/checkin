@@ -1,35 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { nowIST } from '@/lib/time';
+import { getUserSession } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
-  const { fullName, slug, email, mode } = await req.json();
+  const session = getUserSession();
+  
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized: No valid session found' }, { status: 401 });
+  }
+
+  const { mode } = await req.json();
+  
+  // Use session data for identity
+  const { id: employeeId, slug, fullName } = session;
   
   console.log('=== CHECKIN API DEBUG ===');
-  console.log('Received request data:', { fullName, slug, email, mode });
+  console.log('Received request data:', { employeeId: session.id, mode });
   
   if (!mode || !['office', 'remote'].includes(mode)) {
     return NextResponse.json({ error: 'mode must be office|remote' }, { status: 400 });
   }
   
-  let emp;
-  // Prefer email lookup (most reliable); fallback to slug; then name
-  if (email) {
-    const { data } = await supabaseAdmin.from('employees').select('*').eq('email', email).maybeSingle();
-    emp = data as any;
-  }
-  if (!emp && slug) {
-    const { data } = await supabaseAdmin.from('employees').select('*').eq('slug', slug).maybeSingle();
-    emp = data as any;
-  }
-  if (!emp && fullName) {
-    const { data } = await supabaseAdmin.from('employees').select('*').ilike('full_name', fullName).maybeSingle();
-    emp = data as any;
-  }
+  // Verify the employee still exists/is active
+  const { data: emp, error: empError } = await supabaseAdmin
+    .from('employees')
+    .select('*')
+    .eq('id', employeeId)
+    .eq('active', true)
+    .maybeSingle();
   
-  // Do NOT auto-create employees here. Admin must add separately.
-  if (!emp) {
-    return NextResponse.json({ error: 'employee not found' }, { status: 404 });
+  if (!emp || empError) {
+    return NextResponse.json({ error: 'employee not found or inactive' }, { status: 404 });
   }
   
   const ip = req.headers.get('x-forwarded-for') || '0.0.0.0';

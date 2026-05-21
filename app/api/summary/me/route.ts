@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { nowIST, hhmmIST } from '@/lib/time';
+import { getUserSession } from '@/lib/auth';
 
 export async function GET(req: NextRequest){
+  const session = getUserSession();
+  if(!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const { id: employeeId } = session;
+
   const url = new URL(req.url);
-  const slug = url.searchParams.get('slug') || '';
-  const fullName = url.searchParams.get('fullName') || '';
   const offsetDaysParam = url.searchParams.get('offsetDays');
   const offsetDays = offsetDaysParam ? parseInt(offsetDaysParam, 10) : 0;
-  if(!slug && !fullName) return NextResponse.json({ error: 'slug or fullName required' }, { status: 400 });
 
-  let emp: any = null;
-  if(slug){ const { data } = await supabaseAdmin.from('employees').select('id, full_name, slug').eq('slug', slug).maybeSingle(); emp = data; }
-  if(!emp && fullName){ const { data } = await supabaseAdmin.from('employees').select('id, full_name, slug').ilike('full_name', fullName).maybeSingle(); emp = data; }
+  const { data: emp } = await supabaseAdmin.from('employees').select('id, full_name, slug').eq('id', employeeId).maybeSingle();
   if(!emp) return NextResponse.json({ error: 'employee not found' }, { status: 404 });
 
   // Compute start/end of day in IST, then convert to UTC for querying

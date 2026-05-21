@@ -1,50 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { nowIST } from '@/lib/time';
+import { getUserSession } from '@/lib/auth';
 
 export async function POST(req: NextRequest){
   try {
-    const { slug, email, mood, moodComment } = await req.json();
+    const session = getUserSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { mood, moodComment } = await req.json();
+    const employeeId = session.id;
     
     console.log('=== CHECKOUT DEBUG ===');
-    console.log('Request data:', { slug, email, mood, moodComment });
+    console.log('Request data:', { employeeId: session.id, mood, moodComment });
     
-    // Validate required fields
-    if (!slug && !email) {
-      return NextResponse.json({ error: 'slug or email is required' }, { status: 400 });
-    }
-    
-    let emp;
-    // Prefer email lookup (most reliable); fallback to slug
-    if (email) {
-      console.log('Looking up by email:', email);
-      const { data, error } = await supabaseAdmin.from('employees').select('*').eq('email', email).maybeSingle();
-      if (error) {
-        console.log('Email lookup error:', error);
-        return NextResponse.json({ error: 'Failed to lookup employee by email' }, { status: 500 });
-      } else {
-        console.log('Email lookup result:', data);
-        emp = data;
-      }
-    }
-    if (!emp && slug) {
-      console.log('Looking up by slug:', slug);
-      const { data, error } = await supabaseAdmin.from('employees').select('*').eq('slug', slug).maybeSingle();
-      if (error) {
-        console.log('Slug lookup error:', error);
-        return NextResponse.json({ error: 'Failed to lookup employee by slug' }, { status: 500 });
-      } else {
-        console.log('Slug lookup result:', data);
-        emp = data;
-      }
-    }
-    
-    if(!emp) {
-      console.log('Employee not found for:', { email, slug });
-      // Let's also check what employees exist for debugging
-      const { data: allEmployees } = await supabaseAdmin.from('employees').select('id, full_name, email, slug').limit(5);
-      console.log('Sample employees in DB:', allEmployees);
-      return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
+    // Verify employee is active
+    const { data: emp, error: empError } = await supabaseAdmin
+      .from('employees')
+      .select('*')
+      .eq('id', employeeId)
+      .eq('active', true)
+      .maybeSingle();
+      
+    if(!emp || empError) {
+      return NextResponse.json({ error: 'Employee not found or inactive' }, { status: 404 });
     }
     
     const { data: ses, error: sessionError } = await supabaseAdmin

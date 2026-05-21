@@ -1,35 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { nowIST, hhmmIST } from '@/lib/time';
+import { getUserSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const slug = searchParams.get('slug');
-    const dateParam = searchParams.get('date');
-
-    if (!slug) {
-      return NextResponse.json({ error: 'slug is required' }, { status: 400 });
+    const session = getUserSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const { searchParams } = new URL(req.url);
+    const dateParam = searchParams.get('date');
+    const employeeId = session.id;
 
     if (!dateParam) {
       return NextResponse.json({ error: 'date is required' }, { status: 400 });
     }
 
-    // Get employee by slug
+    // Get employee by id (from session)
     const { data: employee, error: empError } = await supabaseAdmin
       .from('employees')
       .select('id, full_name, slug')
-      .eq('slug', slug)
+      .eq('id', employeeId)
       .maybeSingle();
-
-    if (empError) {
-      return NextResponse.json({ error: empError.message }, { status: 500 });
-    }
-
-    if (!employee) {
+      
+    if (empError || !employee) {
       return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
     }
 

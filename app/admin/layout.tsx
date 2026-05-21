@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { AdminCommandPalette } from '@/components/admin/admin-command-palette';
 
 export default function AdminLayout({
   children,
@@ -62,7 +63,9 @@ export default function AdminLayout({
 
   return (
     <div className="admin-typography min-h-screen bg-background text-foreground">
-      {children}
+      <AdminCommandPalette>
+        {children}
+      </AdminCommandPalette>
     </div>
   );
 }

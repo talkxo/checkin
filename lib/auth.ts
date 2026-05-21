@@ -1,14 +1,66 @@
 import { cookies } from 'next/headers';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 const ADMIN_SESSION_COOKIE = 'admin_session';
+const USER_SESSION_COOKIE = 'user_session';
 const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+// SECRET fallback for local dev if not defined in .env
+const AUTH_SECRET = process.env.AUTH_SECRET || 'fallback-secret-for-dev-only-change-in-prod';
 
 export interface AdminSession {
   authenticated: boolean;
   timestamp: number;
 }
 
-// Create admin session
+export interface UserSession {
+  id: string;
+  slug: string;
+  fullName: string;
+  timestamp: number;
+}
+
+// HMAC signing for session payload
+function signPayload(payload: string): string {
+  return createHmac('sha256', AUTH_SECRET).update(payload).digest('hex');
+}
+
+// Verify HMAC signature
+function verifySignature(payload: string, signature: string): boolean {
+  try {
+    const freshSignature = signPayload(payload);
+    return timingSafeEqual(Buffer.from(freshSignature), Buffer.from(signature));
+  } catch {
+    return false;
+  }
+}
+
+// Create and sign session token
+function createSignedToken(data: any): string {
+  const payload = JSON.stringify(data);
+  const signature = signPayload(payload);
+  return `${Buffer.from(payload).toString('base64')}.${signature}`;
+}
+
+// Parse and verify session token
+function getVerifiedToken<T>(token: string): T | null {
+  try {
+    const [b64Payload, signature] = token.split('.');
+    if (!b64Payload || !signature) return null;
+
+    const payload = Buffer.from(b64Payload, 'base64').toString('utf8');
+    if (!verifySignature(payload, signature)) return null;
+
+    return JSON.parse(payload) as T;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * ADMIN AUTHENTICATION
+ */
+
 export function createAdminSession(): AdminSession {
   return {
     authenticated: true,
@@ -16,63 +68,85 @@ export function createAdminSession(): AdminSession {
   };
 }
 
-// Get admin session from cookies
 export function getAdminSession(): AdminSession | null {
   try {
     const cookieStore = cookies();
-    const sessionCookie = cookieStore.get(ADMIN_SESSION_COOKIE);
-    
-    if (!sessionCookie?.value) {
-      return null;
-    }
+    const token = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
+    if (!token) return null;
 
-    const session: AdminSession = JSON.parse(sessionCookie.value);
-    
-    // Check if session is expired
+    const session = getVerifiedToken<AdminSession>(token);
+    if (!session) return null;
+
     if (Date.now() - session.timestamp > SESSION_DURATION) {
       return null;
     }
-    
     return session;
   } catch (error) {
-    console.error('Error parsing admin session:', error);
     return null;
   }
 }
 
-// Set admin session cookie
 export async function setAdminSession(session: AdminSession): Promise<void> {
-  try {
-    const cookieStore = cookies();
-    cookieStore.set(ADMIN_SESSION_COOKIE, JSON.stringify(session), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: SESSION_DURATION / 1000,
-      path: '/'
-    });
-  } catch (error) {
-    console.error('Error setting admin session:', error);
-  }
+  const token = createSignedToken(session);
+  cookies().set(ADMIN_SESSION_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: SESSION_DURATION / 1000,
+    path: '/'
+  });
 }
 
-// Clear admin session
 export async function clearAdminSession(): Promise<void> {
+  cookies().delete(ADMIN_SESSION_COOKIE);
+}
+
+export function isAdminAuthenticated(): boolean {
+  return getAdminSession()?.authenticated === true;
+}
+
+/**
+ * EMPLOYEE AUTHENTICATION
+ */
+
+export function createUserSession(id: string, slug: string, fullName: string): UserSession {
+  return {
+    id,
+    slug,
+    fullName,
+    timestamp: Date.now()
+  };
+}
+
+export async function setUserSession(session: UserSession): Promise<void> {
+  const token = createSignedToken(session);
+  cookies().set(USER_SESSION_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax', // Needed for potential basecamp redirects
+    maxAge: SESSION_DURATION / 1000,
+    path: '/'
+  });
+}
+
+export function getUserSession(): UserSession | null {
   try {
     const cookieStore = cookies();
-    cookieStore.delete(ADMIN_SESSION_COOKIE);
+    const token = cookieStore.get(USER_SESSION_COOKIE)?.value;
+    if (!token) return null;
+
+    const session = getVerifiedToken<UserSession>(token);
+    if (!session) return null;
+
+    if (Date.now() - session.timestamp > SESSION_DURATION) {
+      return null;
+    }
+    return session;
   } catch (error) {
-    console.error('Error clearing admin session:', error);
+    return null;
   }
 }
 
-// Check if admin is authenticated
-export function isAdminAuthenticated(): boolean {
-  try {
-    const session = getAdminSession();
-    return session?.authenticated === true;
-  } catch (error) {
-    console.error('Error checking admin authentication:', error);
-    return false;
-  }
+export async function clearUserSession(): Promise<void> {
+  cookies().delete(USER_SESSION_COOKIE);
 }

@@ -175,100 +175,77 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
 
     setIsLoadingMonthly(true);
     try {
-      // Get months to display based on view mode
-      const months: Date[] = [];
       const now = new Date();
-      const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthsToFetch: { month: number; year: number }[] = [];
       
       if (viewMode === '1month') {
-        months.push(currentMonth);
+        monthsToFetch.push({ month: now.getMonth() + 1, year: now.getFullYear() });
       } else {
-        // Last 3 months
         for (let i = 2; i >= 0; i--) {
-          const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
-          months.push(month);
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          monthsToFetch.push({ month: d.getMonth() + 1, year: d.getFullYear() });
         }
       }
       
-      // Helper function to get days in a month
-      const getDaysInMonth = (date: Date): Date[] => {
-        const year = date.getFullYear();
-        const month = date.getMonth();
-        const lastDay = new Date(year, month + 1, 0);
-        const days: Date[] = [];
-        for (let i = 1; i <= lastDay.getDate(); i++) {
-          days.push(new Date(year, month, i));
-        }
-        return days;
-      };
-      
-      const allDays: Date[] = [];
-      months.forEach(month => {
-        allDays.push(...getDaysInMonth(month));
-      });
-      
-      const monthDays = allDays;
+      const allProcessedDays: MonthlyAttendanceData[] = [];
 
-      // Fetch data for each day in the month
-      const promises = monthDays.map(async (day) => {
-        // Format date as YYYY-MM-DD in IST to avoid timezone issues
-        const dateStr = day.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // en-CA gives YYYY-MM-DD format
-        
+      // Fetch each month in a single call
+      await Promise.all(monthsToFetch.map(async ({ month, year }) => {
         try {
-          const response = await fetch(`/api/attendance/history?slug=${userSlug}&date=${dateStr}`);
-          if (response.ok) {
-            const data = await response.json();
-            // Parse hours from "Xh Ym" format
-            const hoursMatch = data.totalHours.match(/(\d+)h\s*(\d+)?m?/);
-            const hours = hoursMatch 
-              ? parseInt(hoursMatch[1]) + (hoursMatch[2] ? parseInt(hoursMatch[2]) / 60 : 0)
-              : 0;
+          const response = await fetch(`/api/attendance/monthly?month=${month}&year=${year}`);
+          if (!response.ok) return;
+          
+          const { attendance } = await response.json();
+          
+          // Fill in all days for this month
+          const lastDay = new Date(year, month, 0).getDate();
+          for (let d = 1; d <= lastDay; d++) {
+            const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const data = attendance[dateStr];
             
-            // Determine check-in status based on check-in time
             let checkinStatus: 'early' | 'on-time' | 'slightly-late' | 'late' | 'none' = 'none';
-            if (data.checkinTime) {
-              // Parse check-in time (format: "HH:MM")
-              const [checkinHour, checkinMinute] = data.checkinTime.split(':').map(Number);
-              const checkinTimeMinutes = checkinHour * 60 + checkinMinute;
+            let checkinTimeStr = null;
+            let hours = 0;
+            let status: any = 'not_started';
+
+            if (data) {
+              const checkinDate = new Date(data.checkinTime);
+              checkinTimeStr = checkinDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' });
               
-              // Before 9:45 AM = early
-              // 9:45-10:15 AM = on-time
-              // 10:15-10:45 AM = slightly-late
-              // After 10:45 AM = late
-              if (checkinTimeMinutes < 585) { // Before 9:45
-                checkinStatus = 'early';
-              } else if (checkinTimeMinutes < 615) { // 9:45-10:15
-                checkinStatus = 'on-time';
-              } else if (checkinTimeMinutes < 645) { // 10:15-10:45
-                checkinStatus = 'slightly-late';
-              } else { // After 10:45
-                checkinStatus = 'late';
-              }
+              const [h, m] = checkinTimeStr.split(':').map(Number);
+              const minutes = h * 60 + m;
+              
+              if (minutes < 585) checkinStatus = 'early';
+              else if (minutes < 615) checkinStatus = 'on-time';
+              else if (minutes < 645) checkinStatus = 'slightly-late';
+              else checkinStatus = 'late';
+
+              status = data.checkoutTime ? 'complete' : 'active';
+              
+              // Calculate total hours
+              let totalMs = 0;
+              data.sessions.forEach((s: any) => {
+                const start = new Date(s.checkin_ts).getTime();
+                const end = s.checkout_ts ? new Date(s.checkout_ts).getTime() : Date.now();
+                totalMs += end - start;
+              });
+              hours = totalMs / (1000 * 60 * 60);
             }
-            
-            return {
+
+            allProcessedDays.push({
               date: dateStr,
               hours,
-              status: data.status,
-              checkinTime: data.checkinTime,
+              status,
+              checkinTime: checkinTimeStr,
               checkinStatus
-            };
+            });
           }
-        } catch (err) {
-          console.error(`Error fetching data for ${dateStr}:`, err);
+        } catch (e) {
+          console.error('Error fetching month:', month, year, e);
         }
-        
-        return {
-          date: dateStr,
-          hours: 0,
-          status: 'not_started' as const,
-          checkinTime: null,
-          checkinStatus: 'none' as const
-        };
-      });
+      }));
 
-      const monthlyData = await Promise.all(promises);
-      setMonthlyData(monthlyData);
+      setMonthlyData(allProcessedDays);
     } catch (err) {
       console.error('Error fetching monthly data:', err);
     } finally {

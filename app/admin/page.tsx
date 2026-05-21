@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
+import { useRegisterActions } from "kbar";
 import {
   Brain,
   Calendar,
@@ -722,6 +723,41 @@ export default function AdminPage() {
     { id: "ai" as const, label: "Assistive AI", icon: Brain },
     { id: "leave" as const, label: "Leave & Exceptions", icon: Calendar, count: pendingLeaveCount },
   ];
+
+  useRegisterActions([
+    {
+      id: "refresh-data",
+      name: "Refresh Data",
+      shortcut: ["r", "d"],
+      keywords: "reload sync update refresh",
+      section: "Actions",
+      perform: () => refreshOverview(),
+    },
+    {
+      id: "add-user",
+      name: "Add New User",
+      shortcut: ["a", "u"],
+      keywords: "create employee person",
+      section: "Actions",
+      perform: () => setShowAddUserDialog(true),
+    },
+    {
+      id: "reset-sessions",
+      name: "Reset All Sessions",
+      shortcut: ["r", "s"],
+      keywords: "checkout reset force clear",
+      section: "Actions",
+      perform: () => setShowResetDialog(true),
+    },
+    {
+      id: "export-attendance",
+      name: "Export Attendance (CSV)",
+      shortcut: ["e", "a"],
+      keywords: "download csv excel sheet",
+      section: "Actions",
+      perform: () => handleExportFilteredAttendance(),
+    }
+  ], [refreshOverview, setShowAddUserDialog, setShowResetDialog, handleExportFilteredAttendance]);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">

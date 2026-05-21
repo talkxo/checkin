@@ -3,22 +3,26 @@ import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, Bell, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import AssistantChat from '@/components/assistant-chat';
-import PinLogin from '@/components/pin-login';
-import PinChangeModal from '@/components/pin-change-modal';
+import dynamic from 'next/dynamic';
+
+const AssistantChat = dynamic(() => import('@/components/assistant-chat'), { ssr: false });
+const PinLogin = dynamic(() => import('@/components/pin-login'), { ssr: false });
+const PinChangeModal = dynamic(() => import('@/components/pin-change-modal'), { ssr: false });
+const RecentActivity = dynamic(() => import('@/components/recent-activity'), { ssr: false });
+const AttendanceHistory = dynamic(() => import('@/components/attendance-history'), { ssr: false });
+const WFHPlannerTab = dynamic(() => import('@/components/wfh-planner-tab'), { ssr: false });
+const LeaveManagement = dynamic(() => import('@/components/leave-management'), { ssr: false });
+const TodayPresenceCard = dynamic(() => import('@/components/today-presence-card'), { ssr: false });
+const ScoreBreakdownModal = dynamic(() => import('@/components/score-breakdown-modal'), { ssr: false });
+const MoodModal = dynamic(() => import('@/components/dashboard/mood-modal'), { ssr: false });
+
 import StatusBadge from '@/components/status-badge';
 import OverviewCard from '@/components/overview-card';
-import RecentActivity from '@/components/recent-activity';
-import AttendanceHistory from '@/components/attendance-history';
 import DarkModeToggle from '@/components/dark-mode-toggle';
 import PresenceStrip from '@/components/presence-strip';
-import TodayPresenceCard from '@/components/today-presence-card';
-import WFHPlannerTab from '@/components/wfh-planner-tab';
 import WeekStrip from '@/components/week-strip';
-import LeaveManagement from '@/components/leave-management';
 import { fireCheckInConfetti, fireCheckOutConfetti, fireOnTimeEmojis, fireLateCheckInPuff } from '@/lib/use-reward';
 import { getMondayOfWeek } from '@/lib/time';
-import ScoreBreakdownModal from '@/components/score-breakdown-modal';
 
 // Feature flags — set to true to re-enable
 const FEATURE_AI_ENABLED = false;
@@ -305,13 +309,8 @@ export default function HomePage(){
             console.error('Error checking session status:', err);
           });
 
-          // Fetch personal logs consistently on restore (non-blocking)
-          const slug = sessionData.employee.slug;
-          fetchMySummary(slug, true).catch(err => console.error('Error fetching summary:', err));
-          fetchMySummaryYesterday(slug, true).catch(err => console.error('Error fetching yesterday summary:', err));
-          fetchLeaveBalance(slug).catch(err => console.error('Error fetching leave balance:', err));
-          fetchMonthlyStats(slug).catch(err => console.error('Error fetching monthly stats:', err));
-          fetchPunctualityStats(slug).catch(err => console.error('Error fetching deep score stats:', err));
+          // Fetch consolidated dashboard data (non-blocking)
+          fetchDashboardInit().catch(err => console.error('Error initializing dashboard:', err));
         } catch (e) {
           console.error('Error parsing session data:', e);
           localStorage.removeItem('currentSession');
@@ -330,24 +329,8 @@ export default function HomePage(){
         // Ensure UI leaves loading state immediately
         setIsLoading(false);
         
-        // If we have a slug, try to reconstruct the selectedEmployee object and check session
-        if (savedSlug) {
-          const savedId = localStorage.getItem('employeeId');
-          const restoredEmployee = { id: savedId, full_name: savedName, slug: savedSlug };
-          setSelectedEmployee(restoredEmployee);
-          setMe((prev: any) => prev || restoredEmployee);
-          // Check if there's an open session (non-blocking)
-          checkSessionStatus(savedSlug).catch(err => console.error('Error checking session status:', err));
-          fetchMySummary(savedSlug, true).catch(err => console.error('Error fetching summary:', err));
-          fetchMySummaryYesterday(savedSlug, true).catch(err => console.error('Error fetching yesterday summary:', err));
-          fetchLeaveBalance(savedSlug).catch(err => console.error('Error fetching leave balance:', err));
-          fetchMonthlyStats(savedSlug).catch(err => console.error('Error fetching monthly stats:', err));
-          fetchPunctualityStats(savedSlug).catch(err => console.error('Error fetching deep score stats:', err));
-        } else {
-          // No slug available, use full name
-          fetchMySummary(savedName, false).catch(err => console.error('Error fetching summary:', err));
-          fetchMySummaryYesterday(savedName, false).catch(err => console.error('Error fetching yesterday summary:', err));
-        }
+        // Use aggregated dashboard data fetch
+        fetchDashboardInit().catch(err => console.error('Error initializing dashboard:', err));
       } else {
         setIsLoading(false);
       }
@@ -571,35 +554,32 @@ export default function HomePage(){
     }
   };
 
-  const fetchMySummary = async (identifier: string, useSlug: boolean = false) => {
+  const fetchDashboardInit = async () => {
     try {
-      // Auto-detect if identifier looks like a slug (contains hyphens, lowercase)
-      const looksLikeSlug = identifier.includes('-') && identifier === identifier.toLowerCase();
-      const shouldUseSlug = useSlug || looksLikeSlug;
-
-      const param = shouldUseSlug ? `slug=${identifier}` : `fullName=${encodeURIComponent(identifier)}`;
-
-      const r = await fetch(`/api/summary/me?${param}`);
-
+      if (process.env.NODE_ENV === 'development') console.log('Initializing dashboard data via aggregator...');
+      const r = await fetch('/api/dashboard/init');
       if (!r.ok) return;
 
       const data = await r.json();
-      setMe({
-        ...data,
-        ...data.employee,
-        employeeId: data.employee?.id,
-      });
+      if (data.success) {
+        setMe(data.employee);
+        setLeaveBalance(data.stats.leaveBalance);
+        setMonthlyStats(data.stats.monthlyStats);
+        setPunctualityStats(data.stats.punctualityStats);
+        setTodaySummary(data.team.presence || []);
+        
+        // Also fetch yesterday's summary (keep separate since it's an offset)
+        fetchMySummaryYesterday(data.employee.slug, true);
+        fetchYesterdaySummary();
+      }
     } catch (e) {
-      console.error('Error fetching my summary:', e);
+      console.error('Error in dashboard init:', e);
     }
   };
 
   const fetchMySummaryYesterday = async (identifier: string, useSlug: boolean = false) => {
     try {
-      // Auto-detect if identifier looks like a slug (contains hyphens, lowercase)
-      const looksLikeSlug = identifier.includes('-') && identifier === identifier.toLowerCase();
-      const shouldUseSlug = useSlug || looksLikeSlug;
-      const param = shouldUseSlug ? `slug=${identifier}` : `fullName=${encodeURIComponent(identifier)}`;
+      const param = useSlug ? `slug=${identifier}` : `fullName=${encodeURIComponent(identifier)}`;
       const r = await fetch(`/api/summary/me?${param}&offsetDays=-1`);
       if (!r.ok) return;
       const data = await r.json();
@@ -610,67 +590,6 @@ export default function HomePage(){
       });
     } catch (e) {
       console.error('Error fetching my summary (yesterday):', e);
-    }
-  };
-
-  const fetchLeaveBalance = async (slug: string) => {
-    if (!slug) return;
-    try {
-      const r = await fetch(`/api/leave/balance?slug=${slug}`);
-      if (r.ok) {
-        const data = await r.json();
-        setLeaveBalance(data);
-      } else {
-        setLeaveBalance(null);
-      }
-    } catch (e) {
-      console.error('Error fetching leave balance:', e);
-      setLeaveBalance(null);
-    }
-  };
-
-  const fetchMonthlyStats = async (slug: string) => {
-    if (!slug) return;
-    try {
-      const r = await fetch(`/api/monthly/stats?slug=${slug}`);
-      if (r.ok) {
-        const data = await r.json();
-        setMonthlyStats(data);
-      } else {
-        setMonthlyStats(null);
-      }
-    } catch (e) {
-      console.error('Error fetching monthly stats:', e);
-      setMonthlyStats(null);
-    }
-  };
-
-  const fetchPunctualityStats = async (slug: string) => {
-    if (!slug) return;
-    try {
-      const r = await fetch(`/api/stats/punctuality?slug=${slug}`);
-      if (r.ok) {
-        const data = await r.json();
-        setPunctualityStats(data);
-      } else {
-        setPunctualityStats(null);
-      }
-    } catch (e) {
-      console.error('Error fetching deep score stats:', e);
-      setPunctualityStats(null);
-    }
-  };
-
-  const fetchTodaySummary = async () => {
-    try {
-      // Add timestamp to prevent caching
-      const timestamp = new Date().getTime();
-      const r = await fetch(`/api/today/summary?t=${timestamp}`);
-      if (!r.ok) return;
-      const data = await r.json();
-      setTodaySummary(data);
-    } catch (e) {
-      console.error('Error fetching today summary:', e);
     }
   };
 
@@ -778,12 +697,7 @@ export default function HomePage(){
           }).catch(() => {});
         }
 
-        fetchMySummary(j.employee.slug);
-        fetchTodaySummary();
-        // Refresh my summary immediately so last in/out badges update without full reload
-        if (j?.employee?.slug) {
-          fetchMySummary(j.employee.slug, true);
-        }
+        fetchDashboardInit();
       } else {
         if (j.error && j.error.includes('unique constraint')) {
           setMsg('You already have an open session. Please check out first.');
@@ -849,10 +763,7 @@ export default function HomePage(){
         }).catch(() => {});
 
         // Refresh summaries (non-blocking)
-        fetchTodaySummary();
-        if (slug) {
-          fetchMySummary(slug, true).catch(err => console.error('Error fetching summary:', err));
-        }
+        fetchDashboardInit();
         
         return true;
       } else {
@@ -895,8 +806,7 @@ export default function HomePage(){
       localStorage.setItem('userName', selectedEmployee.full_name);
       setIsLoggedIn(true);
       setShowNameInput(false);
-      fetchMySummary(selectedEmployee.slug, true);
-      fetchMySummaryYesterday(selectedEmployee.slug, true);
+      fetchDashboardInit();
     }
   };
 
@@ -904,14 +814,15 @@ export default function HomePage(){
     setName(employee.full_name);
     setSelectedEmployee(employee);
     setSuggestions([]);
+    
     // Auto-submit when employee is selected
     setTimeout(() => {
       localStorage.setItem('userName', employee.full_name);
       localStorage.setItem('userSlug', employee.slug);
+      if (employee.id) localStorage.setItem('employeeId', employee.id);
       setIsLoggedIn(true);
       setShowNameInput(false);
-      fetchMySummary(employee.slug, true); // Use slug for API calls
-      fetchMySummaryYesterday(employee.slug, true);
+      fetchDashboardInit();
     }, 100);
   };
 
@@ -952,11 +863,8 @@ export default function HomePage(){
     setShowNameInput(false);
 
     // Fetch user data (will overwrite me with richer data if available)
-    fetchMySummary(employee.slug, true);
-    fetchMySummaryYesterday(employee.slug, true);
-    fetchLeaveBalance(employee.slug);
-    fetchMonthlyStats(employee.slug);
-    fetchPunctualityStats(employee.slug);
+    // Fetch consolidated dashboard data
+    fetchDashboardInit();
 
     // Check for existing session
     checkSessionStatus(employee.slug);
@@ -988,7 +896,7 @@ export default function HomePage(){
   };
 
   useEffect(()=>{ if(typeof window!== 'undefined') localStorage.setItem('mode', mode); },[mode]);
-  useEffect(()=>{ fetchTodaySummary(); fetchYesterdaySummary(); },[]);
+  useEffect(()=>{ fetchDashboardInit(); },[]);
 
   // Push notification registration (Feature 2)
   useEffect(() => {
@@ -1398,65 +1306,15 @@ export default function HomePage(){
 
                   {/* Mood Check-in Modal */}
                   {showMoodCheck && (
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                      <div className="bg-card rounded-2xl p-6 max-w-sm w-full border border-border/50 shadow-lg">
-                        <h3 className="text-lg font-semibold text-foreground mb-4 text-center">How was your day?</h3>
-                        
-                        <div className="grid grid-cols-5 gap-3 mb-4">
-                          {[
-                            { emoji: '😊', value: 'great' },
-                            { emoji: '🙂', value: 'good' },
-                            { emoji: '😞', value: 'challenging' },
-                            { emoji: '😴', value: 'exhausted' },
-                            { emoji: '🚀', value: 'productive' }
-                          ].map((mood) => (
-                            <button
-                              key={mood.value}
-                              onClick={() => setSelectedMood(mood.value)}
-                              className={`p-3 rounded-lg border-2 transition-all flex items-center justify-center ${
-                                selectedMood === mood.value
-                                  ? 'border-primary bg-primary/10 scale-110'
-                                  : 'border-border hover:border-primary/50 hover:scale-105'
-                              }`}
-                            >
-                              <div className="text-2xl">{mood.emoji}</div>
-                            </button>
-                          ))}
-                        </div>
-                        
-                        {selectedMood && (
-                          <div className="mb-4">
-                            <textarea
-                              placeholder="Any highlights or challenges today? (optional)"
-                              value={moodComment}
-                              onChange={(e) => setMoodComment(e.target.value)}
-                              className="w-full p-3 border border-input rounded-md text-sm resize-none bg-background"
-                              rows={3}
-                            />
-                          </div>
-                        )}
-                        
-                        <div className="flex gap-3">
-                          <button
-                            onClick={() => {
-                              setShowMoodCheck(false);
-                              setSelectedMood('');
-                              setMoodComment('');
-                            }}
-                            className="flex-1 py-2 px-4 border border-input rounded-md text-foreground hover:bg-muted"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={handleMoodSubmit}
-                            disabled={!selectedMood || isSubmitting}
-                            className="flex-1 py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 transition-colors duration-200"
-                          >
-                            {isSubmitting ? 'Checking out...' : 'Check Out'}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                    <MoodModal
+                      onClose={() => {
+                        setShowMoodCheck(false);
+                        setSelectedMood('');
+                        setMoodComment('');
+                      }}
+                      onSubmit={handleMoodSubmit}
+                      isSubmitting={isSubmitting}
+                    />
                   )}
 
                   {/* Auto-Checkout Warning */}

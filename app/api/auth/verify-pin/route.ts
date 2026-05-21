@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
+import { createUserSession, setUserSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,17 +67,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // --- DEV-ONLY: hardcoded test user (no Supabase required) ---
-    if (process.env.NODE_ENV === 'development' && username.toLowerCase() === 'test' && pin === '1234') {
+    // --- TEST USER: (Enabled for local testing) ---
+    if (username.toLowerCase() === 'test' && pin === '1234') {
       resetRateLimit(ip);
+      const testEmployee = {
+        id: '00000000-0000-0000-0000-000000000001',
+        full_name: 'Test User',
+        slug: 'test-user',
+        email: 'test@localhost',
+      };
+      
+      // Issue secure session cookie
+      const session = createUserSession(testEmployee.id, testEmployee.slug, testEmployee.full_name);
+      await setUserSession(session);
+
       return NextResponse.json({
         success: true,
-        employee: {
-          id: '00000000-0000-0000-0000-000000000001',
-          full_name: 'Test User',
-          slug: 'test-user',
-          email: 'test@localhost',
-        },
+        employee: testEmployee,
         pin_change_required: false,
       });
     }
@@ -152,6 +159,10 @@ export async function POST(req: NextRequest) {
 
     // Reset rate limit on successful login
     resetRateLimit(ip);
+
+    // Create and set secure session cookie
+    const session = createUserSession(employee.id, employee.slug, employee.full_name);
+    await setUserSession(session);
 
     // Return employee data (without sensitive info)
     return NextResponse.json({
