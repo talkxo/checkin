@@ -54,7 +54,14 @@ export async function POST(req: NextRequest) {
     
     // Check if this session is stale (>= 12 hours old)
     const AUTO_CHECKOUT_HOURS = 12;
-    const checkinTime = new Date(existingSession.checkin_ts).getTime();
+    const checkinDate = new Date(existingSession.checkin_ts);
+    const checkinTime = checkinDate.getTime();
+    
+    if (Number.isNaN(checkinTime)) {
+      console.error('Invalid checkin_ts in existing session:', existingSession.checkin_ts);
+      return NextResponse.json({ error: 'Invalid session state' }, { status: 500 });
+    }
+    
     const now = Date.now();
     const hoursElapsed = (now - checkinTime) / (1000 * 60 * 60);
     

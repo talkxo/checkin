@@ -37,8 +37,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Calculate total days (excluding weekends)
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    // Force dates to be evaluated in IST so they don't drift across midnights
+    const start = new Date(startDate + 'T00:00:00+05:30');
+    const end = new Date(endDate + 'T23:59:59+05:30');
     let totalDays = 0;
     const current = new Date(start);
     
@@ -138,16 +139,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Update pending leaves count in leave balance
-    const { error: updateError } = await supabaseAdmin
-      .from('leave_balances')
-      .update({
-        pending_leaves: leaveTypeBalance.pending_leaves + totalDays,
-        updated_at: new Date().toISOString()
-      })
-      .eq('employee_id', emp.id)
-      .eq('leave_type_id', leaveTypeId)
-      .eq('year', year);
+    // Update pending leaves count in leave balance atomically
+    const { error: updateError } = await supabaseAdmin.rpc('increment_leave_balance_pending', {
+      emp_id: emp.id,
+      type_id: leaveTypeId,
+      target_year: year,
+      amount: totalDays
+    });
 
     if (updateError) {
       console.error('Error updating leave balance:', updateError);

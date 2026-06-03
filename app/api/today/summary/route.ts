@@ -7,15 +7,23 @@ export async function GET(req: NextRequest) {
   const offsetDaysParam = url.searchParams.get('offsetDays');
   const offsetDays = offsetDaysParam ? parseInt(offsetDaysParam, 10) : 0;
 
+  const nowUTC = new Date();
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  
+  // Shift current UTC time by +5.5h to get the "IST Time" represented in UTC fields
+  const targetIstTime = new Date(nowUTC.getTime() + istOffset);
+  targetIstTime.setUTCDate(targetIstTime.getUTCDate() + offsetDays);
+
+  const y = targetIstTime.getUTCFullYear();
+  const m = targetIstTime.getUTCMonth();
+  const d = targetIstTime.getUTCDate();
+
+  // Calculate UTC boundary timestamps by taking the IST midnight boundaries and subtracting the 5.5h offset
+  const start = new Date(Date.UTC(y, m, d) - istOffset);
+  const end = new Date(Date.UTC(y, m, d + 1) - istOffset - 1);
+
+  // Still get nowIST for some backwards compatibility logs
   const now = nowIST();
-  // Build IST boundaries for the target day (today + offsetDays)
-  const istNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-  istNow.setDate(istNow.getDate() + offsetDays);
-  const istStart = new Date(istNow); istStart.setHours(0,0,0,0);
-  const istEnd = new Date(istNow); istEnd.setHours(23,59,59,999);
-  // Convert IST boundaries to UTC for querying stored UTC timestamps
-  const start = new Date(istStart.toLocaleString('en-US', { timeZone: 'UTC' }));
-  const end = new Date(istEnd.toLocaleString('en-US', { timeZone: 'UTC' }));
 
   console.log('=== TODAY SUMMARY DEBUG ===');
   console.log('OffsetDays:', offsetDays);

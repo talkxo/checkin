@@ -63,63 +63,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
-    // If approved, update the leave balance
-    if (action === 'approve') {
-      // Get current leave balance
-      const { data: leaveBalance, error: balanceError } = await supabaseAdmin
-        .from('leave_balances')
-        .select('*')
-        .eq('employee_id', leaveRequest.employee_id)
-        .eq('leave_type_id', leaveRequest.leave_type_id)
-        .eq('year', year)
-        .single();
+    // Atomically update the leave balance
+    const isApproved = action === 'approve';
+    const { error: balanceUpdateError } = await supabaseAdmin.rpc('process_leave_balance', {
+      emp_id: leaveRequest.employee_id,
+      type_id: leaveRequest.leave_type_id,
+      target_year: year,
+      amount: leaveRequest.total_days,
+      is_approved: isApproved
+    });
 
-      if (balanceError) {
-        console.error('Error fetching leave balance:', balanceError);
-        return NextResponse.json({ error: 'Failed to fetch leave balance' }, { status: 500 });
-      }
-
-      if (!leaveBalance) {
-        return NextResponse.json({ error: 'Leave balance not found' }, { status: 404 });
-      }
-
-      // Update leave balance
-      const { error: balanceUpdateError } = await supabaseAdmin
-        .from('leave_balances')
-        .update({
-          used_leaves: leaveBalance.used_leaves + leaveRequest.total_days,
-          pending_leaves: Math.max(0, leaveBalance.pending_leaves - leaveRequest.total_days),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', leaveBalance.id);
-
-      if (balanceUpdateError) {
-        console.error('Error updating leave balance:', balanceUpdateError);
-        return NextResponse.json({ error: 'Failed to update leave balance' }, { status: 500 });
-      }
-    } else {
-      // If rejected, just remove from pending
-      const { data: leaveBalance, error: balanceError } = await supabaseAdmin
-        .from('leave_balances')
-        .select('*')
-        .eq('employee_id', leaveRequest.employee_id)
-        .eq('leave_type_id', leaveRequest.leave_type_id)
-        .eq('year', year)
-        .single();
-
-      if (!balanceError && leaveBalance) {
-        const { error: balanceUpdateError } = await supabaseAdmin
-          .from('leave_balances')
-          .update({
-            pending_leaves: Math.max(0, leaveBalance.pending_leaves - leaveRequest.total_days),
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', leaveBalance.id);
-
-        if (balanceUpdateError) {
-          console.error('Error updating leave balance after rejection:', balanceUpdateError);
-        }
-      }
+    if (balanceUpdateError) {
+      console.error('Error updating leave balance atomically:', balanceUpdateError);
+      return NextResponse.json({ error: 'Failed to update leave balance' }, { status: 500 });
     }
 
     return NextResponse.json({

@@ -632,7 +632,7 @@ export default function HomePage(){
   };
 
   const act = async (checkMode: 'office' | 'remote') => {
-    if (!name.trim()) return;
+    if (!name.trim() || isSubmitting) return;
     setIsSubmitting(true);
     setMsg('');
     setMsgIsError(false);

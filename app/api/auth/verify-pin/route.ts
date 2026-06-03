@@ -5,32 +5,53 @@ import { createUserSession, setUserSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-// Simple in-memory rate limiting
-// In production, consider using Redis or a database
-const rateLimitMap = new Map<string, { attempts: number; resetAt: number }>();
+// Supabase-backed rate limiting for serverless environments
 const MAX_ATTEMPTS = 5;
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
 
-function checkRateLimit(ip: string): { allowed: boolean; remainingAttempts: number; resetAt: number } {
+async function checkRateLimit(ip: string): Promise<{ allowed: boolean; remainingAttempts: number; resetAt: number }> {
   const now = Date.now();
-  const record = rateLimitMap.get(ip);
+  
+  // Try to get existing record
+  const { data: record, error } = await supabaseAdmin
+    .from('login_attempts')
+    .select('*')
+    .eq('ip_address', ip)
+    .maybeSingle();
 
-  if (!record || now > record.resetAt) {
+  if (error) {
+    console.error('Rate limit fetch error:', error);
+    // Fail open if DB fails, or we could fail closed. Let's fail open to not block logins on DB glitch
+    return { allowed: true, remainingAttempts: MAX_ATTEMPTS - 1, resetAt: now + RATE_LIMIT_WINDOW };
+  }
+
+  const recordResetAt = record ? new Date(record.reset_at).getTime() : 0;
+
+  if (!record || now > recordResetAt) {
     // Reset or create new record
-    rateLimitMap.set(ip, { attempts: 1, resetAt: now + RATE_LIMIT_WINDOW });
+    const newResetAt = new Date(now + RATE_LIMIT_WINDOW).toISOString();
+    await supabaseAdmin
+      .from('login_attempts')
+      .upsert({ ip_address: ip, attempts: 1, reset_at: newResetAt });
+      
     return { allowed: true, remainingAttempts: MAX_ATTEMPTS - 1, resetAt: now + RATE_LIMIT_WINDOW };
   }
 
   if (record.attempts >= MAX_ATTEMPTS) {
-    return { allowed: false, remainingAttempts: 0, resetAt: record.resetAt };
+    return { allowed: false, remainingAttempts: 0, resetAt: recordResetAt };
   }
 
-  record.attempts++;
-  return { allowed: true, remainingAttempts: MAX_ATTEMPTS - record.attempts, resetAt: record.resetAt };
+  const newAttempts = record.attempts + 1;
+  await supabaseAdmin
+    .from('login_attempts')
+    .update({ attempts: newAttempts })
+    .eq('ip_address', ip);
+
+  return { allowed: true, remainingAttempts: MAX_ATTEMPTS - newAttempts, resetAt: recordResetAt };
 }
 
-function resetRateLimit(ip: string) {
-  rateLimitMap.delete(ip);
+async function resetRateLimit(ip: string) {
+  await supabaseAdmin.from('login_attempts').delete().eq('ip_address', ip);
 }
 
 export async function POST(req: NextRequest) {
@@ -54,7 +75,7 @@ export async function POST(req: NextRequest) {
 
     // Check rate limiting
     const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-    const rateLimit = checkRateLimit(ip);
+    const rateLimit = await checkRateLimit(ip);
 
     if (!rateLimit.allowed) {
       const resetMinutes = Math.ceil((rateLimit.resetAt - Date.now()) / 60000);
@@ -69,7 +90,7 @@ export async function POST(req: NextRequest) {
 
     // --- TEST USER: (Enabled for local testing) ---
     if (username.toLowerCase() === 'test' && pin === '1234') {
-      resetRateLimit(ip);
+      await resetRateLimit(ip);
       const testEmployee = {
         id: '00000000-0000-0000-0000-000000000001',
         full_name: 'Test User',
@@ -158,7 +179,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Reset rate limit on successful login
-    resetRateLimit(ip);
+    await resetRateLimit(ip);
 
     // Create and set secure session cookie
     const session = createUserSession(employee.id, employee.slug, employee.full_name);
