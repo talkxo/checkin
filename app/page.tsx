@@ -85,6 +85,7 @@ export default function HomePage(){
   const [name,setName]=useState('');
   const [pending,setPending]=useState(false);
   const [msg,setMsg]=useState('');
+  const [msgIsError,setMsgIsError]=useState(false);
   const [mode,setMode]=useState<'office'|'remote'>('office');
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [me, setMe] = useState<any>(null);
@@ -523,6 +524,14 @@ export default function HomePage(){
   const checkSessionStatus = async (slug: string) => {
     try {
       const r = await fetch(`/api/session/open?slug=${slug}`);
+      
+      // If session cookie expired, force re-login
+      if (r.status === 401) {
+        console.warn('Session expired (401) — forcing re-login');
+        handleLogout();
+        return;
+      }
+      
       const data = await r.json();
 
       if (data.ok && data.session) {
@@ -558,6 +567,14 @@ export default function HomePage(){
     try {
       if (process.env.NODE_ENV === 'development') console.log('Initializing dashboard data via aggregator...');
       const r = await fetch('/api/dashboard/init');
+      
+      // If session cookie expired, force re-login
+      if (r.status === 401) {
+        console.warn('Dashboard init got 401 — forcing re-login');
+        handleLogout();
+        return;
+      }
+      
       if (!r.ok) return;
 
       const data = await r.json();
@@ -618,6 +635,7 @@ export default function HomePage(){
     if (!name.trim()) return;
     setIsSubmitting(true);
     setMsg('');
+    setMsgIsError(false);
     
     // First check if there's already an open session
     if (hasOpen && currentSession) {
@@ -699,6 +717,12 @@ export default function HomePage(){
 
         fetchDashboardInit();
       } else {
+        // 401 = session cookie expired — silently force re-login (same as dashboard/session handlers)
+        if (r.status === 401) {
+          console.warn('Check-in got 401 — forcing re-login');
+          handleLogout();
+          return;
+        }
         if (j.error && j.error.includes('unique constraint')) {
           setMsg('You already have an open session. Please check out first.');
           // Refresh session status
@@ -706,7 +730,8 @@ export default function HomePage(){
             checkSessionStatus(selectedEmployee.slug);
           }
         } else {
-          setMsg(j.error || 'Error');
+          setMsgIsError(true);
+          setMsg(j.error || 'Something went wrong. Please try again.');
         }
       }
     } catch (error) {
@@ -717,7 +742,7 @@ export default function HomePage(){
   };
 
   // Core checkout function - reusable for both manual and auto checkout
-  const performCheckout = async (mood?: string, moodComment?: string, skipMoodUI: boolean = false): Promise<boolean> => {
+  const performCheckout = async (mood?: string, moodComment?: string, skipMoodUI: boolean = false, checkoutTs?: string): Promise<boolean> => {
     if (!currentSession) return false;
     
     const slug = currentSession.employee.slug;
@@ -729,7 +754,8 @@ export default function HomePage(){
         body: JSON.stringify({ 
           slug,
           mood,
-          moodComment
+          moodComment,
+          checkoutTs
         }) 
       });
       const j = await r.json();
@@ -767,7 +793,14 @@ export default function HomePage(){
         
         return true;
       } else {
-        setMsg(j.error || 'Error');
+        // 401 = session expired — silently force re-login
+        if (r.status === 401) {
+          console.warn('Checkout got 401 — forcing re-login');
+          handleLogout();
+          return false;
+        }
+        setMsgIsError(true);
+        setMsg(j.error || 'Something went wrong. Please try again.');
         // If checkout failed, recheck session status
         checkSessionStatus(slug);
         return false;
@@ -789,6 +822,7 @@ export default function HomePage(){
   const handleMoodSubmit = async () => {
     setIsSubmitting(true);
     setMsg('');
+    setMsgIsError(false);
     
     const success = await performCheckout(selectedMood, moodComment, false);
     
@@ -893,6 +927,7 @@ export default function HomePage(){
     setShowNameInput(true);
     setMe(null);
     setMsg('');
+    setMsgIsError(false);
   };
 
   useEffect(()=>{ if(typeof window!== 'undefined') localStorage.setItem('mode', mode); },[mode]);
@@ -1050,8 +1085,9 @@ export default function HomePage(){
         const warningThreshold = autoCheckoutHours - (10 / 60); // 10 minutes before
 
         if (hoursElapsed >= autoCheckoutHours) {
-          // Auto-checkout - perform checkout directly without mood UI
-          const success = await performCheckout(undefined, `Auto-checked out after ${hoursElapsed.toFixed(2)} hours`, true);
+          // Auto-checkout — cap the checkout timestamp at checkin + autoCheckoutHours
+          const cappedTs = new Date(checkinTime + autoCheckoutHours * 60 * 60 * 1000).toISOString();
+          const success = await performCheckout(undefined, `Auto-checked out after ${autoCheckoutHours} hours (capped)`, true, cappedTs);
           if (success) {
             if ('Notification' in window && Notification.permission === 'granted') {
               new Notification('Auto-Checkout', {
@@ -1341,7 +1377,11 @@ export default function HomePage(){
                       initial={{ opacity: 0, y: -4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
-                      className="text-sm text-foreground bg-muted/60 border border-border/50 rounded-xl px-4 py-3"
+                      className={`text-sm rounded-xl px-4 py-3 ${
+                        msgIsError
+                          ? 'text-red-700 dark:text-red-400 bg-red-500/10 border border-red-500/30'
+                          : 'text-foreground bg-muted/60 border border-border/50'
+                      }`}
                     >
                       {msg}
                     </motion.div>

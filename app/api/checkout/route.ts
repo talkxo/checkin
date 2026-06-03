@@ -10,11 +10,11 @@ export async function POST(req: NextRequest){
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { mood, moodComment } = await req.json();
+    const { mood, moodComment, checkoutTs } = await req.json();
     const employeeId = session.id;
     
     console.log('=== CHECKOUT DEBUG ===');
-    console.log('Request data:', { employeeId: session.id, mood, moodComment });
+    console.log('Request data:', { employeeId: session.id, mood, moodComment, checkoutTs });
     
     // Verify employee is active
     const { data: emp, error: empError } = await supabaseAdmin
@@ -45,8 +45,18 @@ export async function POST(req: NextRequest){
       return NextResponse.json({ error: 'No open session found' }, { status: 404 });
     }
     
-    // Use IST timestamp for checkout
-    const istTimestamp = nowIST().toISOString();
+    // Use provided checkoutTs if valid, otherwise current IST time
+    let istTimestamp: string;
+    if (checkoutTs) {
+      const parsed = new Date(checkoutTs);
+      if (!isNaN(parsed.getTime())) {
+        istTimestamp = parsed.toISOString();
+      } else {
+        istTimestamp = nowIST().toISOString();
+      }
+    } else {
+      istTimestamp = nowIST().toISOString();
+    }
     
     // Prepare update data
     const updateData: any = { checkout_ts: istTimestamp };

@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual } from 'crypto';
 
 const ADMIN_SESSION_COOKIE = 'admin_session';
 const USER_SESSION_COOKIE = 'user_session';
-const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 // SECRET fallback for local dev if not defined in .env
 const AUTH_SECRET = process.env.AUTH_SECRET || 'fallback-secret-for-dev-only-change-in-prod';

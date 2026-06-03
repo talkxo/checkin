@@ -51,12 +51,39 @@ export async function POST(req: NextRequest) {
   
   if (existingSession) {
     console.log('Found existing session:', existingSession);
-    // Return existing session data instead of error
-    return NextResponse.json({
-      employee: { id: emp.id, full_name: emp.full_name, slug: emp.slug },
-      session: existingSession,
-      message: 'Open session already exists'
-    });
+    
+    // Check if this session is stale (>= 12 hours old)
+    const AUTO_CHECKOUT_HOURS = 12;
+    const checkinTime = new Date(existingSession.checkin_ts).getTime();
+    const now = Date.now();
+    const hoursElapsed = (now - checkinTime) / (1000 * 60 * 60);
+    
+    if (hoursElapsed >= AUTO_CHECKOUT_HOURS) {
+      // Auto-close the stale session with a capped checkout timestamp
+      const cappedCheckoutTs = new Date(checkinTime + AUTO_CHECKOUT_HOURS * 60 * 60 * 1000).toISOString();
+      console.log(`Auto-closing stale session ${existingSession.id} (${hoursElapsed.toFixed(2)}h old), capping checkout at ${cappedCheckoutTs}`);
+      
+      const { error: closeError } = await supabaseAdmin
+        .from('sessions')
+        .update({
+          checkout_ts: cappedCheckoutTs,
+          mood_comment: `Auto-closed: stale session (${hoursElapsed.toFixed(1)}h, capped at ${AUTO_CHECKOUT_HOURS}h)`
+        })
+        .eq('id', existingSession.id);
+      
+      if (closeError) {
+        console.error('Failed to auto-close stale session:', closeError);
+        return NextResponse.json({ error: 'Failed to close stale session' }, { status: 500 });
+      }
+      // Fall through to create new session below
+    } else {
+      // Session is recent — return it as-is
+      return NextResponse.json({
+        employee: { id: emp.id, full_name: emp.full_name, slug: emp.slug },
+        session: existingSession,
+        message: 'Open session already exists'
+      });
+    }
   }
   
   // Create new session with explicit IST timestamp
