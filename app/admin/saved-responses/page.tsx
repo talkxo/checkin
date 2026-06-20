@@ -1,12 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Edit, Calendar, Tag } from 'lucide-react';
+import { Trash2, Calendar, Tag } from 'lucide-react';
 
 interface SavedResponse {
   id: string;
@@ -102,48 +100,43 @@ export default function SavedResponsesPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Saved Responses</h1>
-          <p className="text-gray-600 mt-2">Browse and manage your saved AI chat responses</p>
+    <div className="min-h-screen bg-background p-4 sm:p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Saved Responses</h1>
+            <p className="text-muted-foreground mt-1">Browse and manage your saved AI chat responses</p>
+          </div>
+          <Button onClick={() => window.location.href = '/admin?tab=ai'} variant="outline" className="rounded-xl">
+            Back to AI
+          </Button>
         </div>
-        <Button onClick={() => window.history.back()} variant="outline">
-          Back to Chat
-        </Button>
-      </div>
 
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Tag className="h-5 w-5" />
-            Filters & Sorting
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        {/* Filters */}
+        <div className="rounded-3xl border border-border/50 bg-card px-5 py-5">
           <div className="flex flex-wrap gap-4 items-center">
-            {/* Tag Filters */}
             <div className="flex-1">
-              <label className="text-sm font-medium mb-2 block">Filter by Tags:</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 block">Filter by Tags</label>
               <div className="flex flex-wrap gap-2">
                 {allTags.map(tag => (
                   <Badge
                     key={tag}
                     variant={selectedTags.includes(tag) ? "default" : "outline"}
-                    className="cursor-pointer hover:bg-gray-100"
+                    className="cursor-pointer rounded-full"
                     onClick={() => toggleTag(tag)}
                   >
                     {tag}
                   </Badge>
                 ))}
+                {allTags.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No tags yet</p>
+                )}
               </div>
             </div>
 
-            {/* Sort Options */}
             <div className="flex gap-2">
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-32 rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -153,7 +146,7 @@ export default function SavedResponsesPage() {
               </Select>
 
               <Select value={sortOrder} onValueChange={setSortOrder}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-32 rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -162,42 +155,38 @@ export default function SavedResponsesPage() {
                 </SelectContent>
               </Select>
 
-              <Button onClick={clearFilters} variant="outline" size="sm">
+              <Button onClick={clearFilters} variant="outline" size="sm" className="rounded-xl">
                 Clear
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Results */}
-      {loading ? (
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading saved responses...</p>
         </div>
-      ) : responses.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-12">
-            <Tag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">No saved responses</h3>
-            <p className="text-gray-600">
-              {selectedTags.length > 0 
+
+        {/* Results */}
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Loading saved responses...</p>
+          </div>
+        ) : responses.length === 0 ? (
+          <div className="rounded-3xl border border-border/50 bg-card px-5 py-12 text-center">
+            <Tag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">No saved responses</h3>
+            <p className="text-muted-foreground">
+              {selectedTags.length > 0
                 ? `No responses found with the selected tags: ${selectedTags.join(', ')}`
                 : 'You haven\'t saved any chat responses yet. Use the save icon in the chat to save important responses.'
               }
             </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {responses.map((response) => (
-            <Card key={response.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {responses.map((response) => (
+              <div key={response.id} className="rounded-3xl border border-border/50 bg-card px-5 py-5 transition-colors hover:bg-muted/10">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-lg">{response.title}</CardTitle>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                    <h3 className="text-lg font-semibold text-foreground">{response.title}</h3>
+                    <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
                         {formatDate(response.created_at)}
@@ -208,37 +197,30 @@ export default function SavedResponsesPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={() => deleteResponse(response.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => deleteResponse(response.id)}
+                    className="rounded-xl text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-4">
-                  <p className="text-gray-700 whitespace-pre-wrap">{response.content}</p>
+                <div className="mt-4">
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{response.content}</p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap gap-2">
                   {response.tags.map(tag => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
+                    <Badge key={tag} variant="secondary" className="rounded-full text-xs">
                       {tag}
                     </Badge>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

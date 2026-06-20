@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Lock, Eye, EyeOff, RefreshCw, Download } from 'lucide-react';
+import { Lock, RefreshCw } from 'lucide-react';
 
 interface Employee {
   id: string;
@@ -196,57 +196,55 @@ export default function PinManagementPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 p-4">
+    <div className="min-h-screen bg-background p-4 sm:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">PIN Management</h1>
-            <p className="text-gray-600">Set and manage employee PINs for secure login</p>
+            <p className="text-muted-foreground">Set and manage employee PINs for secure login</p>
           </div>
           <div className="flex gap-2">
             <Button
               variant="outline"
               onClick={handleBulkGenerate}
+              className="rounded-xl"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
               Generate PINs for All
             </Button>
             <Button
               variant="outline"
-              onClick={() => window.location.href = '/admin'}
+              onClick={() => window.location.href = '/admin?tab=people'}
+              className="rounded-xl"
             >
-              Back to Dashboard
+              Back to People
             </Button>
           </div>
         </div>
 
         {/* Messages */}
         {error && (
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="pt-6">
-              <p className="text-red-600">{error}</p>
-            </CardContent>
-          </Card>
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3">
+            <p className="text-sm text-destructive">{error}</p>
+          </div>
         )}
 
         {success && (
-          <Card className="border-green-200 bg-green-50">
-            <CardContent className="pt-6">
-              <p className="text-green-600">{success}</p>
-            </CardContent>
-          </Card>
+          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
+            <p className="text-sm text-foreground">{success}</p>
+          </div>
         )}
 
         {/* Employees Table */}
-        <Card>
+        <Card className="rounded-3xl border-border/50 bg-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Lock className="w-5 h-5" />
@@ -354,31 +352,15 @@ export default function PinManagementPage() {
         </Card>
 
         {/* Instructions */}
-        <Card className="bg-blue-50 border-blue-200">
-          <CardHeader>
-            <CardTitle className="text-blue-700">Instructions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm text-gray-700">
-              <li className="flex items-start gap-2">
-                <span className="font-semibold">•</span>
-                <span>PINs must be exactly 4 digits (0000-9999)</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-semibold">•</span>
-                <span>PINs are hashed using bcrypt and cannot be recovered. If an employee forgets their PIN, you must reset it.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-semibold">•</span>
-                <span>Use "Generate PINs for All" to automatically create random PINs for all employees without PINs. The PIN list will be downloaded as a CSV file.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-semibold">•</span>
-                <span>Only active employees can have PINs set or changed.</span>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
+        <div className="rounded-3xl border border-border/50 bg-muted/20 px-5 py-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">How it works</p>
+          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+            <li>PINs must be exactly 4 digits (0000-9999).</li>
+            <li>PINs are hashed with bcrypt and cannot be recovered. If forgotten, reset and set a new one.</li>
+            <li>"Generate PINs for All" creates random PINs for employees without one and downloads a CSV.</li>
+            <li>Only active employees can have PINs set or changed.</li>
+          </ul>
+        </div>
       </div>
     </div>
   );

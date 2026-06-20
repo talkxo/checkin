@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { Bot, Brain, Lightbulb, Loader2, MessageSquareText, RefreshCw, Send, Sparkles, User } from "lucide-react";
+import { Bookmark, Bot, Brain, Lightbulb, Loader2, MessageSquareText, RefreshCw, Send, Sparkles, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 
@@ -246,9 +246,15 @@ export function AdminAiWorkspace({
     <div className="space-y-5">
       <section className="rounded-3xl border border-border/50 bg-card px-5 py-5">
         <div className="flex flex-col gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Assistive Analysis</p>
-            <h2 className="mt-2 text-xl font-semibold text-foreground">Ask better questions. Get usable answers.</h2>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Assistive Analysis</p>
+              <h2 className="mt-2 text-xl font-semibold text-foreground">Ask better questions. Get usable answers.</h2>
+            </div>
+            <Button variant="outline" onClick={() => window.location.href = '/admin/saved-responses'} className="rounded-xl">
+              <Bookmark className="mr-2 h-4 w-4" />
+              Saved Responses
+            </Button>
           </div>
         <div className="mt-2 w-full max-w-xl">
           <div className="relative flex items-center rounded-xl border border-border/60 bg-muted/30 p-1">

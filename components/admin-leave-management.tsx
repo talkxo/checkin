@@ -531,22 +531,19 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
               <TableHeader>
                 <TableRow>
                   <TableHead>Employee</TableHead>
-                  <TableHead>Privilege Leave</TableHead>
-                  <TableHead>Sick Leave</TableHead>
-                  <TableHead>Bonus Leave</TableHead>
+                  {leaveTypes.map((lt) => (
+                    <TableHead key={lt.id}>{lt.name}</TableHead>
+                  ))}
                   <TableHead>Total Available</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {employeeLeaveBalances.map((employeeData) => {
-                  const privilegeLeave = employeeData.leaveBalance.find((lb: any) => lb.leave_type_name === 'Privilege Leave');
-                  const sickLeave = employeeData.leaveBalance.find((lb: any) => lb.leave_type_name === 'Sick Leave');
-                  const bonusLeave = employeeData.leaveBalance.find((lb: any) => lb.leave_type_name === 'Bonus Leave');
-                  
-                  const totalAvailable = (privilegeLeave?.available_leaves || 0) + 
-                                       (sickLeave?.available_leaves || 0) + 
-                                       (bonusLeave?.available_leaves || 0);
+                  const totalAvailable = leaveTypes.reduce((sum, lt) => {
+                    const balance = employeeData.leaveBalance.find((lb: any) => lb.leave_type_name === lt.name);
+                    return sum + (balance?.available_leaves || 0);
+                  }, 0);
 
                   return (
                     <TableRow key={employeeData.employee.id}>
@@ -556,30 +553,19 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
                           <div className="text-sm text-muted-foreground dark:text-muted-foreground">{employeeData.employee.slug}</div>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div className="font-medium text-foreground dark:text-foreground">{privilegeLeave?.available_leaves || 0}</div>
-                          <div className="text-muted-foreground dark:text-muted-foreground">
-                            {privilegeLeave?.used_leaves || 0} used • {privilegeLeave?.pending_leaves || 0} pending
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div className="font-medium text-foreground dark:text-foreground">{sickLeave?.available_leaves || 0}</div>
-                          <div className="text-muted-foreground dark:text-muted-foreground">
-                            {sickLeave?.used_leaves || 0} used • {sickLeave?.pending_leaves || 0} pending
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div className="font-medium text-foreground dark:text-foreground">{bonusLeave?.available_leaves || 0}</div>
-                          <div className="text-muted-foreground dark:text-muted-foreground">
-                            {bonusLeave?.used_leaves || 0} used • {bonusLeave?.pending_leaves || 0} pending
-                          </div>
-                        </div>
-                      </TableCell>
+                      {leaveTypes.map((lt) => {
+                        const balance = employeeData.leaveBalance.find((lb: any) => lb.leave_type_name === lt.name);
+                        return (
+                          <TableCell key={lt.id}>
+                            <div className="text-sm">
+                              <div className="font-medium text-foreground dark:text-foreground">{balance?.available_leaves || 0}</div>
+                              <div className="text-muted-foreground dark:text-muted-foreground">
+                                {balance?.used_leaves || 0} used • {balance?.pending_leaves || 0} pending
+                              </div>
+                            </div>
+                          </TableCell>
+                        );
+                      })}
                       <TableCell>
                         <div className="font-semibold text-primary dark:text-primary">{totalAvailable} days</div>
                       </TableCell>

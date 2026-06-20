@@ -1,6 +1,6 @@
 "use client";
 
-import { Edit, Plus, Search, Trash2, Users } from "lucide-react";
+import { Edit, KeyRound, Plus, Search, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -65,6 +65,10 @@ export function AdminPeopleWorkspace({
                 className="w-[240px] rounded-xl border-border/60 bg-background pl-9"
               />
             </div>
+            <Button variant="outline" onClick={() => window.location.href = '/admin/pin-management'} className="rounded-xl">
+              <KeyRound className="mr-2 h-4 w-4" />
+              PIN Management
+            </Button>
             <Button onClick={onAddUser} className="rounded-xl">
               <Plus className="mr-2 h-4 w-4" />
               Add User
