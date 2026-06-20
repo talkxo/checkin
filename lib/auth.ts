@@ -150,3 +150,13 @@ export function getUserSession(): UserSession | null {
 export async function clearUserSession(): Promise<void> {
   cookies().delete(USER_SESSION_COOKIE);
 }
+
+const REFRESH_THRESHOLD = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+export async function refreshUserSessionIfNeeded(): Promise<void> {
+  const session = getUserSession();
+  if (!session) return;
+  if (Date.now() - session.timestamp < REFRESH_THRESHOLD) return;
+  const refreshed = createUserSession(session.id, session.slug, session.fullName);
+  await setUserSession(refreshed);
+}

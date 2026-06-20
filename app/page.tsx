@@ -276,72 +276,63 @@ export default function HomePage(){
       setIsLoading(false);
       return;
     }
-    
-    try {
-      const saved = (localStorage.getItem('mode') as any) || 'office';
-      setMode(saved);
-      
-      // Check for existing session
-      const session = localStorage.getItem('currentSession');
-      const savedName = localStorage.getItem('userName');
-      
-      if (session && savedName) {
-        try {
-          const sessionData = JSON.parse(session);
-          
-          // Validate session data structure
-          if (!sessionData || !sessionData.employee || !sessionData.employee.slug) {
-            throw new Error('Invalid session data structure');
-          }
-          
-          setCurrentSession(sessionData);
-          setName(savedName);
-          setIsLoggedIn(true);
-          setShowNameInput(false);
-          setSelectedEmployee(sessionData.employee);
-          // Set me immediately from session so tabs work before API resolves
-          setMe((prev: any) => prev || { id: sessionData.employee.id, full_name: sessionData.employee.full_name || savedName, slug: sessionData.employee.slug });
 
-          // Ensure UI leaves loading state immediately
-          setIsLoading(false);
+    const saved = (localStorage.getItem('mode') as any) || 'office';
+    setMode(saved);
 
-          // Check if session is still open (non-blocking)
-          checkSessionStatus(sessionData.employee.slug).catch(err => {
-            console.error('Error checking session status:', err);
-          });
+    const session = localStorage.getItem('currentSession');
+    const savedName = localStorage.getItem('userName');
 
-          // Fetch consolidated dashboard data (non-blocking)
-          fetchDashboardInit().catch(err => console.error('Error initializing dashboard:', err));
-        } catch (e) {
-          console.error('Error parsing session data:', e);
-          localStorage.removeItem('currentSession');
-          localStorage.removeItem('userName');
-          setIsLoading(false);
+    if (!savedName) {
+      setIsLoading(false);
+      getCurrentLocation();
+      return;
+    }
+
+    // User was previously logged in — restore local state immediately
+    setName(savedName);
+    setIsLoggedIn(true);
+    setShowNameInput(false);
+
+    let sessionData: any = null;
+    if (session) {
+      try {
+        sessionData = JSON.parse(session);
+        if (!sessionData?.employee?.slug) throw new Error('Invalid session data');
+        setCurrentSession(sessionData);
+        setSelectedEmployee(sessionData.employee);
+        setHasOpen(true);
+        setMe((prev: any) => prev || { id: sessionData.employee.id, full_name: sessionData.employee.full_name || savedName, slug: sessionData.employee.slug });
+      } catch (e) {
+        console.error('Error parsing session data:', e);
+        localStorage.removeItem('currentSession');
+        sessionData = null;
+      }
+    }
+
+    // Validate session with server, then load dashboard — sequential, not racing
+    const initSession = async () => {
+      try {
+        // Step 1: Validate the cookie is still good via session/open
+        const status = await checkSessionStatus(sessionData?.employee?.slug || '');
+
+        if (status === 'unauthorized') {
+          handleLogout();
+          setMsg('Your session has expired. Please log in again.');
+          return;
         }
-      } else if (savedName) {
-        // User is logged in but no active session
-        // Try to get the slug from localStorage
-        const savedSlug = typeof window !== 'undefined' ? localStorage.getItem('userSlug') : null;
-        
-        setName(savedName);
-        setIsLoggedIn(true);
-        setShowNameInput(false);
-        
-        // Ensure UI leaves loading state immediately
-        setIsLoading(false);
-        
-        // Use aggregated dashboard data fetch
-        fetchDashboardInit().catch(err => console.error('Error initializing dashboard:', err));
-      } else {
+
+        // Step 2: Load dashboard data (only if cookie is valid)
+        await fetchDashboardInit();
+      } catch (e) {
+        console.error('Error in session init:', e);
+      } finally {
         setIsLoading(false);
       }
-      
-      // Get location on app load (non-blocking)
-      getCurrentLocation();
-    } catch (error) {
-      console.error('Error in initialization useEffect:', error);
-      setIsLoading(false);
-    }
+    };
+
+    initSession();
+    getCurrentLocation();
   },[]);
 
   // Compute streak for Team tab from recent IST check-in dates.
@@ -521,30 +512,30 @@ export default function HomePage(){
     return () => clearInterval(interval);
   }, [isHolding, hasOpen, mode, holdProgress, me?.workedMinutes]);
 
-  const checkSessionStatus = async (slug: string) => {
+  const checkSessionStatus = async (slug: string): Promise<'open' | 'closed' | 'unauthorized' | 'error'> => {
     try {
-      const r = await fetch(`/api/session/open?slug=${slug}`);
-      
-      // If session cookie expired, force re-login
+      const r = await fetch('/api/session/open');
+
       if (r.status === 401) {
-        console.warn('Session expired (401) — forcing re-login');
-        handleLogout();
-        return;
+        return 'unauthorized';
       }
-      
+
       const data = await r.json();
 
       if (data.ok && data.session) {
         setCurrentSession(data);
         setHasOpen(true);
+        return 'open';
       } else {
         setHasOpen(false);
         setCurrentSession(null);
+        localStorage.removeItem('currentSession');
+        return 'closed';
       }
     } catch (e) {
       console.error('Error checking session status:', e);
-      setHasOpen(false);
-      setCurrentSession(null);
+      // On network error, preserve existing state — don't destroy a valid local session
+      return 'error';
     }
   };
 
@@ -565,16 +556,13 @@ export default function HomePage(){
 
   const fetchDashboardInit = async () => {
     try {
-      if (process.env.NODE_ENV === 'development') console.log('Initializing dashboard data via aggregator...');
       const r = await fetch('/api/dashboard/init');
-      
-      // If session cookie expired, force re-login
+
       if (r.status === 401) {
-        console.warn('Dashboard init got 401 — forcing re-login');
-        handleLogout();
+        // Don't force logout here — let the init gate or the calling context handle it
         return;
       }
-      
+
       if (!r.ok) return;
 
       const data = await r.json();
@@ -584,8 +572,7 @@ export default function HomePage(){
         setMonthlyStats(data.stats.monthlyStats);
         setPunctualityStats(data.stats.punctualityStats);
         setTodaySummary(data.team.presence || []);
-        
-        // Also fetch yesterday's summary (keep separate since it's an offset)
+
         fetchMySummaryYesterday(data.employee.slug, true);
         fetchYesterdaySummary();
       }
@@ -645,18 +632,10 @@ export default function HomePage(){
     }
     
     try {
-      // Get slug from localStorage if selectedEmployee is null
-      const storedSlug = localStorage.getItem('userSlug');
-
-      // Use slug for checkin if available, otherwise use full name
-      const checkinData = (selectedEmployee?.slug || storedSlug)
-        ? { slug: selectedEmployee?.slug || storedSlug, mode: checkMode }
-        : { fullName: name, mode: checkMode };
-      
-      const r = await fetch('/api/checkin', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify(checkinData) 
+      const r = await fetch('/api/checkin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: checkMode })
       });
       const j = await r.json();
       
@@ -717,15 +696,16 @@ export default function HomePage(){
 
         fetchDashboardInit();
       } else {
-        // 401 = session cookie expired — silently force re-login (same as dashboard/session handlers)
         if (r.status === 401) {
-          console.warn('Check-in got 401 — forcing re-login');
           handleLogout();
+          setMsg('Your session has expired. Please log in again.');
           return;
         }
-        if (j.error && j.error.includes('unique constraint')) {
+        if (r.status === 404) {
+          setMsgIsError(true);
+          setMsg('Account not found or inactive. Please contact your admin.');
+        } else if (j.error && j.error.includes('unique constraint')) {
           setMsg('You already have an open session. Please check out first.');
-          // Refresh session status
           if (selectedEmployee) {
             checkSessionStatus(selectedEmployee.slug);
           }
@@ -735,7 +715,8 @@ export default function HomePage(){
         }
       }
     } catch (error) {
-      setMsg('Network error. Please try again.');
+      setMsgIsError(true);
+      setMsg('Connection issue. Please check your network and try again.');
     }
     
     setIsSubmitting(false);
@@ -744,19 +725,14 @@ export default function HomePage(){
   // Core checkout function - reusable for both manual and auto checkout
   const performCheckout = async (mood?: string, moodComment?: string, skipMoodUI: boolean = false, checkoutTs?: string): Promise<boolean> => {
     if (!currentSession) return false;
-    
+
     const slug = currentSession.employee.slug;
-    
+
     try {
-      const r = await fetch('/api/checkout', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ 
-          slug,
-          mood,
-          moodComment,
-          checkoutTs
-        }) 
+      const r = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mood, moodComment, checkoutTs })
       });
       const j = await r.json();
       
@@ -793,20 +769,24 @@ export default function HomePage(){
         
         return true;
       } else {
-        // 401 = session expired — silently force re-login
         if (r.status === 401) {
-          console.warn('Checkout got 401 — forcing re-login');
           handleLogout();
+          setMsg('Your session has expired. Please log in again.');
           return false;
         }
-        setMsgIsError(true);
-        setMsg(j.error || 'Something went wrong. Please try again.');
-        // If checkout failed, recheck session status
+        if (r.status === 404) {
+          setMsgIsError(true);
+          setMsg(j.error || 'No open session found. You may have already checked out.');
+        } else {
+          setMsgIsError(true);
+          setMsg(j.error || 'Something went wrong. Please try again.');
+        }
         checkSessionStatus(slug);
         return false;
       }
     } catch (error) {
-      setMsg('Network error. Please try again.');
+      setMsgIsError(true);
+      setMsg('Connection issue. Your session is saved — please refresh and try again.');
       console.error('Checkout error:', error);
       return false;
     }
@@ -931,7 +911,6 @@ export default function HomePage(){
   };
 
   useEffect(()=>{ if(typeof window!== 'undefined') localStorage.setItem('mode', mode); },[mode]);
-  useEffect(()=>{ fetchDashboardInit(); },[]);
 
   // Push notification registration (Feature 2)
   useEffect(() => {
