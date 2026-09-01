@@ -7,16 +7,16 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     
     // Log the incoming request
-    console.log('Test webhook received:', JSON.stringify(body, null, 2));
-    
+    if (process.env.NODE_ENV === 'development') console.log('Test webhook received:', JSON.stringify(body, null, 2));
+
     // Check environment variables
     const envVars = {
       BC_CHAT_ID: process.env.BC_CHAT_ID,
       BC_ACCOUNT_ID: process.env.BC_ACCOUNT_ID,
       BC_PROJECT_ID: process.env.BC_PROJECT_ID
     };
-    
-    console.log('Environment variables:', envVars);
+
+    if (process.env.NODE_ENV === 'development') console.log('Environment variables:', envVars);
     
     // Simulate the webhook logic
     if (body.type !== 'chatbot_message') {
@@ -30,11 +30,11 @@ export async function POST(req: NextRequest) {
     const conversationId = body.conversation?.id;
     const expectedChatIds = process.env.BC_CHAT_ID?.split('\n').map(id => id.trim()).filter(id => id) || [];
     
-    console.log(`Comparing: "${conversationId}" with [${expectedChatIds.join(', ')}]`);
-    
+    if (process.env.NODE_ENV === 'development') console.log(`Comparing: "${conversationId}" with [${expectedChatIds.join(', ')}]`);
+
     // Extract chat ID from conversation ID (format: chat_id@account_id)
     const chatIdFromConversation = conversationId?.split('@')[0];
-    console.log(`Extracted chat ID from conversation: "${chatIdFromConversation}"`);
+    if (process.env.NODE_ENV === 'development') console.log(`Extracted chat ID from conversation: "${chatIdFromConversation}"`);
     
     if (!expectedChatIds.includes(chatIdFromConversation)) {
       return NextResponse.json({ 

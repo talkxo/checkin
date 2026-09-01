@@ -145,14 +145,16 @@ No specific data available. Provide a helpful response that:
 Response Style: ${responseStyle}`;
     }
 
-    console.log('Calling OpenRouter with prompt:', prompt.substring(0, 200) + '...');
-    console.log('Context data available:', contextData ? 'Yes' : 'No');
-    console.log('Context data length:', contextData.length);
-    console.log('Has data flag:', hasData);
-    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Calling OpenRouter with prompt:', prompt.substring(0, 200) + '...');
+      console.log('Context data available:', contextData ? 'Yes' : 'No');
+      console.log('Context data length:', contextData.length);
+      console.log('Has data flag:', hasData);
+    }
+
     // If no context data is available, provide a helpful fallback
     if (!hasData) {
-      console.log('No context data available, using fallback response');
+      if (process.env.NODE_ENV === 'development') console.log('No context data available, using fallback response');
       
       // Try to get at least basic chatbot data as fallback
       try {
@@ -198,13 +200,15 @@ Please try asking again in a few minutes, or use the dashboard for immediate ins
       ]);
       aiResponse = result as { success: boolean; data?: any; error?: string };
     } catch (aiError) {
-      console.log('AI request failed or timed out');
+      if (process.env.NODE_ENV === 'development') console.log('AI request failed or timed out');
       aiResponse = { success: false, error: 'AI request failed' };
     }
 
-    console.log('AI Response success:', aiResponse.success);
-    console.log('AI Response error:', aiResponse.error);
-    console.log('AI Response data preview:', aiResponse.data?.substring(0, 100) + '...');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('AI Response success:', aiResponse.success);
+      console.log('AI Response error:', aiResponse.error);
+      console.log('AI Response data preview:', aiResponse.data?.substring(0, 100) + '...');
+    }
 
     if (!aiResponse.success) {
       console.error('AI Error:', aiResponse.error);

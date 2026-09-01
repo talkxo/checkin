@@ -73,7 +73,7 @@ export async function postCampfire(content: string) {
     });
     
     if (res.status === 401) {
-      console.log('Basecamp token expired, refreshing...');
+      if (process.env.NODE_ENV === 'development') console.log('Basecamp token expired, refreshing...');
       await refresh(await getSetting('basecamp_oauth'));
       return postCampfire(content);
     }

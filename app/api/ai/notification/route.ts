@@ -15,10 +15,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'context is required' }, { status: 400 });
     }
 
-    console.log('AI Notification Request:', { 
-      user: userData?.full_name || 'Unknown', 
-      context: context.substring(0, 100) + '...' 
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('AI Notification Request:', {
+        user: userData?.full_name || 'Unknown',
+        context: context.substring(0, 100) + '...'
+      });
+    }
 
     const notification = await generateSmartNotification(userData, context);
 
@@ -65,7 +67,7 @@ export async function POST(req: NextRequest) {
       .replace(/^\s*/, '') // Remove leading whitespace
       .replace(/\s*$/, ''); // Remove trailing whitespace
 
-    console.log('AI Notification success:', cleanNotification?.substring(0, 100) + '...');
+    if (process.env.NODE_ENV === 'development') console.log('AI Notification success:', cleanNotification?.substring(0, 100) + '...');
     return NextResponse.json({ notification: cleanNotification });
   } catch (error) {
     console.error('AI Notification endpoint error:', error);

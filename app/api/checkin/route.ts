@@ -15,8 +15,10 @@ export async function POST(req: NextRequest) {
   // Use session data for identity
   const { id: employeeId, slug, fullName } = session;
   
-  console.log('=== CHECKIN API DEBUG ===');
-  console.log('Received request data:', { employeeId: session.id, mode });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('=== CHECKIN API DEBUG ===');
+    console.log('Received request data:', { employeeId: session.id, mode });
+  }
   
   if (!mode || !['office', 'remote'].includes(mode)) {
     return NextResponse.json({ error: 'mode must be office|remote' }, { status: 400 });
@@ -46,12 +48,13 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
   
   if (sessionError) {
-    console.log('Error checking existing session:', sessionError);
+    if (process.env.NODE_ENV === 'development') console.log('Error checking existing session:', sessionError);
   }
-  
+
   if (existingSession) {
-    console.log('Found existing session:', existingSession);
-    
+    if (process.env.NODE_ENV === 'development') console.log('Found existing session:', existingSession);
+
+
     // Check if this session is stale (>= 12 hours old)
     const AUTO_CHECKOUT_HOURS = 12;
     const checkinDate = new Date(existingSession.checkin_ts);
@@ -68,7 +71,7 @@ export async function POST(req: NextRequest) {
     if (hoursElapsed >= AUTO_CHECKOUT_HOURS) {
       // Auto-close the stale session with a capped checkout timestamp
       const cappedCheckoutTs = new Date(checkinTime + AUTO_CHECKOUT_HOURS * 60 * 60 * 1000).toISOString();
-      console.log(`Auto-closing stale session ${existingSession.id} (${hoursElapsed.toFixed(2)}h old), capping checkout at ${cappedCheckoutTs}`);
+      if (process.env.NODE_ENV === 'development') console.log(`Auto-closing stale session ${existingSession.id} (${hoursElapsed.toFixed(2)}h old), capping checkout at ${cappedCheckoutTs}`);
       
       const { error: closeError } = await supabaseAdmin
         .from('sessions')
@@ -95,7 +98,7 @@ export async function POST(req: NextRequest) {
   
   // Create new session with explicit IST timestamp
   const istTimestamp = nowIST().toISOString();
-  console.log('Creating new session for employee:', emp.id, 'at:', istTimestamp);
+  if (process.env.NODE_ENV === 'development') console.log('Creating new session for employee:', emp.id, 'at:', istTimestamp);
   
   const { data, error } = await supabaseAdmin
     .from('sessions')
@@ -110,10 +113,10 @@ export async function POST(req: NextRequest) {
     .single();
   
   if (error) {
-    console.log('Error creating session:', error);
+    if (process.env.NODE_ENV === 'development') console.log('Error creating session:', error);
     // If it's a duplicate constraint error, try to get the existing session
     if (error.message.includes('unique constraint') || error.message.includes('duplicate key')) {
-      console.log('Duplicate session detected, fetching existing session');
+      if (process.env.NODE_ENV === 'development') console.log('Duplicate session detected, fetching existing session');
       const { data: existingSession } = await supabaseAdmin
         .from('sessions')
         .select('*')

@@ -6,19 +6,23 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    console.log('=== HISTORICAL DATA DEBUG ===');
-    
+    if (process.env.NODE_ENV === 'development') console.log('=== HISTORICAL DATA DEBUG ===');
+
     const { searchParams } = new URL(req.url);
     const timeRange = searchParams.get('range') || 'week';
     const customStartDate = searchParams.get('startDate');
     const customEndDate = searchParams.get('endDate');
-    
-    console.log('Time range requested:', timeRange);
-    console.log('Custom dates:', customStartDate, customEndDate);
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Time range requested:', timeRange);
+      console.log('Custom dates:', customStartDate, customEndDate);
+    }
 
     const now = nowIST();
-    console.log('Current IST time:', now.toISOString());
-    console.log('Current IST time (local):', now.toString());
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Current IST time:', now.toISOString());
+      console.log('Current IST time (local):', now.toString());
+    }
     
     let startDate: Date;
     let endDate: Date = new Date(now);
@@ -54,7 +58,7 @@ export async function GET(req: NextRequest) {
       }
     }
     
-    console.log('Date range:', startDate.toISOString(), 'to', endDate.toISOString());
+    if (process.env.NODE_ENV === 'development') console.log('Date range:', startDate.toISOString(), 'to', endDate.toISOString());
 
     // Get all sessions in the date range
     const { data: sessions, error } = await supabaseAdmin
@@ -78,11 +82,11 @@ export async function GET(req: NextRequest) {
       .order('checkin_ts', { ascending: true });
 
     if (error) {
-      console.log('Supabase error:', error);
+      if (process.env.NODE_ENV === 'development') console.log('Supabase error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    
-    console.log('Sessions found:', sessions?.length || 0);
+
+    if (process.env.NODE_ENV === 'development') console.log('Sessions found:', sessions?.length || 0);
 
     // Process sessions into attendance data
     const attendanceData = sessions?.map(session => {

@@ -3,22 +3,24 @@ import { callOpenRouter } from '@/lib/ai';
 
 export async function GET(req: NextRequest) {
   try {
-    console.log('Testing AI service...');
-    
+    if (process.env.NODE_ENV === 'development') console.log('Testing AI service...');
+
     // Test with a simple prompt
     const testMessages = [
       { role: 'system', content: 'You are a helpful assistant.' },
       { role: 'user', content: 'Say "Hello, AI is working!" and nothing else.' }
     ];
-    
+
     const result = await callOpenRouter(testMessages, 0.1);
-    
-    console.log('AI Test Result:', {
-      success: result.success,
-      error: result.error,
-      dataLength: result.data?.length || 0,
-      dataPreview: result.data?.substring(0, 100) || 'No data'
-    });
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('AI Test Result:', {
+        success: result.success,
+        error: result.error,
+        dataLength: result.data?.length || 0,
+        dataPreview: result.data?.substring(0, 100) || 'No data'
+      });
+    }
     
     return NextResponse.json({
       success: result.success,

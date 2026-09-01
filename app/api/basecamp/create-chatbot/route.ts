@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    console.log('Creating Basecamp chatbot...');
+    if (process.env.NODE_ENV === 'development') console.log('Creating Basecamp chatbot...');
     
     // Check environment variables
     if (!process.env.BC_ACCOUNT_ID || !process.env.BC_PROJECT_ID || !process.env.BC_CHAT_ID) {
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       avatar_url: "https://talkxo-checkin.vercel.app/insyde-logo.png"
     };
 
-    console.log('Creating chatbot with data:', chatbotData);
+    if (process.env.NODE_ENV === 'development') console.log('Creating chatbot with data:', chatbotData);
 
     const response = await fetch(`https://3.basecampapi.com/${process.env.BC_ACCOUNT_ID}/buckets/${process.env.BC_PROJECT_ID}/chats/${process.env.BC_CHAT_ID}/chatbots.json`, {
       method: 'POST',
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify(chatbotData)
     });
 
-    console.log('Basecamp API response status:', response.status);
+    if (process.env.NODE_ENV === 'development') console.log('Basecamp API response status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     }
 
     const chatbot = await response.json();
-    console.log('Chatbot created successfully:', chatbot);
+    if (process.env.NODE_ENV === 'development') console.log('Chatbot created successfully:', chatbot);
 
     return NextResponse.json({
       status: 'success',

@@ -156,7 +156,7 @@ export default function KnowledgeBaseManager({ isOpen, onClose }: KnowledgeBaseM
             </div>
             <Button
               onClick={handleAddNew}
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <i className="fas fa-plus mr-2"></i>
               Add New
@@ -181,7 +181,7 @@ export default function KnowledgeBaseManager({ isOpen, onClose }: KnowledgeBaseM
                 <Card
                   key={item.id}
                   className={`cursor-pointer transition-all hover:shadow-md ${
-                    selectedItem?.id === item.id ? 'ring-2 ring-purple-500' : ''
+                    selectedItem?.id === item.id ? 'ring-2 ring-primary' : ''
                   }`}
                   onClick={() => setSelectedItem(item)}
                 >
@@ -286,7 +286,7 @@ export default function KnowledgeBaseManager({ isOpen, onClose }: KnowledgeBaseM
                         <Button
                           onClick={handleSave}
                           disabled={isLoading || !selectedItem.category.trim() || !selectedItem.content.trim()}
-                          className="bg-purple-600 hover:bg-purple-700"
+                          className="bg-primary text-primary-foreground hover:bg-primary/90"
                         >
                           {isLoading ? (
                             <i className="fas fa-spinner fa-spin mr-2"></i>

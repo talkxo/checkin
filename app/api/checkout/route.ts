@@ -13,8 +13,10 @@ export async function POST(req: NextRequest){
     const { mood, moodComment, checkoutTs } = await req.json();
     const employeeId = session.id;
     
-    console.log('=== CHECKOUT DEBUG ===');
-    console.log('Request data:', { employeeId: session.id, mood, moodComment, checkoutTs });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('=== CHECKOUT DEBUG ===');
+      console.log('Request data:', { employeeId: session.id, mood, moodComment, checkoutTs });
+    }
     
     // Verify employee is active
     const { data: emp, error: empError } = await supabaseAdmin

@@ -35,7 +35,7 @@ export async function callOpenRouter(
   const baseDelay = 1000; // 1 second
 
   for (const model of models) {
-    console.log(`Trying model: ${model}`);
+    if (process.env.NODE_ENV === 'development') console.log(`Trying model: ${model}`);
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -63,7 +63,7 @@ export async function callOpenRouter(
 
         if (response.status === 429) {
           // Rate limited - try next model
-          console.log(`Rate limited on ${model}, trying next model...`);
+          if (process.env.NODE_ENV === 'development') console.log(`Rate limited on ${model}, trying next model...`);
           break;
         }
 
@@ -85,7 +85,7 @@ export async function callOpenRouter(
         }
 
         const data = await response.json();
-        console.log(`✅ Success with model: ${model}`);
+        if (process.env.NODE_ENV === 'development') console.log(`✅ Success with model: ${model}`);
 
         const firstChoice = data.choices?.[0];
         let finalContent = firstChoice?.message?.content || '';
@@ -129,19 +129,19 @@ export async function callOpenRouter(
           finishReason = continuationChoice?.finish_reason;
         }
 
-        console.log(`Response length: ${finalContent.length} characters`);
+        if (process.env.NODE_ENV === 'development') console.log(`Response length: ${finalContent.length} characters`);
         return {
           success: true,
           data: finalContent
         };
       } catch (error) {
-        console.log(`Model ${model} error (attempt ${attempt}):`, error);
-        
+        if (process.env.NODE_ENV === 'development') console.log(`Model ${model} error (attempt ${attempt}):`, error);
+
         // If it's a timeout, try next model immediately
         const isAbortError = typeof DOMException !== 'undefined' && error instanceof DOMException && error.name === 'AbortError';
         const isTimeoutMessage = error instanceof Error && typeof error.message === 'string' && error.message.includes('timeout');
         if (isAbortError || isTimeoutMessage) {
-          console.log(`Timeout on ${model}, trying next model...`);
+          if (process.env.NODE_ENV === 'development') console.log(`Timeout on ${model}, trying next model...`);
           break;
         }
         

@@ -25,11 +25,13 @@ export async function GET(req: NextRequest) {
   // Still get nowIST for some backwards compatibility logs
   const now = nowIST();
 
-  console.log('=== TODAY SUMMARY DEBUG ===');
-  console.log('OffsetDays:', offsetDays);
-  console.log('Current time UTC:', now.toISOString());
-  console.log('Query start UTC:', start.toISOString());
-  console.log('Query end UTC:', end.toISOString());
+  if (process.env.NODE_ENV === 'development') {
+    console.log('=== TODAY SUMMARY DEBUG ===');
+    console.log('OffsetDays:', offsetDays);
+    console.log('Current time UTC:', now.toISOString());
+    console.log('Query start UTC:', start.toISOString());
+    console.log('Query end UTC:', end.toISOString());
+  }
 
   // Get all employees
   const { data: employees, error: empError } = await supabaseAdmin
@@ -49,14 +51,16 @@ export async function GET(req: NextRequest) {
 
   if (sessError) return NextResponse.json({ error: sessError.message }, { status: 500 });
 
-  console.log('Found sessions for today:', sessions?.length || 0);
-  if (sessions && sessions.length > 0) {
-    console.log('Sample session times:');
-    sessions.slice(0, 3).forEach((s, i) => {
-      console.log(`  Session ${i+1}: ${s.checkin_ts} (${new Date(s.checkin_ts).toLocaleString('en-US', {timeZone: 'Asia/Kolkata'})})`);
-    });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Found sessions for today:', sessions?.length || 0);
+    if (sessions && sessions.length > 0) {
+      console.log('Sample session times:');
+      sessions.slice(0, 3).forEach((s, i) => {
+        console.log(`  Session ${i+1}: ${s.checkin_ts} (${new Date(s.checkin_ts).toLocaleString('en-US', {timeZone: 'Asia/Kolkata'})})`);
+      });
+    }
+    console.log('=== END DEBUG ===');
   }
-  console.log('=== END DEBUG ===');
 
   // Process each employee's data
   const summary = employees?.map(emp => {

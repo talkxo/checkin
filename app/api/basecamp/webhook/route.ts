@@ -7,15 +7,19 @@ export const dynamic = 'force-dynamic';
 // Helper function to handle check-in
 async function handleCheckin(sender: any, mode: string, origin: string): Promise<string> {
   try {
-    console.log('=== CHECKIN DEBUG ===');
-    console.log('Sender object:', JSON.stringify(sender, null, 2));
-    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('=== CHECKIN DEBUG ===');
+      console.log('Sender object:', JSON.stringify(sender, null, 2));
+    }
+
     const email = sender.email_address || sender.email;
     const name = sender.name || sender.full_name;
-    
-    console.log('Extracted email:', email);
-    console.log('Extracted name:', name);
-    
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Extracted email:', email);
+      console.log('Extracted name:', name);
+    }
+
     if (!email) {
       return "I need your email address to check you in. Please make sure your Basecamp profile has your email address.";
     }
@@ -59,15 +63,19 @@ async function handleCheckin(sender: any, mode: string, origin: string): Promise
 // Helper function to handle check-out
 async function handleCheckout(sender: any, origin: string): Promise<string> {
   try {
-    console.log('=== CHECKOUT DEBUG ===');
-    console.log('Sender object:', JSON.stringify(sender, null, 2));
-    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('=== CHECKOUT DEBUG ===');
+      console.log('Sender object:', JSON.stringify(sender, null, 2));
+    }
+
     const email = sender.email_address || sender.email;
     const name = sender.name || sender.full_name;
-    
-    console.log('Extracted email:', email);
-    console.log('Extracted name:', name);
-    
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Extracted email:', email);
+      console.log('Extracted name:', name);
+    }
+
     if (!email) {
       return "I need your email address to check you out. Please make sure your Basecamp profile has your email address.";
     }
@@ -96,11 +104,13 @@ async function handleCheckout(sender: any, origin: string): Promise<string> {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    console.log('Basecamp webhook received:', JSON.stringify(body, null, 2));
-    console.log('Environment variables check:');
-    console.log('- BC_CHAT_ID:', process.env.BC_CHAT_ID ? `Set: ${process.env.BC_CHAT_ID}` : 'Not set');
-    console.log('- BC_ACCOUNT_ID:', process.env.BC_ACCOUNT_ID ? `Set: ${process.env.BC_ACCOUNT_ID}` : 'Not set');
-    console.log('- BC_PROJECT_ID:', process.env.BC_PROJECT_ID ? `Set: ${process.env.BC_PROJECT_ID}` : 'Not set');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Basecamp webhook received:', JSON.stringify(body, null, 2));
+      console.log('Environment variables check:');
+      console.log('- BC_CHAT_ID:', process.env.BC_CHAT_ID ? `Set: ${process.env.BC_CHAT_ID}` : 'Not set');
+      console.log('- BC_ACCOUNT_ID:', process.env.BC_ACCOUNT_ID ? `Set: ${process.env.BC_ACCOUNT_ID}` : 'Not set');
+      console.log('- BC_PROJECT_ID:', process.env.BC_PROJECT_ID ? `Set: ${process.env.BC_PROJECT_ID}` : 'Not set');
+    }
 
     // Handle both chatbot_message and command message types
     let content, sender, conversation;
@@ -128,14 +138,14 @@ export async function POST(req: NextRequest) {
     
     // Only respond to messages in the configured chat
     const expectedChatIds = process.env.BC_CHAT_ID?.split('\n').map(id => id.trim()).filter(id => id) || [];
-    console.log(`Comparing conversation.id: "${conversation.id}" with BC_CHAT_IDs: [${expectedChatIds.join(', ')}]`);
-    
+    if (process.env.NODE_ENV === 'development') console.log(`Comparing conversation.id: "${conversation.id}" with BC_CHAT_IDs: [${expectedChatIds.join(', ')}]`);
+
     // Extract chat ID from conversation ID (format: chat_id@account_id)
     const chatIdFromConversation = conversation.id.split('@')[0];
-    console.log(`Extracted chat ID from conversation: "${chatIdFromConversation}"`);
-    
+    if (process.env.NODE_ENV === 'development') console.log(`Extracted chat ID from conversation: "${chatIdFromConversation}"`);
+
     if (!expectedChatIds.includes(chatIdFromConversation)) {
-      console.log(`Message from different chat (${conversation.id}), extracted chat ID ${chatIdFromConversation} not in expected: [${expectedChatIds.join(', ')}], ignoring`);
+      if (process.env.NODE_ENV === 'development') console.log(`Message from different chat (${conversation.id}), extracted chat ID ${chatIdFromConversation} not in expected: [${expectedChatIds.join(', ')}], ignoring`);
       return NextResponse.json({ status: 'ignored' });
     }
 
@@ -144,7 +154,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: 'ignored', reason: 'Sender is chatbot' });
     }
 
-    console.log('Processing message:', content);
+    if (process.env.NODE_ENV === 'development') console.log('Processing message:', content);
 
     // Handle check-in/check-out commands
     if (content.toLowerCase().includes('check in') || content.toLowerCase().includes('checkin') || content.toLowerCase().includes('clock in')) {
@@ -170,9 +180,9 @@ export async function POST(req: NextRequest) {
       if (chatbotDataResponse.ok) {
         const chatbotData = await chatbotDataResponse.json();
         contextData = `Complete Attendance Data: ${JSON.stringify(chatbotData, null, 2)}`;
-        console.log('Chatbot data fetched successfully');
+        if (process.env.NODE_ENV === 'development') console.log('Chatbot data fetched successfully');
       } else {
-        console.log('Failed to fetch chatbot data:', chatbotDataResponse.status);
+        if (process.env.NODE_ENV === 'development') console.log('Failed to fetch chatbot data:', chatbotDataResponse.status);
         contextData = 'Error: Unable to fetch attendance data';
       }
     } catch (error) {
@@ -182,7 +192,7 @@ export async function POST(req: NextRequest) {
 
     // Check if we have valid data
     if (!contextData || contextData.includes('Error:') || contextData === '') {
-      console.log('No valid attendance data available, using fallback response');
+      if (process.env.NODE_ENV === 'development') console.log('No valid attendance data available, using fallback response');
       const fallbackResponse = `I don't have current attendance data available right now. Please try again in a few minutes, or check the admin dashboard for current information.`;
       
       // Check if this is a test request (no Basecamp headers)
@@ -262,7 +272,7 @@ Provide a helpful, concise response (max 2-3 sentences) based ONLY on the availa
       }
 
       // Return fallback response for Basecamp chatbot to post
-      console.log('AI failed, returning fallback response for chatbot to post');
+      if (process.env.NODE_ENV === 'development') console.log('AI failed, returning fallback response for chatbot to post');
       return new Response(fallbackResponse, {
         headers: { 'Content-Type': 'text/plain' }
       });
@@ -272,7 +282,7 @@ Provide a helpful, concise response (max 2-3 sentences) based ONLY on the availa
     const isTestRequest = !req.headers.get('user-agent')?.includes('Basecamp') && !req.headers.get('x-forwarded-for');
     
     if (isTestRequest) {
-      console.log('Test request detected, returning AI response without posting to Basecamp');
+      if (process.env.NODE_ENV === 'development') console.log('Test request detected, returning AI response without posting to Basecamp');
       return NextResponse.json({ 
         status: 'success', 
         message: 'Test webhook successful',
@@ -282,7 +292,7 @@ Provide a helpful, concise response (max 2-3 sentences) based ONLY on the availa
     }
 
     // Return just the content text for Basecamp chatbot to post
-    console.log('AI response generated successfully, returning content for chatbot to post');
+    if (process.env.NODE_ENV === 'development') console.log('AI response generated successfully, returning content for chatbot to post');
     return new Response(aiResponse.data, {
       headers: { 'Content-Type': 'text/plain' }
     });
