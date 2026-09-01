@@ -33,14 +33,6 @@ const isWorkDay = (date: Date) => {
   return day >= 1 && day <= 5;
 };
 
-// Helper for push notification subscription
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
-}
-
 // Helper function to format IST times consistently
 const formatISTTime = (timestamp: string) => {
   try {
@@ -680,18 +672,6 @@ export default function HomePage(){
           }
           setCheckInSuccess(true);
           setTimeout(() => setCheckInSuccess(false), 1200);
-
-          // Push notification (Feature 2)
-          fetch('/api/push/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              employeeId: me?.id,
-              title: 'Checked in',
-              body: `You checked in at ${formatISTTimeShort(j.session.checkin_ts)}`,
-              tag: 'checkin',
-            }),
-          }).catch(() => {});
         }
 
         fetchDashboardInit();
@@ -751,18 +731,6 @@ export default function HomePage(){
         // Reward animation (Feature 4)
         fireCheckOutConfetti();
         if (navigator.vibrate) navigator.vibrate([80]);
-
-        // Push notification (Feature 2)
-        fetch('/api/push/send', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            employeeId: me?.id,
-            title: 'Checked out',
-            body: 'See you tomorrow!',
-            tag: 'checkout',
-          }),
-        }).catch(() => {});
 
         // Refresh summaries (non-blocking)
         fetchDashboardInit();
@@ -912,38 +880,15 @@ export default function HomePage(){
 
   useEffect(()=>{ if(typeof window!== 'undefined') localStorage.setItem('mode', mode); },[mode]);
 
-  // Push notification registration (Feature 2)
+  // Register the service worker for PWA installability + offline app shell.
+  // Not gated behind login — the login screen itself is part of the app
+  // shell, and installability should be available to any visitor.
   useEffect(() => {
-    if (!isLoggedIn || !me?.id) return;
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-
-    const registerPush = async () => {
-      try {
-        const reg = await navigator.serviceWorker.register('/sw.js');
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') return;
-
-        const existing = await reg.pushManager.getSubscription();
-        const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-        if (!vapidKey) return;
-
-        const sub = existing || await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidKey),
-        });
-
-        await fetch('/api/push/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ subscription: sub.toJSON(), employeeId: me.id }),
-        });
-      } catch (err) {
-        console.warn('Push registration failed:', err);
-      }
-    };
-
-    registerPush();
-  }, [isLoggedIn, me?.id]);
+    if (!('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.register('/sw.js').catch((err) => {
+      console.warn('Service worker registration failed:', err);
+    });
+  }, []);
 
   // WFH plan fetch (Feature 3)
   useEffect(() => {

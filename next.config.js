@@ -7,8 +7,8 @@ const nextConfig = {
   // Security response headers applied to every route.
   // Note: intentionally no Content-Security-Policy here — this app loads
   // fonts from Google Fonts, Font Awesome from cdnjs.cloudflare.com, images
-  // from Vercel Blob storage, and talks to Supabase, OpenRouter, Basecamp
-  // webhooks, and web-push. A CSP added without careful allowlisting would
+  // from Vercel Blob storage, and talks to Supabase, OpenRouter, and
+  // Basecamp webhooks. A CSP added without careful allowlisting would
   // likely break these at runtime in ways `next build` won't catch.
   async headers() {
     return [
