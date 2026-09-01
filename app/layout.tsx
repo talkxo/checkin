@@ -27,6 +27,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
   viewportFit: 'cover',
   themeColor: '#6a63b6',
 };
@@ -43,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="INSYDE" />
+        <meta name="apple-mobile-web-app-title" content="Insyde" />
         <meta name="robots" content="noindex, nofollow" />
       </head>
       <body className={sourceSansPro.className}>

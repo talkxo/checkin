@@ -80,6 +80,20 @@
     color-scheme: light;
   }
 
+  /* iOS Safari auto-zooms the page on focus if a form control renders
+     under 16px. The 90% root font-size above puts every rem-based text
+     size (including inputs using text-base = 1rem) under that threshold
+     on mobile. Force a literal, non-rem 16px on form controls only —
+     this doesn't touch the 90% scale used everywhere else in the app.
+     !important is required here: Tailwind's own utility classes (e.g.
+     the shared Input component's `text-base`) live in a later cascade
+     layer than this @layer base rule and would otherwise win. */
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
   .dark html,
   html.dark {
     color-scheme: dark;
