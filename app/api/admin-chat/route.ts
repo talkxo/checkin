@@ -8,13 +8,54 @@ const requestCounts = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT = 5; // 5 requests per minute
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
 
+interface FetchedData {
+  chatbot?: any;
+  historical?: any;
+  mood?: any;
+}
+
+// Builds a clean, human-readable fallback directly from the structured data
+// objects — not by re-parsing pretty-printed JSON text, which previously
+// leaked raw `{`/`[` characters into the response whenever the AI call failed.
+function buildDataSummary(data: FetchedData): string {
+  const lines: string[] = [];
+
+  if (data.chatbot?.summary) {
+    const s = data.chatbot.summary;
+    lines.push(
+      `**Team Status:** ${s.totalEmployees ?? 'unknown'} total employees, ` +
+      `${s.activeToday ?? 0} active today, ${s.currentlyCheckedIn ?? 0} currently checked in.`
+    );
+  }
+  if (data.chatbot?.currentlyCheckedIn?.length) {
+    const names = data.chatbot.currentlyCheckedIn
+      .map((p: any) => p?.full_name || p?.name)
+      .filter(Boolean)
+      .slice(0, 10)
+      .join(', ');
+    if (names) lines.push(`**Currently working:** ${names}`);
+  }
+  if (data.chatbot?.todayStats) {
+    const t = data.chatbot.todayStats;
+    lines.push(`**Today's split:** ${t.office ?? 0} office, ${t.remote ?? 0} remote.`);
+  }
+  if (data.mood?.length) {
+    lines.push(`**Mood check-ins:** ${data.mood.length} recorded for this range.`);
+  }
+  if (data.historical) {
+    lines.push(`Historical pattern data is available — ask a more specific question to dig in.`);
+  }
+
+  return lines.join('\n\n');
+}
+
 export async function POST(req: NextRequest) {
   try {
     // Check if API key is configured
     if (!process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY.trim() === '') {
       console.error('OpenRouter API key not configured');
-      return NextResponse.json({ 
-        response: 'AI service is not configured. Please contact the administrator to set up the OpenRouter API key. For now, you can use the admin dashboard to view attendance data directly.' 
+      return NextResponse.json({
+        response: 'AI service is not configured. Please contact the administrator to set up the OpenRouter API key. For now, you can use the admin dashboard to view attendance data directly.'
       });
     }
 
@@ -22,11 +63,11 @@ export async function POST(req: NextRequest) {
     const clientIP = req.ip || 'unknown';
     const now = Date.now();
     const clientData = requestCounts.get(clientIP);
-    
+
     if (clientData && now < clientData.resetTime) {
       if (clientData.count >= RATE_LIMIT) {
-        return NextResponse.json({ 
-          error: 'Rate limit exceeded. Please wait a moment before trying again.' 
+        return NextResponse.json({
+          error: 'Rate limit exceeded. Please wait a moment before trying again.'
         }, { status: 429 });
       }
       clientData.count++;
@@ -40,15 +81,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    // Smart data fetching based on query type
-    let contextData = '';
     const messageLower = message.toLowerCase();
-    
-    // Helper function to fetch with timeout
+
     const fetchWithTimeout = async (url: string, timeoutMs: number = 5000) => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-      
       try {
         const response = await fetch(url, { signal: controller.signal });
         clearTimeout(timeoutId);
@@ -60,66 +97,37 @@ export async function POST(req: NextRequest) {
       }
     };
 
-    // Determine which data to fetch based on query
-    const fetchPromises: Promise<any>[] = [];
-    
-    // Always fetch basic chatbot data (most comprehensive)
-    fetchPromises.push(
-      fetchWithTimeout(`${req.nextUrl.origin}/api/admin/chatbot-data`)
-        .then(data => data ? { type: 'chatbot', data } : null)
-    );
+    // Fetch whatever data is relevant to the question, in parallel.
+    const wantsHistorical = messageLower.includes('pattern') || messageLower.includes('trend') || messageLower.includes('unusual');
+    const wantsMood = messageLower.includes('mood') || messageLower.includes('engagement') || messageLower.includes('wellbeing');
 
-    // Add specific data based on query keywords
-    if (messageLower.includes('pattern') || messageLower.includes('trend') || messageLower.includes('unusual')) {
-      fetchPromises.push(
-        fetchWithTimeout(`${req.nextUrl.origin}/api/admin/historical-data`)
-          .then(data => data ? { type: 'historical', data } : null)
-      );
-    }
-    
-    if (messageLower.includes('mood') || messageLower.includes('engagement') || messageLower.includes('wellbeing')) {
-      fetchPromises.push(
-        fetchWithTimeout(`${req.nextUrl.origin}/api/admin/mood-data`)
-          .then(data => data ? { type: 'mood', data } : null)
-      );
-    }
+    const [chatbot, historical, mood] = await Promise.all([
+      fetchWithTimeout(`${req.nextUrl.origin}/api/admin/chatbot-data`),
+      wantsHistorical ? fetchWithTimeout(`${req.nextUrl.origin}/api/admin/historical-data`) : Promise.resolve(null),
+      wantsMood ? fetchWithTimeout(`${req.nextUrl.origin}/api/admin/mood-data`) : Promise.resolve(null),
+    ]);
 
-    // Execute all fetches in parallel with timeout
-    try {
-      const results = await Promise.allSettled(fetchPromises);
-      
-      results.forEach((result, index) => {
-        if (result.status === 'fulfilled' && result.value) {
-          const { type, data } = result.value;
-          if (type === 'chatbot') {
-            contextData += `Team Status: ${JSON.stringify(data.summary, null, 2)}\n`;
-            if (data.currentlyCheckedIn?.length > 0) {
-              contextData += `Currently Active: ${JSON.stringify(data.currentlyCheckedIn, null, 2)}\n`;
-            }
-            if (data.todayStats) {
-              contextData += `Today's Distribution: ${JSON.stringify(data.todayStats, null, 2)}\n`;
-            }
-          } else if (type === 'historical') {
-            contextData += `Historical Patterns: ${JSON.stringify(data, null, 2)}\n`;
-          } else if (type === 'mood') {
-            contextData += `Mood/Engagement Data: ${JSON.stringify(data, null, 2)}\n`;
-          }
-        }
+    const fetchedData: FetchedData = { chatbot, historical, mood };
+    const hasData = Boolean(chatbot || historical || mood);
+
+    // Build the context block for the AI prompt from the same structured data.
+    let contextData = '';
+    if (chatbot?.summary) contextData += `Team Status: ${JSON.stringify(chatbot.summary)}\n`;
+    if (chatbot?.currentlyCheckedIn?.length) contextData += `Currently Active: ${JSON.stringify(chatbot.currentlyCheckedIn)}\n`;
+    if (chatbot?.todayStats) contextData += `Today's Distribution: ${JSON.stringify(chatbot.todayStats)}\n`;
+    if (historical) contextData += `Historical Patterns: ${JSON.stringify(historical)}\n`;
+    if (mood) contextData += `Mood/Engagement Data: ${JSON.stringify(mood)}\n`;
+
+    if (!hasData) {
+      return NextResponse.json({
+        response: `I couldn't access attendance data right now. Try the admin dashboard directly for current team status, or ask again in a moment.`
       });
-    } catch (error) {
-      console.error('Error in parallel data fetching:', error);
     }
 
-    // Create a focused AI prompt based on available data
-    const hasData = contextData.trim().length > 0;
-    
     let prompt = `You are an INSYDE admin assistant for People Ops/HR teams.
 
 User Question: "${message}"
-Response Style: ${responseStyle}`;
-
-    if (hasData) {
-      prompt += `
+Response Style: ${responseStyle}
 
 Available Data: ${contextData}
 
@@ -132,206 +140,27 @@ Instructions:
 
 Response Style Guidelines:
 - SHORT: 1-2 sentences maximum
-- DETAILED: 2-3 bullet points with insights  
+- DETAILED: 2-3 bullet points with insights
 - REPORT: 3-4 bullet points with recommendations`;
-    } else {
-      prompt += `
 
-No specific data available. Provide a helpful response that:
-- Acknowledges the data access limitation
-- Suggests alternative ways to get the information
-- Maintains a professional and helpful tone
-
-Response Style: ${responseStyle}`;
-    }
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Calling OpenRouter with prompt:', prompt.substring(0, 200) + '...');
-      console.log('Context data available:', contextData ? 'Yes' : 'No');
-      console.log('Context data length:', contextData.length);
-      console.log('Has data flag:', hasData);
-    }
-
-    // If no context data is available, provide a helpful fallback
-    if (!hasData) {
-      if (process.env.NODE_ENV === 'development') console.log('No context data available, using fallback response');
-      
-      // Try to get at least basic chatbot data as fallback
-      try {
-        const basicData = await fetchWithTimeout(`${req.nextUrl.origin}/api/admin/chatbot-data`, 3000);
-        if (basicData) {
-          const fallbackResponse = `I'm having trouble accessing detailed data right now, but here's what I can tell you:
-
-• **Team Overview**: ${basicData.summary?.totalEmployees || 'Unknown'} total employees
-• **Active Today**: ${basicData.summary?.activeToday || 0} people have checked in
-• **Currently Online**: ${basicData.summary?.currentlyCheckedIn || 0} people are currently working
-
-For more detailed insights, please try asking again in a few minutes or visit the admin dashboard.`;
-          
-          return NextResponse.json({ response: fallbackResponse });
-        }
-      } catch (error) {
-        console.error('Even basic data fetch failed:', error);
-      }
-      
-      // Final fallback if everything fails
-      const staticFallback = `I'm having trouble accessing the attendance data right now. Here are some things you can check:
-
-• **Team Status**: Visit the admin dashboard for current attendance
-• **Quick Stats**: Check today's headcount and remote/office distribution  
-• **Manual Review**: Use the snapshot view for detailed employee status
-
-Please try asking again in a few minutes, or use the dashboard for immediate insights.`;
-      
-      return NextResponse.json({ response: staticFallback });
-    }
-    
-    // Try AI response with a longer timeout for thinking models
-    let aiResponse;
-    try {
-      const result = await Promise.race([
-        callOpenRouter([
-          { role: 'system', content: 'You are an INSYDE admin assistant. Provide brief, helpful responses about team attendance and status. Keep responses concise and actionable.' },
-          { role: 'user', content: prompt }
-        ], 0.3),
-        new Promise<{ success: boolean; data?: any; error?: string }>((_, reject) => 
-          setTimeout(() => reject(new Error('AI timeout')), 20000) // 20 second timeout
-        )
-      ]);
-      aiResponse = result as { success: boolean; data?: any; error?: string };
-    } catch (aiError) {
-      if (process.env.NODE_ENV === 'development') console.log('AI request failed or timed out');
-      aiResponse = { success: false, error: 'AI request failed' };
-    }
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log('AI Response success:', aiResponse.success);
-      console.log('AI Response error:', aiResponse.error);
-      console.log('AI Response data preview:', aiResponse.data?.substring(0, 100) + '...');
-    }
-
-    if (!aiResponse.success) {
-      console.error('AI Error:', aiResponse.error);
-      
-      // Try to provide a data-driven response even when AI fails
-      if (hasData) {
-        try {
-          // Parse the context data to extract useful information
-          const dataLines = contextData.split('\n').filter(line => line.trim());
-          let dataSummary = '';
-          
-          dataLines.forEach(line => {
-            if (line.includes('Team Status:')) {
-              dataSummary += `\n**Current Team Status:**\n${line.replace('Team Status:', '').trim()}\n`;
-            } else if (line.includes('Currently Active:')) {
-              dataSummary += `\n**Currently Working:**\n${line.replace('Currently Active:', '').trim()}\n`;
-            } else if (line.includes('Today\'s Distribution:')) {
-              dataSummary += `\n**Today\'s Distribution:**\n${line.replace('Today\'s Distribution:', '').trim()}\n`;
-            }
-          });
-          
-          if (dataSummary) {
-            const dataDrivenResponse = `I'm having trouble processing your request with AI, but here's what I can tell you from the current data:${dataSummary}\n\nFor more detailed insights, please try asking again in a few minutes or visit the admin dashboard.`;
-            return NextResponse.json({ response: dataDrivenResponse });
-          }
-        } catch (parseError) {
-          console.error('Error parsing context data for fallback:', parseError);
-        }
-      }
-      
-      // If we have data but couldn't parse it, try to provide basic info
-      if (hasData && contextData.length > 0) {
-        const basicResponse = `I'm having trouble processing your request with AI, but I can see there is attendance data available. Here's what I can tell you:
-
-• **Data Available**: Current team attendance information is accessible
-• **Recent Activity**: ${contextData.includes('recentActivity') ? 'Recent check-ins are available' : 'No recent activity data'}
-• **Team Status**: ${contextData.includes('currentlyCheckedIn') ? 'Some team members are currently working' : 'No current active sessions'}
-
-For detailed insights, please visit the admin dashboard or try asking again in a few minutes.`;
-        
-        return NextResponse.json({ response: basicResponse });
-      }
-      
-      // Final fallback response
-      const fallbackResponse = `I'm having trouble accessing the attendance data right now. Here are some things you can check:
-
-• **Team Status**: Visit the admin dashboard for current attendance
-• **Quick Stats**: Check today's headcount and remote/office distribution  
-• **Manual Review**: Use the snapshot view for detailed employee status
-
-Please try asking again in a few minutes, or use the dashboard for immediate insights.`;
-      
-      return NextResponse.json({ response: fallbackResponse });
-    }
-
-    // Basic response validation (relaxed)
-    const responseContent = aiResponse.data || '';
-    
-    // Only reject responses that are clearly corrupted or empty
-    const isTooShort = responseContent.trim().length < 5;
-    const isTooLong = responseContent.length > 3000;
-    
-    // Only check for obvious error patterns, not normal text
-    const obviousErrors = [
-      'stack trace', 'undefined', 'null', '))":'
-    ];
-    
-    const hasObviousErrors = obviousErrors.some(error => 
-      responseContent.toLowerCase().includes(error.toLowerCase())
+    const aiResponse = await callOpenRouter(
+      [
+        { role: 'system', content: 'You are an INSYDE admin assistant. Provide brief, helpful responses about team attendance and status. Keep responses concise and actionable.' },
+        { role: 'user', content: prompt }
+      ],
+      0.3
     );
-    
-    if (isTooShort || isTooLong || hasObviousErrors) {
-      console.error('AI response rejected for basic issues:', {
-        content: responseContent.substring(0, 100),
-        isTooShort,
-        isTooLong,
-        hasObviousErrors
-      });
-      
-      // Provide data-driven fallback instead of generic message
-      let fallbackResponse = `I'm having trouble processing that request right now. `;
-      
-      if (hasData) {
-        fallbackResponse += `Based on the available data, here's what I can tell you:
 
-• **Team Status**: Check the admin dashboard for current attendance
-• **Quick Stats**: Review today's headcount and remote/office distribution  
-• **Manual Review**: Use the snapshot view for detailed employee status
-
-Please try asking again in a few minutes, or use the dashboard for immediate insights.`;
-      } else {
-        fallbackResponse += `Please try asking again in a few minutes, or use the dashboard for immediate insights.`;
-      }
-      
+    if (!aiResponse.success || !aiResponse.data?.trim()) {
+      console.error('Admin chat AI call failed:', aiResponse.error);
+      const summary = buildDataSummary(fetchedData);
+      const fallbackResponse = summary
+        ? `I couldn't get an AI-generated answer right now, but here's what the current data shows:\n\n${summary}\n\n_Reason: ${aiResponse.error || 'no response returned'}_`
+        : `I couldn't get an AI-generated answer right now (${aiResponse.error || 'no response returned'}). Try the admin dashboard for current attendance data, or ask again shortly.`;
       return NextResponse.json({ response: fallbackResponse });
     }
 
-    // Clean the AI response to remove any reasoning or analysis
-    let cleanResponse = responseContent;
-    
-    // Remove common reasoning patterns
-    const reasoningPatterns = [
-      /analysis.*?assistantfinal/i,
-      /we need to.*?good\./i,
-      /let's craft.*?words, within/i,
-      /count words.*?good\./i,
-      /that's \d+ words.*?good\./i,
-      /provide concise.*?assistantfinal/i,
-      /use short style.*?assistantfinal/i
-    ];
-    
-    reasoningPatterns.forEach(pattern => {
-      cleanResponse = cleanResponse.replace(pattern, '');
-    });
-    
-    // Clean up any remaining artifacts
-    cleanResponse = cleanResponse
-      .replace(/analysis/i, '')
-      .replace(/assistantfinal/i, '')
-      .replace(/^\s*/, '') // Remove leading whitespace
-      .replace(/\s*$/, ''); // Remove trailing whitespace
-
-    return NextResponse.json({ response: cleanResponse });
+    return NextResponse.json({ response: aiResponse.data.trim() });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },

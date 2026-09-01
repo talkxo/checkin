@@ -157,6 +157,7 @@ export default function AdminPage() {
   const [customPrompt, setCustomPrompt] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState("");
+  const [aiError, setAiError] = useState<string | null>(null);
   const [aiResultMeta, setAiResultMeta] = useState<AiResultMeta>({
     recordsAnalyzed: 0,
     uniquePeople: 0,
@@ -666,6 +667,8 @@ export default function AdminPage() {
 
   const generateAiOutput = async () => {
     setIsAiLoading(true);
+    setAiError(null);
+    setAiResult("");
     try {
       if (selectedAiFeature === "sentiment") {
         const moodData = await loadMoodData(aiTimeRange);
@@ -697,7 +700,10 @@ export default function AdminPage() {
           }),
         });
         const data = await response.json();
-        setAiResult(data.sentiment || "No sentiment analysis returned.");
+        if (!response.ok || !data.sentiment) {
+          throw new Error(data.error || "AI returned no sentiment analysis.");
+        }
+        setAiResult(data.sentiment);
       } else {
         const attendancePayload = aiTimeRange === "today" ? todayData : await loadHistoricalData(aiTimeRange);
         const uniquePeople = new Set(
@@ -730,10 +736,18 @@ export default function AdminPage() {
           }),
         });
         const data = await response.json();
-        setAiResult(data.report || data.insights || "No analysis returned.");
+        const content = data.report || data.insights;
+        if (!response.ok || !content) {
+          throw new Error(data.error || "AI returned no analysis.");
+        }
+        setAiResult(content);
       }
-    } catch {
-      setAiResult("The AI workspace could not generate an answer. Please retry with a narrower scope.");
+    } catch (error) {
+      setAiError(
+        error instanceof Error && error.message
+          ? error.message
+          : "The AI workspace could not generate an answer. Please retry with a narrower scope."
+      );
     } finally {
       setIsAiLoading(false);
     }
@@ -895,6 +909,7 @@ export default function AdminPage() {
               onGenerate={generateAiOutput}
               isLoading={isAiLoading}
               result={aiResult}
+              error={aiError}
               resultMeta={aiResultMeta}
             />
           ) : null}

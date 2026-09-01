@@ -1,13 +1,49 @@
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
 
+// Primary model + fallback chain, all free. OpenRouter retries down this
+// list server-side on ANY error (rate-limit, downtime, context overflow,
+// moderation) via the `models` array — this replaces a hand-rolled
+// client-side loop across several hardcoded free-model IDs that kept going
+// defunct. `openrouter/free` sits last: it's OpenRouter's own router across
+// ~24 free models and self-updates as models come and go, but its picks are
+// unscoped by role — live testing surfaced it landing on a content-safety
+// classifier model that returned "User Safety: safe" instead of an actual
+// answer. A named general-purpose model sits ahead of it as a real fallback
+// before falling back to that fully random pool.
+const PRIMARY_MODEL = 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free';
+const SECONDARY_MODEL = 'nvidia/nemotron-3.5-lightning:free';
+const FALLBACK_MODEL = 'openrouter/free';
+
 interface AIResponse {
   success: boolean;
   data?: any;
   error?: string;
 }
 
-// Helper function to make API calls to OpenRouter with fallback models
+async function requestCompletion(messages: any[], temperature: number, maxTokens: number, signal: AbortSignal) {
+  return fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://insyde.talkxo.com',
+      'X-Title': 'INSYDE AI'
+    },
+    body: JSON.stringify({
+      model: PRIMARY_MODEL,
+      models: [SECONDARY_MODEL, FALLBACK_MODEL],
+      messages,
+      temperature,
+      max_tokens: maxTokens,
+      // Strip reasoning/thinking tokens from the response server-side instead
+      // of regex-scrubbing leaked chain-of-thought out of the final text.
+      reasoning: { exclude: true }
+    }),
+    signal
+  });
+}
+
 export async function callOpenRouter(
   messages: any[],
   temperature: number = 0.7,
@@ -21,146 +57,77 @@ export async function callOpenRouter(
     };
   }
 
-  // API key presence confirmed — do not log even partial key
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-  // Use only free models with fallbacks for better reliability
-  const models = [
-    'liquid/lfm-2.5-1.2b-thinking:free', // Primary: requested OpenRouter model
-    'google/gemma-3n-e4b-it:free',       // Fallback 1: Original reliable model
-    'meta-llama/llama-3.2-3b-instruct:free',  // Fallback 2: Fast and efficient
-    'microsoft/phi-3-mini-128k-instruct:free' // Fallback 3: Good for structured data
-  ];
+  try {
+    const response = await requestCompletion(messages, temperature, maxTokens, controller.signal);
+    clearTimeout(timeoutId);
 
-  const maxRetries = 2;
-  const baseDelay = 1000; // 1 second
-
-  for (const model of models) {
-    if (process.env.NODE_ENV === 'development') console.log(`Trying model: ${model}`);
-    
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for better reliability
-
-        const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://talkxo-checkin.vercel.app',
-            'X-Title': 'INSYDE AI'
-          },
-          body: JSON.stringify({
-            model,
-            messages,
-            temperature,
-            max_tokens: maxTokens
-          }),
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        if (response.status === 429) {
-          // Rate limited - try next model
-          if (process.env.NODE_ENV === 'development') console.log(`Rate limited on ${model}, trying next model...`);
-          break;
-        }
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`❌ Model ${model} failed: ${response.status} - ${errorText}`);
-          
-          // If it's an authentication error, don't try other models
-          if (response.status === 401) {
-            console.error('Authentication error - API key might be invalid');
-            return {
-              success: false,
-              error: 'Authentication failed - check API key'
-            };
-          }
-          
-          // Try next model
-          break;
-        }
-
-        const data = await response.json();
-        if (process.env.NODE_ENV === 'development') console.log(`✅ Success with model: ${model}`);
-
-        const firstChoice = data.choices?.[0];
-        let finalContent = firstChoice?.message?.content || '';
-        let finishReason = firstChoice?.finish_reason;
-
-        // If model output is truncated, request continuation and append.
-        for (let continuation = 0; continuation < 2 && finishReason === 'length'; continuation++) {
-          const continuationResponse = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-              'Content-Type': 'application/json',
-              'HTTP-Referer': 'https://talkxo-checkin.vercel.app',
-              'X-Title': 'INSYDE AI'
-            },
-            body: JSON.stringify({
-              model,
-              messages: [
-                ...messages,
-                { role: 'assistant', content: finalContent },
-                {
-                  role: 'user',
-                  content:
-                    'Continue exactly from where you stopped. Do not repeat previous sections. Return only the remaining markdown.'
-                }
-              ],
-              temperature,
-              max_tokens: maxTokens
-            }),
-            signal: controller.signal
-          });
-
-          if (!continuationResponse.ok) break;
-
-          const continuationData = await continuationResponse.json();
-          const continuationChoice = continuationData.choices?.[0];
-          const continuationContent = continuationChoice?.message?.content || '';
-          if (!continuationContent.trim()) break;
-
-          finalContent = `${finalContent.trimEnd()}\n\n${continuationContent.trimStart()}`;
-          finishReason = continuationChoice?.finish_reason;
-        }
-
-        if (process.env.NODE_ENV === 'development') console.log(`Response length: ${finalContent.length} characters`);
-        return {
-          success: true,
-          data: finalContent
-        };
-      } catch (error) {
-        if (process.env.NODE_ENV === 'development') console.log(`Model ${model} error (attempt ${attempt}):`, error);
-
-        // If it's a timeout, try next model immediately
-        const isAbortError = typeof DOMException !== 'undefined' && error instanceof DOMException && error.name === 'AbortError';
-        const isTimeoutMessage = error instanceof Error && typeof error.message === 'string' && error.message.includes('timeout');
-        if (isAbortError || isTimeoutMessage) {
-          if (process.env.NODE_ENV === 'development') console.log(`Timeout on ${model}, trying next model...`);
-          break;
-        }
-        
-        if (attempt === maxRetries) {
-          // Try next model
-          break;
-        }
-        
-        // Wait before retry
-        const delay = baseDelay * Math.pow(2, attempt - 1);
-        await new Promise(resolve => setTimeout(resolve, delay));
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`OpenRouter request failed: ${response.status} - ${errorText}`);
+      if (response.status === 401) {
+        return { success: false, error: 'Authentication failed - check API key' };
       }
+      if (response.status === 429) {
+        return { success: false, error: 'Rate limited - please try again shortly' };
+      }
+      return { success: false, error: `OpenRouter error: ${response.status}` };
     }
-  }
 
-  return {
-    success: false,
-    error: 'All models failed or rate limited'
-  };
+    const data = await response.json();
+    const firstChoice = data.choices?.[0];
+    let finalContent = firstChoice?.message?.content || '';
+    let finishReason = firstChoice?.finish_reason;
+
+    // If model output is truncated, request continuation and append.
+    for (let continuation = 0; continuation < 2 && finishReason === 'length'; continuation++) {
+      const continuationResponse = await requestCompletion(
+        [
+          ...messages,
+          { role: 'assistant', content: finalContent },
+          {
+            role: 'user',
+            content:
+              'Continue exactly from where you stopped. Do not repeat previous sections. Return only the remaining markdown.'
+          }
+        ],
+        temperature,
+        maxTokens,
+        controller.signal
+      );
+
+      if (!continuationResponse.ok) break;
+
+      const continuationData = await continuationResponse.json();
+      const continuationChoice = continuationData.choices?.[0];
+      const continuationContent = continuationChoice?.message?.content || '';
+      if (!continuationContent.trim()) break;
+
+      finalContent = `${finalContent.trimEnd()}\n\n${continuationContent.trimStart()}`;
+      finishReason = continuationChoice?.finish_reason;
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`OpenRouter response via ${data.model || PRIMARY_MODEL}, length: ${finalContent.length} characters`);
+    }
+
+    // A 200 response with empty content is a real failure mode — seen when
+    // the fallback router lands on a flaky free model. Treat it as one
+    // rather than returning success with nothing for callers to render.
+    if (!finalContent.trim()) {
+      console.error(`OpenRouter returned an empty completion (model: ${data.model || PRIMARY_MODEL})`);
+      return { success: false, error: 'Model returned an empty response' };
+    }
+
+    return { success: true, data: finalContent };
+  } catch (error) {
+    clearTimeout(timeoutId);
+    const isAbortError = typeof DOMException !== 'undefined' && error instanceof DOMException && error.name === 'AbortError';
+    if (process.env.NODE_ENV === 'development') console.log('OpenRouter request error:', isAbortError ? 'timeout' : error);
+    return { success: false, error: isAbortError ? 'Request timed out' : 'Request failed' };
+  }
 }
 
 // AI Feature 1: HR-Focused Attendance Insights & Employee Engagement Analysis

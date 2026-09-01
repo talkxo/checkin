@@ -22,6 +22,7 @@ interface AdminAiWorkspaceProps {
   onGenerate: () => void;
   isLoading: boolean;
   result: string;
+  error?: string | null;
   resultMeta: {
     recordsAnalyzed: number;
     uniquePeople: number;
@@ -72,6 +73,7 @@ interface ReportQueueItem {
   requestedAt: number;
   status: "pending" | "ready" | "failed";
   content?: string;
+  errorMessage?: string;
   meta?: {
     recordsAnalyzed: number;
     uniquePeople: number;
@@ -93,6 +95,7 @@ export function AdminAiWorkspace({
   onGenerate,
   isLoading,
   result,
+  error,
   resultMeta,
 }: AdminAiWorkspaceProps) {
   const promptText = useMemo(() => customPrompt || promptPresets[selectedAiFeature], [customPrompt, selectedAiFeature]);
@@ -234,13 +237,14 @@ export function AdminAiWorkspace({
                 ...item,
                 status: result ? "ready" : "failed",
                 content: result || item.content,
+                errorMessage: result ? undefined : error || "AI returned no analysis.",
               }
             : item
         )
       );
       setActiveReportRequestId(null);
     }
-  }, [isLoading, result, activeReportRequestId]);
+  }, [isLoading, result, error, activeReportRequestId]);
 
   return (
     <div className="space-y-5">
@@ -461,7 +465,12 @@ export function AdminAiWorkspace({
                                 Download
                               </button>
                             ) : (
-                              <span className="text-xs font-medium text-destructive">Failed</span>
+                              <span
+                                className="text-xs font-medium text-destructive"
+                                title={item.errorMessage}
+                              >
+                                Failed{item.errorMessage ? ` — ${item.errorMessage}` : ""}
+                              </span>
                             )}
                           </td>
                         </motion.tr>
