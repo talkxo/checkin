@@ -8,21 +8,23 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const testName = url.searchParams.get('name') || 'Rizvi';
     
-    console.log('=== EMPLOYEE DEBUG ===');
-    console.log('Testing lookup for name:', testName);
-    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('=== EMPLOYEE DEBUG ===');
+      console.log('Testing lookup for name:', testName);
+    }
+
     // Get all employees first
     const { data: allEmployees, error: allError } = await supabaseAdmin
       .from('employees')
       .select('id, full_name, slug, email')
       .order('full_name');
-    
+
     if (allError) {
-      console.log('Error fetching all employees:', allError);
+      if (process.env.NODE_ENV === 'development') console.log('Error fetching all employees:', allError);
       return NextResponse.json({ error: allError.message }, { status: 500 });
     }
-    
-    console.log('All employees in DB:', allEmployees);
+
+    if (process.env.NODE_ENV === 'development') console.log('All employees in DB:', allEmployees);
     
     // Test different lookup methods
     const lookups = {
@@ -65,7 +67,7 @@ export async function GET(req: NextRequest) {
       .maybeSingle();
     lookups.generatedSlug = generatedSlugMatch;
     
-    console.log('Lookup results:', lookups);
+    if (process.env.NODE_ENV === 'development') console.log('Lookup results:', lookups);
     
     return NextResponse.json({
       testName,

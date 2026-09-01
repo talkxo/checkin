@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
     // Get auto-checkout hours from settings (default: 12)
     const autoCheckoutHours = Number(await getSetting('auto_checkout_hours')) || 12;
-    console.log(`Auto-checkout: Checking sessions with duration >= ${autoCheckoutHours} hours`);
+    if (process.env.NODE_ENV === 'development') console.log(`Auto-checkout: Checking sessions with duration >= ${autoCheckoutHours} hours`);
     
     // Get all open sessions (checkout_ts IS NULL)
     const { data: openSessions, error: sessionsError } = await supabaseAdmin
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
             console.error(`Error checking out session ${session.id}:`, updateError);
             errors++;
           } else {
-            console.log(`Auto-checked out session ${session.id} for employee ${session.employees?.full_name || session.employee_id} (${durationHours.toFixed(2)} hours)`);
+            if (process.env.NODE_ENV === 'development') console.log(`Auto-checked out session ${session.id} for employee ${session.employees?.full_name || session.employee_id} (${durationHours.toFixed(2)} hours)`);
             checkedOut++;
           }
         }

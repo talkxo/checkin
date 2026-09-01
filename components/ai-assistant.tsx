@@ -191,8 +191,8 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
         <DialogHeader className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
-                <i className="fas fa-robot text-white text-lg"></i>
+              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                <i className="fas fa-robot text-primary-foreground text-lg"></i>
               </div>
               <div>
                 <DialogTitle className="text-lg font-semibold text-foreground">
@@ -225,14 +225,14 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
               <div
                 className={`max-w-[80%] rounded-lg p-4 ${
                   message.role === 'user'
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-primary text-primary-foreground'
                     : 'bg-gray-100 text-foreground'
                 }`}
               >
                 <div className="flex items-start space-x-2">
                   {message.role === 'assistant' && (
-                    <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                      <i className="fas fa-robot text-white text-xs"></i>
+                    <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <i className="fas fa-robot text-primary-foreground text-xs"></i>
                     </div>
                   )}
                   <div className="flex-1">
@@ -248,7 +248,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                       </div>
                     )}
                     <div className={`text-xs mt-2 ${
-                      message.role === 'user' ? 'text-purple-200' : 'text-gray-500'
+                      message.role === 'user' ? 'text-primary-foreground/70' : 'text-gray-500'
                     }`}>
                       {formatTime(message.timestamp)}
                     </div>
@@ -262,8 +262,8 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
             <div className="flex justify-start">
               <div className="bg-gray-100 rounded-lg p-4 max-w-[80%]">
                 <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center">
-                    <i className="fas fa-robot text-white text-xs"></i>
+                  <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                    <i className="fas fa-robot text-primary-foreground text-xs"></i>
                   </div>
                   <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
@@ -296,7 +296,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                 className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-full transition-colors ${
                   isListening 
                     ? 'bg-red-500 text-white hover:bg-red-600' 
-                    : 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'
+                    : 'text-gray-400 hover:text-primary hover:bg-primary/10'
                 }`}
                 disabled={isLoading}
               >
@@ -306,7 +306,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
             <Button
               onClick={sendMessage}
               disabled={!inputValue.trim() || isLoading}
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <i className="fas fa-paper-plane mr-2"></i>
               Send

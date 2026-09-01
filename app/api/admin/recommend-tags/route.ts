@@ -44,7 +44,7 @@ Provide only the tags as a JSON array, no explanations:
         return NextResponse.json({ tags: tags.slice(0, 5) }); // Limit to 5 tags
       }
     } catch (parseError) {
-      console.log('Failed to parse AI response as JSON, using fallback');
+      if (process.env.NODE_ENV === 'development') console.log('Failed to parse AI response as JSON, using fallback');
     }
 
     // Fallback if AI response isn't valid JSON

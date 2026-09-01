@@ -234,7 +234,7 @@ ${context}`;
       ]);
       aiResponse = result as { success: boolean; data?: any; error?: string };
     } catch (error) {
-      console.log('AI request failed or timed out, using fallback response');
+      if (process.env.NODE_ENV === 'development') console.log('AI request failed or timed out, using fallback response');
       aiResponse = {
         success: false,
         error: 'AI request failed'
@@ -243,7 +243,7 @@ ${context}`;
 
     if (!aiResponse.success) {
       // Provide a smart fallback response based on the query
-      console.log('AI models failed, providing smart fallback response');
+      if (process.env.NODE_ENV === 'development') console.log('AI models failed, providing smart fallback response');
       
       let fallbackResponse = '';
       const queryLower = query.toLowerCase();

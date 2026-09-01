@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     
     const url = `https://launchpad.37signals.com/authorization/new?type=web_server&client_id=${process.env.BC_CLIENT_ID}&redirect_uri=${redirect}&state=${state}`;
     
-    console.log('Redirecting to Basecamp OAuth:', url);
+    if (process.env.NODE_ENV === 'development') console.log('Redirecting to Basecamp OAuth:', url);
     return NextResponse.redirect(url);
   } catch (error) {
     console.error('Basecamp auth error:', error);

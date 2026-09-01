@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import nextDynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { useRegisterActions } from "kbar";
 import {
@@ -14,12 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import DarkModeToggle from "@/components/dark-mode-toggle";
-import AdminLeaveManagement from "@/components/admin-leave-management";
 import { WorkspaceShell } from "@/components/admin/workspace-shell";
-import { AdminOverviewWorkspace } from "@/components/admin/admin-overview-workspace";
-import { AdminAttendanceWorkspace } from "@/components/admin/admin-attendance-workspace";
-import { AdminPeopleWorkspace } from "@/components/admin/admin-people-workspace";
-import { AdminAiWorkspace } from "@/components/admin/admin-ai-workspace";
 import { EmployeeDetailDrawer } from "@/components/admin/employee-detail-drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +40,33 @@ import type {
 } from "@/components/admin/types";
 
 export const dynamic = "force-dynamic";
+
+const TabLoadingSpinner = () => (
+  <div className="flex items-center justify-center py-16">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+  </div>
+);
+
+const AdminOverviewWorkspace = nextDynamic(
+  () => import("@/components/admin/admin-overview-workspace").then((mod) => mod.AdminOverviewWorkspace),
+  { ssr: false, loading: TabLoadingSpinner }
+);
+const AdminAttendanceWorkspace = nextDynamic(
+  () => import("@/components/admin/admin-attendance-workspace").then((mod) => mod.AdminAttendanceWorkspace),
+  { ssr: false, loading: TabLoadingSpinner }
+);
+const AdminPeopleWorkspace = nextDynamic(
+  () => import("@/components/admin/admin-people-workspace").then((mod) => mod.AdminPeopleWorkspace),
+  { ssr: false, loading: TabLoadingSpinner }
+);
+const AdminAiWorkspace = nextDynamic(
+  () => import("@/components/admin/admin-ai-workspace").then((mod) => mod.AdminAiWorkspace),
+  { ssr: false, loading: TabLoadingSpinner }
+);
+const AdminLeaveManagement = nextDynamic(
+  () => import("@/components/admin-leave-management"),
+  { ssr: false, loading: TabLoadingSpinner }
+);
 
 const ADMIN_LATE_CUTOFF_MINUTES = 630;
 

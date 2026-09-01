@@ -7,9 +7,11 @@ export async function POST(req: NextRequest) {
   try {
     const { message, responseStyle = 'short' } = await req.json();
 
-    console.log('=== ADMIN CHAT DEBUG ===');
-    console.log('Message:', message);
-    console.log('Response Style:', responseStyle);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('=== ADMIN CHAT DEBUG ===');
+      console.log('Message:', message);
+      console.log('Response Style:', responseStyle);
+    }
 
     // Test with a simple prompt first
     const simplePrompt = `You are an INSYDE admin assistant. The user asked: "${message}"
@@ -18,14 +20,14 @@ Please provide a brief, helpful response about team attendance and status. Keep 
 
 Response style: ${responseStyle}`;
 
-    console.log('Simple prompt:', simplePrompt);
+    if (process.env.NODE_ENV === 'development') console.log('Simple prompt:', simplePrompt);
 
     const aiResponse = await callOpenRouter([
       { role: 'system', content: 'You are an INSYDE admin assistant. Provide brief, helpful responses.' },
       { role: 'user', content: simplePrompt }
     ], 0.3);
 
-    console.log('AI Response:', aiResponse);
+    if (process.env.NODE_ENV === 'development') console.log('AI Response:', aiResponse);
 
     return NextResponse.json({
       success: true,

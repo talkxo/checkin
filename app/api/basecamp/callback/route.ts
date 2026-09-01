@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
       code 
     });
 
-    console.log('Exchanging code for token...');
+    if (process.env.NODE_ENV === 'development') console.log('Exchanging code for token...');
     const r = await fetch('https://launchpad.37signals.com/authorization/token', { 
       method: 'POST', 
       headers: { 
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
     }
 
     const tok = await r.json();
-    console.log('Basecamp OAuth successful, storing tokens...');
+    if (process.env.NODE_ENV === 'development') console.log('Basecamp OAuth successful, storing tokens...');
     
     await setSetting('basecamp_oauth', { 
       access_token: tok.access_token, 
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
       expires_at: Date.now() + (tok.expires_in ?? 3600) * 1000 
     });
 
-    console.log('Basecamp connection successful!');
+    if (process.env.NODE_ENV === 'development') console.log('Basecamp connection successful!');
     return NextResponse.redirect(new URL('/', base));
   } catch (error) {
     console.error('Basecamp callback error:', error);

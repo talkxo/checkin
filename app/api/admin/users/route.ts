@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
           // Don't fail the employee creation, just log the error
           // The admin can manually set up leaves if needed
         } else {
-          console.log(`Successfully initialized leave balances for ${data.full_name}`);
+          if (process.env.NODE_ENV === 'development') console.log(`Successfully initialized leave balances for ${data.full_name}`);
         }
       }
     } catch (leaveError) {

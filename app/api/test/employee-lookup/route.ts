@@ -7,9 +7,11 @@ export async function GET(req: NextRequest) {
     const testName = searchParams.get('name') || 'Rishi';
     const testEmail = searchParams.get('email') || 'rishi@talkxo.com';
     
-    console.log('=== EMPLOYEE LOOKUP TEST ===');
-    console.log('Testing name:', testName);
-    console.log('Testing email:', testEmail);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('=== EMPLOYEE LOOKUP TEST ===');
+      console.log('Testing name:', testName);
+      console.log('Testing email:', testEmail);
+    }
     
     // Get all employees
     const { data: allEmployees, error: allError } = await supabaseAdmin
@@ -21,7 +23,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: allError.message }, { status: 500 });
     }
     
-    console.log('All employees:', allEmployees);
+    if (process.env.NODE_ENV === 'development') console.log('All employees:', allEmployees);
     
     // Test different lookup methods
     const lookups: any = {
@@ -66,7 +68,7 @@ export async function GET(req: NextRequest) {
       .maybeSingle();
     lookups.byEmail = emailMatch;
     
-    console.log('Lookup results:', lookups);
+    if (process.env.NODE_ENV === 'development') console.log('Lookup results:', lookups);
     
     return NextResponse.json({
       allEmployees,
