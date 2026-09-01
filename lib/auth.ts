@@ -9,21 +9,35 @@ const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days
 // environment — a hardcoded fallback would let anyone forge a valid session
 // cookie, since this file is in a public repo. Only non-production
 // environments (local dev without a .env.local) fall back to a dev secret.
-if (!process.env.AUTH_SECRET && process.env.NODE_ENV === 'production') {
-  throw new Error(
-    'AUTH_SECRET environment variable is not set. Refusing to start in production without a secret ' +
-    'to sign session cookies — set AUTH_SECRET in your environment configuration.'
-  );
-}
+//
+// Resolved lazily on first actual use rather than at module load: Next.js
+// evaluates route modules during its build-time "Collecting page data" step
+// (and similar static analysis), which happens outside any real request and
+// may not have runtime secrets available. Throwing at import time crashes
+// the build itself instead of just refusing to serve real traffic — this
+// resolves the secret (and enforces the guard) only when a session is
+// actually signed or verified.
+let cachedAuthSecret: string | null = null;
 
-if (!process.env.AUTH_SECRET) {
-  console.warn(
-    'AUTH_SECRET is not set — using an insecure development-only fallback secret. ' +
-    'Set AUTH_SECRET in .env.local before deploying to production.'
-  );
-}
+function getAuthSecret(): string {
+  if (cachedAuthSecret) return cachedAuthSecret;
 
-const AUTH_SECRET = process.env.AUTH_SECRET || 'fallback-secret-for-dev-only-change-in-prod';
+  if (!process.env.AUTH_SECRET) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'AUTH_SECRET environment variable is not set. Refusing to sign or verify session cookies ' +
+        'in production without a secret — set AUTH_SECRET in your environment configuration.'
+      );
+    }
+    console.warn(
+      'AUTH_SECRET is not set — using an insecure development-only fallback secret. ' +
+      'Set AUTH_SECRET in .env.local before deploying to production.'
+    );
+  }
+
+  cachedAuthSecret = process.env.AUTH_SECRET || 'fallback-secret-for-dev-only-change-in-prod';
+  return cachedAuthSecret;
+}
 
 export interface AdminSession {
   authenticated: boolean;
@@ -39,7 +53,7 @@ export interface UserSession {
 
 // HMAC signing for session payload
 function signPayload(payload: string): string {
-  return createHmac('sha256', AUTH_SECRET).update(payload).digest('hex');
+  return createHmac('sha256', getAuthSecret()).update(payload).digest('hex');
 }
 
 // Verify HMAC signature
