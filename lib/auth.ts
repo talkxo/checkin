@@ -5,7 +5,24 @@ const ADMIN_SESSION_COOKIE = 'admin_session';
 const USER_SESSION_COOKIE = 'user_session';
 const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-// SECRET fallback for local dev if not defined in .env
+// SECRET used to sign session cookies. In production this must come from the
+// environment — a hardcoded fallback would let anyone forge a valid session
+// cookie, since this file is in a public repo. Only non-production
+// environments (local dev without a .env.local) fall back to a dev secret.
+if (!process.env.AUTH_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error(
+    'AUTH_SECRET environment variable is not set. Refusing to start in production without a secret ' +
+    'to sign session cookies — set AUTH_SECRET in your environment configuration.'
+  );
+}
+
+if (!process.env.AUTH_SECRET) {
+  console.warn(
+    'AUTH_SECRET is not set — using an insecure development-only fallback secret. ' +
+    'Set AUTH_SECRET in .env.local before deploying to production.'
+  );
+}
+
 const AUTH_SECRET = process.env.AUTH_SECRET || 'fallback-secret-for-dev-only-change-in-prod';
 
 export interface AdminSession {
