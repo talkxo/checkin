@@ -1,6 +1,7 @@
 "use client";
 
-import { Edit, KeyRound, Plus, Search, Trash2, Users } from "lucide-react";
+import { useState } from "react";
+import { Check, Copy, Edit, KeyRound, Plus, Search, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -24,11 +25,29 @@ export function AdminPeopleWorkspace({
   onEditUser,
   onDeactivateUser,
 }: AdminPeopleWorkspaceProps) {
-  const filteredUsers = users.filter((user) =>
-    [user.full_name, user.email || "", user.slug].some((value) =>
-      value.toLowerCase().includes(searchQuery.toLowerCase())
+  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+
+  const copySlug = async (slug: string) => {
+    try {
+      await navigator.clipboard.writeText(slug);
+      setCopiedSlug(slug);
+      setTimeout(() => setCopiedSlug((current) => (current === slug ? null : current)), 1500);
+    } catch {
+      // Clipboard access denied or unavailable — silently ignore, nothing to copy visibly changes.
+    }
+  };
+
+  // Active people first, then inactive — alphabetical by name within each group.
+  const filteredUsers = users
+    .filter((user) =>
+      [user.full_name, user.email || "", user.slug].some((value) =>
+        value.toLowerCase().includes(searchQuery.toLowerCase())
+      )
     )
-  );
+    .sort((a, b) => {
+      if (a.active !== b.active) return a.active ? -1 : 1;
+      return a.full_name.localeCompare(b.full_name);
+    });
 
   const activeUsers = users.filter((user) => user.active).length;
 
@@ -94,7 +113,24 @@ export function AdminPeopleWorkspace({
                   <tr key={user.id} className="hover:bg-muted/20">
                     <td className="px-5 py-4 font-semibold text-foreground">{user.full_name}</td>
                     <td className="px-5 py-4 text-muted-foreground">{user.email || "N/A"}</td>
-                    <td className="px-5 py-4 font-mono text-xs text-muted-foreground">{user.slug}</td>
+                    <td className="px-5 py-4 font-mono text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1.5">
+                        <span>{user.slug}</span>
+                        <button
+                          type="button"
+                          onClick={() => copySlug(user.slug)}
+                          className="text-muted-foreground/60 transition-colors hover:text-foreground"
+                          title="Copy slug"
+                          aria-label="Copy slug"
+                        >
+                          {copiedSlug === user.slug ? (
+                            <Check className="h-3 w-3 text-emerald-500" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                        </button>
+                      </div>
+                    </td>
                     <td className="px-5 py-4">
                       <Badge variant={user.active ? "default" : "secondary"}>{user.active ? "Active" : "Inactive"}</Badge>
                     </td>
