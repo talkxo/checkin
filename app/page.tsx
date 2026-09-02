@@ -1079,7 +1079,13 @@ export default function HomePage(){
     return (
       <div className="min-h-screen bg-background dark:bg-background flex items-center justify-center p-8">
         <div className="bg-card rounded-2xl border border-border/50 p-8 text-center shadow-sm">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <motion.img
+            src="https://pqkph3lzaffmetri.public.blob.vercel-storage.com/1764957051530-Inside-Icon.png"
+            alt=""
+            className="h-12 w-12 mx-auto mb-4"
+            animate={{ opacity: [0.35, 1, 0.35], scale: [0.92, 1, 0.92] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          />
           <p className="text-foreground">Loading...</p>
         </div>
       </div>
