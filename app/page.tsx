@@ -231,7 +231,7 @@ export default function HomePage() {
   }, []);
 
   // Greeting name — preferred display name wins, else first name on record
-  const firstName = displayName.trim() || (name ? name.split(' ')[0] : 'there');
+  const firstName = displayName.trim() || (name ? name.trim().split(' ')[0] : 'there');
 
   // Dynamic greeting based on time of day (IST)
   const greetingPrefix = (() => {
