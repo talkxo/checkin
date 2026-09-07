@@ -36,12 +36,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning className={`${sourceSansPro.variable} ${playfairDisplay.variable}`}>
       <head>
-        {/* Apply the persisted theme before first paint — the app is dark-first,
-            so only an explicit 'light' opt-out skips the dark class. */}
+        {/* Apply the persisted theme before first paint — dark-first app;
+            'auto' follows the system preference. */}
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{if(localStorage.getItem('theme')!=='light'){document.documentElement.classList.add('dark')}}catch(e){document.documentElement.classList.add('dark')}",
+              "try{var t=localStorage.getItem('theme');var dark=t==='dark'||t==null||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',dark)}catch(e){document.documentElement.classList.add('dark')}",
           }}
         />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />

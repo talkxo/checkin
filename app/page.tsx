@@ -45,6 +45,7 @@ export default function HomePage() {
   const [breakdownModal, setBreakdownModal] = useState<'deepScore' | 'noFill' | null>(null);
   const [activeTab, setActiveTab] = useState<HomeTab>('today');
   const [leaveOpen, setLeaveOpen] = useState(false);
+  const [displayName, setDisplayName] = useState('');
 
   const currentTime = useClock();
 
@@ -70,6 +71,7 @@ export default function HomePage() {
     localStorage.removeItem('currentSession');
     localStorage.removeItem('userName');
     localStorage.removeItem('userSlug');
+    localStorage.removeItem('displayName');
     session.reset();
     setName('');
     setSelectedEmployee(null);
@@ -115,6 +117,8 @@ export default function HomePage() {
 
     const saved = (localStorage.getItem('mode') as any) || 'office';
     session.setMode(saved);
+    const savedDisplayName = localStorage.getItem('displayName');
+    if (savedDisplayName) setDisplayName(savedDisplayName);
 
     const savedSession = localStorage.getItem('currentSession');
     const savedName = localStorage.getItem('userName');
@@ -226,8 +230,8 @@ export default function HomePage() {
     });
   }, []);
 
-  // Get user's first name for greeting
-  const firstName = name ? name.split(' ')[0] : 'there';
+  // Greeting name — preferred display name wins, else first name on record
+  const firstName = displayName.trim() || (name ? name.split(' ')[0] : 'there');
 
   // Dynamic greeting based on time of day (IST)
   const greetingPrefix = (() => {
@@ -282,7 +286,13 @@ export default function HomePage() {
           // Main App - Mobile First Design
           <div className="space-y-6">
             <GreetingHeader
-              firstName={firstName}
+              recordName={name}
+              displayName={displayName}
+              onDisplayNameChange={(n) => {
+                setDisplayName(n);
+                if (n.trim()) localStorage.setItem('displayName', n.trim());
+                else localStorage.removeItem('displayName');
+              }}
               greetingText={greetingPrefix.text}
               greetingEmoji={greetingPrefix.emoji}
               dateLine={dateLine}

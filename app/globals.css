@@ -45,9 +45,9 @@
     --shadow-glass-strong: 0 12px 40px rgba(23, 23, 23, 0.14);
 
     /* Ambient backdrop blobs (dark mode shifts to luminous variants) */
-    --ambient-a: #4b4b55;
-    --ambient-b: #8a8a96;
-    --ambient-c: #67dfc2;
+    --ambient-a: #67dfc2;
+    --ambient-b: #a7edd2;
+    --ambient-c: #d7f8ea;
 
     /* Semantic action colors (theme-independent, exposed for JS-driven styles) */
     --color-success: #22c55e;
@@ -92,8 +92,8 @@
     --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.35);
     --shadow-glass-strong: 0 12px 40px rgba(0, 0, 0, 0.45);
 
-    --ambient-a: #63636e;
-    --ambient-b: #3d3d46;
+    --ambient-a: #1f7a5e;
+    --ambient-b: #67dfc2;
     --ambient-c: #5cfaad;
   }
 
@@ -324,6 +324,14 @@
     background: linear-gradient(135deg, var(--gradient-from), var(--gradient-to));
   }
   /* Fresh-UI accents */
+  .text-greeting {
+    color: color-mix(in srgb, #67dfc2 62%, #101010);
+  }
+
+  .dark .text-greeting {
+    color: #67dfc2;
+  }
+
   .text-gradient {
     background: linear-gradient(120deg, var(--gradient-from), var(--gradient-to) 55%, var(--ambient-c));
     -webkit-background-clip: text;
