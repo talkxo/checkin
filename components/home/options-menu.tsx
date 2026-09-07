@@ -90,7 +90,7 @@ export default function OptionsMenu({
               </div>
             </div>
             <div className="mt-3">
-              <p className="mb-1 text-[11px] text-muted-foreground">Greeting calls you</p>
+              <p className="mb-1 text-[11px] text-muted-foreground">What should we call you?</p>
               <input
                 value={displayName}
                 onChange={(e) => onDisplayNameChange(e.target.value)}
