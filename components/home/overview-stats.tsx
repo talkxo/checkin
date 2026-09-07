@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Info } from 'lucide-react';
 import type { PunctualityStats } from '@/hooks/use-dashboard-data';
 
-const MICRO_LABEL = 'text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground';
+const MICRO_LABEL = 'card-label';
 const DISPLAY_NUMBER = 'text-[32px] font-bold leading-none tabular-nums text-foreground';
 
 // Shared skeleton: label pinned top, value centered in a flexible middle,
@@ -24,9 +24,9 @@ function StatCardShell({
     onClick ? 'cursor-pointer hover:opacity-95' : 'cursor-default'
   }`;
   const header = (
-    <div className="flex min-h-[16px] items-center justify-between">
+    <div className="flex h-4 items-center justify-between">
       <span className={MICRO_LABEL}>{label}</span>
-      <Info className="h-3 w-3 text-muted-foreground/60" />
+      <Info className="h-3 w-3 shrink-0 text-muted-foreground/60" />
     </div>
   );
 

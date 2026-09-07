@@ -89,10 +89,10 @@ export default function CheckInCard({
       />
 
       {/* State caption */}
-      <div className="relative z-10 flex items-center justify-between">
+      <div className="relative z-10 flex h-4 items-center justify-between">
         <span
-          className={`text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors duration-150 ${
-            covered ? 'text-white/85' : 'text-muted-foreground'
+          className={`card-label transition-colors duration-150 ${
+            covered ? 'text-white/85' : ''
           }`}
         >
           {hasOpen ? 'On the clock' : 'Check in'}

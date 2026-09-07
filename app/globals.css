@@ -228,7 +228,7 @@
 
   /* Standardized card title — every card's label uses this */
   .card-label {
-    @apply text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground;
+    @apply text-[10px] font-semibold uppercase leading-4 tracking-[0.18em] text-muted-foreground;
   }
 
   /* Glass system — frosted panels that blur the ambient backdrop behind them */

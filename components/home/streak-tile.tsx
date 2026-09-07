@@ -19,10 +19,8 @@ export default function StreakTile({ current, best }: StreakTileProps) {
         aria-hidden
         className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-white/15 blur-2xl"
       />
-      <div className="relative z-10">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/80">
-          Streak
-        </span>
+      <div className="relative z-10 flex h-4 items-center">
+        <span className="card-label text-white/80">Streak</span>
       </div>
       <div className="relative z-10">
         <p className="text-[40px] font-bold leading-none tabular-nums text-white">
