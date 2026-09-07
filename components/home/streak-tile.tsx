@@ -24,7 +24,7 @@ export default function StreakTile({ current, best }: StreakTileProps) {
       </div>
       <div className="relative z-10">
         <p className="text-[40px] font-bold leading-none tabular-nums text-white">
-          <span className="mr-1.5 text-[26px]" aria-hidden>🔥</span>
+          <span className="mr-2 text-[40px] leading-none" aria-hidden>🔥</span>
           {current}
           <span className="text-[22px] font-semibold text-white/85">d</span>
         </p>
