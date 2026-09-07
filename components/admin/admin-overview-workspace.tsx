@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Cake, Plane, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SegmentedControl } from "@/components/admin/segmented";
 import { Textarea } from "@/components/ui/textarea";
 import { formatISTDateKey, getMondayOfWeek } from "@/lib/time";
 import type { AdminStats, TodayData } from "./types";
@@ -20,7 +21,7 @@ interface AdminOverviewWorkspaceProps {
   onOpenLeave: () => void;
 }
 
-type MoodRange = "week" | "month";
+type MoodRange = "week" | "month" | "90days";
 type MoodBucket = "positive" | "neutral" | "low" | "unknown";
 
 interface TeamPlanEntry {
@@ -115,7 +116,15 @@ export function AdminOverviewWorkspace({
     };
     const loadMoodData = async () => {
       try {
-        const response = await fetch(`/api/admin/mood-data?range=${moodRange}`);
+        const params = new URLSearchParams();
+        if (moodRange === "90days") {
+          params.set("range", "custom");
+          params.set("startDate", formatISTDateKey(new Date(Date.now() - 89 * 86400000)));
+          params.set("endDate", formatISTDateKey(new Date()));
+        } else {
+          params.set("range", moodRange);
+        }
+        const response = await fetch(`/api/admin/mood-data?${params.toString()}`);
         const payload = await response.json();
         setMoodEntries(Array.isArray(payload?.moodData) ? payload.moodData : []);
       } catch {
@@ -420,42 +429,44 @@ export function AdminOverviewWorkspace({
         </div>
 
         <div className="glass rounded-3xl p-5">
-          <div className="flex items-center justify-between">
-            <p className="card-label">Team mood</p>
-            <div className="flex items-center gap-1 rounded-lg bg-muted/30 p-0.5">
-              {(["week", "month"] as const).map((range) => (
-                <button
-                  key={range}
-                  onClick={() => setMoodRange(range)}
-                  className={`rounded-md px-2 py-0.5 text-xs font-medium capitalize transition-colors ${
-                    moodRange === range ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {range}
-                </button>
-              ))}
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="card-label">Team mood</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {moodRange === "week" ? "Last 7 days" : moodRange === "month" ? "Last 30 days" : "Last 90 days"}
+                {moodStats.total ? ` · ${moodStats.total} ${moodStats.total === 1 ? "entry" : "entries"}` : ""}
+              </p>
             </div>
+            <SegmentedControl
+              size="sm"
+              value={moodRange}
+              onChange={(v) => setMoodRange(v as MoodRange)}
+              options={[
+                { value: "week", label: "Week" },
+                { value: "month", label: "Month" },
+                { value: "90days", label: "90 days" },
+              ]}
+            />
           </div>
-          <div className="mt-3 flex h-14 items-end gap-2">
+
+          <div className="mt-5 flex h-32 items-end gap-3 px-1">
             {moodStats.rows.map((row) => (
-              <div key={`bar-${row.bucket}`} className="flex flex-1 flex-col items-center gap-1">
-                <div className="flex h-10 w-full items-end rounded bg-muted">
-                  <div className={`w-full rounded ${bucketColorMap[row.bucket]}`} style={{ height: `${Math.max(row.pct, row.count > 0 ? 16 : 4)}%` }} />
+              <div key={`bar-${row.bucket}`} className="group relative flex flex-1 flex-col items-center gap-1.5">
+                {/* Tooltip */}
+                <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-foreground px-2 py-1 text-xs text-background opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+                  {row.label} · {row.count} {row.count === 1 ? "entry" : "entries"} ({row.pct}%)
+                  <span className="absolute top-full left-1/2 -mt-1 -translate-x-1/2 border-4 border-transparent border-t-foreground" />
+                </div>
+                <div className="flex h-24 w-full items-end rounded-lg bg-muted">
+                  <div
+                    className={`w-full rounded-lg transition-all duration-300 ${bucketColorMap[row.bucket]}`}
+                    style={{ height: `${Math.max(row.pct, row.count > 0 ? 10 : 3)}%` }}
+                  />
                 </div>
                 <span className="text-xs text-muted-foreground">{row.label}</span>
               </div>
             ))}
           </div>
-          {(() => {
-            const lead = moodStats.rows.reduce((a, b) => (b.count > a.count ? b : a), moodStats.rows[0]);
-            return (
-              <p className="mt-2 text-sm font-medium text-foreground">
-                {moodStats.total
-                  ? `${lead.label} — ${lead.count} ${lead.count === 1 ? "entry" : "entries"} (${lead.pct}%)`
-                  : "No data yet"}
-              </p>
-            );
-          })()}
         </div>
 
         <div className="glass rounded-3xl p-5">

@@ -19,18 +19,16 @@ export default function StreakTile({ current, best }: StreakTileProps) {
         aria-hidden
         className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-white/15 blur-2xl"
       />
-      <div className="relative z-10 flex items-center justify-between">
+      <div className="relative z-10">
         <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/80">
           Streak
-        </span>
-        <span className="text-lg" aria-hidden>
-          🔥
         </span>
       </div>
       <div className="relative z-10">
         <p className="text-[40px] font-bold leading-none tabular-nums text-white">
           {current}
           <span className="text-[22px] font-semibold text-white/85">d</span>
+          <span className="ml-2 text-[26px]" aria-hidden>🔥</span>
         </p>
         <div className="mt-3">
           <span className="inline-block rounded-full bg-white/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/90">
