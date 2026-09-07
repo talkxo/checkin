@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { LogOut, Moon, Bell, BellOff, IdCard, Sun } from 'lucide-react';
+import { LogOut, Moon, Bell, BellOff, IdCard, Sun, Copy, BadgeCheck } from 'lucide-react';
 import { useTheme, type Theme } from '@/components/theme-provider';
 
 interface OptionsMenuProps {
+  slug: string;
   recordName: string;
   displayName: string;
   onDisplayNameChange: (name: string) => void;
@@ -18,6 +19,7 @@ interface OptionsMenuProps {
  * preference and logout, replacing the three loose header buttons.
  */
 export default function OptionsMenu({
+  slug,
   recordName,
   displayName,
   onDisplayNameChange,
@@ -26,7 +28,18 @@ export default function OptionsMenu({
   onLogout,
 }: OptionsMenuProps) {
   const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  const copySlug = async () => {
+    try {
+      await navigator.clipboard.writeText(slug);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard unavailable — nothing visible changes
+    }
+  };
   const { theme, setTheme } = useTheme();
 
   useEffect(() => {
@@ -64,9 +77,16 @@ export default function OptionsMenu({
             {/* Identity + display name */}
             <div className="flex items-center gap-2.5">
               <IdCard className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{recordName}</p>
-                <p className="text-[11px] text-muted-foreground">Name on record</p>
+                <button
+                  onClick={copySlug}
+                  className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+                  title="Copy slug"
+                >
+                  <span className="font-mono">{slug}</span>
+                  {copied ? <BadgeCheck className="h-3 w-3 text-success-500" /> : <Copy className="h-3 w-3" />}
+                </button>
               </div>
             </div>
             <div className="mt-3">
@@ -85,14 +105,17 @@ export default function OptionsMenu({
             {/* Notifications */}
             <button
               onClick={onToggleReminders}
-              className="flex w-full items-center justify-between gap-3 rounded-lg px-1 py-2 transition-colors hover:bg-muted/40"
+              className="flex w-full items-start justify-between gap-3 rounded-lg px-1 py-2 transition-colors hover:bg-muted/40"
             >
-              <span className="flex items-center gap-2.5 text-sm text-foreground">
-                {remindersEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
-                Reminders (10 AM & 6:30 PM)
+              <span className="flex items-start gap-2.5">
+                {remindersEnabled ? <Bell className="mt-0.5 h-4 w-4" /> : <BellOff className="mt-0.5 h-4 w-4" />}
+                <span className="flex flex-col items-start">
+                  <span className="text-sm text-foreground">Timing reminders</span>
+                  <span className="text-[11px] text-muted-foreground">10:00 AM & 6:30 PM IST</span>
+                </span>
               </span>
               <span
-                className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
+                className={`relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition-colors ${
                   remindersEnabled ? 'bg-success-500' : 'bg-muted-foreground/40'
                 }`}
                 role="switch"

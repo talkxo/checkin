@@ -3,6 +3,7 @@
 import OptionsMenu from '@/components/home/options-menu';
 
 interface GreetingHeaderProps {
+  slug: string;
   recordName: string;
   displayName: string;
   onDisplayNameChange: (name: string) => void;
@@ -24,6 +25,7 @@ export default function GreetingHeader({
   remindersEnabled,
   onToggleReminders,
   onLogout,
+  slug,
 }: GreetingHeaderProps) {
   return (
     <>
@@ -37,6 +39,7 @@ export default function GreetingHeader({
           />
         </div>
         <OptionsMenu
+          slug={slug}
           recordName={recordName}
           displayName={displayName}
           onDisplayNameChange={onDisplayNameChange}

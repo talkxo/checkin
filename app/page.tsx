@@ -46,6 +46,7 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState<HomeTab>('today');
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [displayName, setDisplayName] = useState('');
+  const [userSlugState, setUserSlugState] = useState('');
 
   const currentTime = useClock();
 
@@ -119,6 +120,7 @@ export default function HomePage() {
     session.setMode(saved);
     const savedDisplayName = localStorage.getItem('displayName');
     if (savedDisplayName) setDisplayName(savedDisplayName);
+    setUserSlugState(localStorage.getItem('userSlug') || '');
 
     const savedSession = localStorage.getItem('currentSession');
     const savedName = localStorage.getItem('userName');
@@ -286,6 +288,7 @@ export default function HomePage() {
           // Main App - Mobile First Design
           <div className="space-y-6">
             <GreetingHeader
+              slug={userSlugState}
               recordName={name}
               displayName={displayName}
               onDisplayNameChange={(n) => {
