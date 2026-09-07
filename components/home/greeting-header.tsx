@@ -51,8 +51,9 @@ export default function GreetingHeader({
 
       {/* Greeting Section */}
       <div>
-        <h1 className="max-w-[85%] text-[32px] font-bold leading-tight text-greeting" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>
-          {greetingText}, {displayName}! {greetingEmoji}
+        <h1 className="max-w-[85%] text-[32px] font-bold leading-tight" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>
+          <span className="text-greeting">{greetingText}, {displayName}!</span>{' '}
+          <span>{greetingEmoji}</span>
         </h1>
         <p className="text-sm text-muted-foreground mt-1.5">{dateLine}</p>
       </div>

@@ -45,8 +45,8 @@
     --shadow-glass-strong: 0 12px 40px rgba(23, 23, 23, 0.14);
 
     /* Ambient backdrop blobs (dark mode shifts to luminous variants) */
-    --ambient-a: #5ff1f1;
-    --ambient-b: #67dfc2;
+    --ambient-a: #67dfc2;
+    --ambient-b: #a7f3d0;
     --ambient-c: #a7f3d0;
 
     /* Semantic action colors (theme-independent, exposed for JS-driven styles) */
@@ -92,9 +92,9 @@
     --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.35);
     --shadow-glass-strong: 0 12px 40px rgba(0, 0, 0, 0.45);
 
-    --ambient-a: #0d9488;
+    --ambient-a: #0f766e;
     --ambient-b: #14b8a6;
-    --ambient-c: #5ff1f1;
+    --ambient-c: #0f766e;
   }
 
   html {
@@ -276,48 +276,33 @@
   }
 
   .ambient-blobs i:nth-child(1) {
-    width: 34rem;
-    height: 34rem;
-    left: -8%;
-    top: 55%;
+    width: 30rem;
+    height: 30rem;
+    left: -6%;
+    top: 58%;
     background: var(--ambient-a);
-    opacity: 0.35;
-    animation: ambient-drift-a 34s ease-in-out infinite alternate;
+    opacity: 0.18;
+    animation: ambient-drift-a 38s ease-in-out infinite alternate;
   }
 
   .ambient-blobs i:nth-child(2) {
-    width: 26rem;
-    height: 26rem;
-    right: -10%;
-    top: 30%;
+    width: 24rem;
+    height: 24rem;
+    right: -8%;
+    top: -8%;
     background: var(--ambient-b);
-    opacity: 0.28;
-    animation: ambient-drift-b 41s ease-in-out infinite alternate;
-  }
-
-  .ambient-blobs i:nth-child(3) {
-    width: 20rem;
-    height: 20rem;
-    left: 35%;
-    top: -14%;
-    background: var(--ambient-c);
-    opacity: 0.22;
-    animation: ambient-drift-c 37s ease-in-out infinite alternate;
+    opacity: 0.15;
+    animation: ambient-drift-b 44s ease-in-out infinite alternate;
   }
 
   @keyframes ambient-drift-a {
     from { transform: translate3d(0, 0, 0) scale(1); }
-    to { transform: translate3d(16vw, -22vh, 0) scale(1.15); }
+    to { transform: translate3d(9vw, -9vh, 0) scale(1.08); }
   }
 
   @keyframes ambient-drift-b {
     from { transform: translate3d(0, 0, 0) scale(1.1); }
-    to { transform: translate3d(-12vw, 18vh, 0) scale(0.9); }
-  }
-
-  @keyframes ambient-drift-c {
-    from { transform: translate3d(0, 0, 0) scale(0.95); }
-    to { transform: translate3d(10vw, 24vh, 0) scale(1.2); }
+    to { transform: translate3d(-8vw, 9vh, 0) scale(0.95); }
   }
 
   /* CSS animations — used by admin, leave, and login pages */
@@ -377,16 +362,11 @@
   }
   /* Fresh-UI accents */
   .text-greeting {
-    background: linear-gradient(120deg, #5ff1f1 10%, #3ec9b9 90%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: #222222;
   }
 
   .dark .text-greeting {
-    background: linear-gradient(120deg, #5ff1f1 10%, #67dfc2 90%);
-    -webkit-background-clip: text;
-    background-clip: text;
+    color: #ededed;
   }
 
   .text-gradient {
