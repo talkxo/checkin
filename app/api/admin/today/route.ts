@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminAuthenticated, getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { nowIST } from '@/lib/time';
 
 export async function GET(req: NextRequest) {
+  if (!isAdminAuthenticated() && !getUserSession()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const now = nowIST();
     const start = new Date(now);

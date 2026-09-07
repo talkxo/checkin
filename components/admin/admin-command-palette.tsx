@@ -89,9 +89,9 @@ function CommandPaletteUI() {
   return (
     <KBarPortal>
       <KBarPositioner className="z-[100] fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <KBarAnimator className="w-full max-w-xl bg-background rounded-xl shadow-2xl overflow-hidden border border-border/50">
-          <KBarSearch 
-            className="w-full px-6 py-4 text-lg bg-transparent border-b border-border/50 outline-none text-foreground placeholder:text-muted-foreground"
+        <KBarAnimator className="w-full max-w-xl glass-strong rounded-2xl overflow-hidden">
+          <KBarSearch
+            className="w-full px-6 py-4 text-lg bg-transparent border-b border-glass-border outline-none text-foreground placeholder:text-muted-foreground"
             defaultPlaceholder="Type a command or search..."
           />
           <div className="py-2">

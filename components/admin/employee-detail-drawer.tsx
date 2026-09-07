@@ -85,10 +85,10 @@ export function EmployeeDetailDrawer({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="right-0 top-0 h-screen max-w-xl translate-x-0 translate-y-0 rounded-none border-l border-border/60 p-0 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-right-full sm:left-auto sm:translate-x-0 sm:translate-y-0">
+      <DialogContent className="right-0 top-0 h-screen max-w-xl translate-x-0 translate-y-0 rounded-none border-l border-glass-border p-0 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-right-full sm:left-auto sm:translate-x-0 sm:translate-y-0">
         {employee ? (
           <div className="flex h-full flex-col">
-            <DialogHeader className="border-b border-border/50 px-6 py-5">
+            <DialogHeader className="border-b border-glass-border px-6 py-5">
               <DialogTitle className="text-xl">{employee.name}</DialogTitle>
               <DialogDescription>
                 {employee.slug} · {employee.daysPresent}/{employee.elapsedWorkingDays} days present · {employee.attendanceRate}% attendance
@@ -97,11 +97,11 @@ export function EmployeeDetailDrawer({
 
             <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
               <section className="grid grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-border/50 bg-muted/20 p-4">
+                <div className="rounded-2xl bg-muted/20 p-4">
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Hours</p>
                   <p className="mt-2 text-2xl font-semibold [font-variant-numeric:tabular-nums]">{employee.totalHours}</p>
                 </div>
-                <div className="rounded-2xl border border-border/50 bg-muted/20 p-4">
+                <div className="rounded-2xl bg-muted/20 p-4">
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Remote vs Office</p>
                   <p className="mt-2 text-2xl font-semibold [font-variant-numeric:tabular-nums]">
                     {employee.remoteDays}/{employee.officeDays}
@@ -162,7 +162,7 @@ export function EmployeeDetailDrawer({
                       const summaryTotal = totalEntitlement > 0 ? totalEntitlement : availableLeaves + usedLeaves + pendingLeaves;
 
                       return (
-                      <div key={`${leaveTypeName}-${index}`} className="flex items-center justify-between rounded-2xl border border-border/50 px-4 py-3">
+                      <div key={`${leaveTypeName}-${index}`} className="flex items-center justify-between rounded-2xl bg-muted/20 px-4 py-3">
                         <div>
                           <p className="text-sm font-medium text-foreground">{leaveTypeName}</p>
                           <p className="text-xs text-muted-foreground">
@@ -185,7 +185,7 @@ export function EmployeeDetailDrawer({
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Session Timeline</h3>
                 <div className="space-y-2">
                   {employee.sessions.map((session) => (
-                    <div key={session.id} className="rounded-2xl border border-border/50 px-4 py-3">
+                    <div key={session.id} className="rounded-2xl bg-muted/20 px-4 py-3">
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <p className="text-sm font-medium text-foreground">{formatISTDateLong(session.date)}</p>

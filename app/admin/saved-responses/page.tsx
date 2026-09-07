@@ -95,7 +95,8 @@ export default function SavedResponsesPage() {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      timeZone: 'Asia/Kolkata'
     });
   };
 
@@ -113,7 +114,7 @@ export default function SavedResponsesPage() {
         </div>
 
         {/* Filters */}
-        <div className="rounded-3xl border border-border/50 bg-card px-5 py-5">
+        <div className="glass rounded-3xl px-5 py-5">
           <div className="flex flex-wrap gap-4 items-center">
             <div className="flex-1">
               <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 block">Filter by Tags</label>
@@ -169,7 +170,7 @@ export default function SavedResponsesPage() {
             <p className="mt-2 text-muted-foreground">Loading saved responses...</p>
           </div>
         ) : responses.length === 0 ? (
-          <div className="rounded-3xl border border-border/50 bg-card px-5 py-12 text-center">
+          <div className="glass rounded-3xl px-5 py-12 text-center">
             <Tag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">No saved responses</h3>
             <p className="text-muted-foreground">
@@ -182,7 +183,7 @@ export default function SavedResponsesPage() {
         ) : (
           <div className="space-y-4">
             {responses.map((response) => (
-              <div key={response.id} className="rounded-3xl border border-border/50 bg-card px-5 py-5 transition-colors hover:bg-muted/10">
+              <div key={response.id} className="glass glass-hover rounded-3xl px-5 py-5">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-foreground">{response.title}</h3>

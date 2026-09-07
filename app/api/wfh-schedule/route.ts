@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { getUserSession, isAdminAuthenticated } from '@/lib/auth';
 
 // GET ?week=2026-03-30 or ?week=2026-03-30&employeeId=xxx
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const week = searchParams.get('week');
   const employeeId = searchParams.get('employeeId');
+
+  if (!isAdminAuthenticated() && !getUserSession()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   if (!week) {
     return NextResponse.json({ error: 'Missing week query parameter' }, { status: 400 });
@@ -26,6 +31,14 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const { employeeId, weekStart, wfhDays } = await req.json();
+
+    const session = getUserSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (employeeId !== session.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     if (!employeeId || !weekStart || !Array.isArray(wfhDays)) {
       return NextResponse.json(

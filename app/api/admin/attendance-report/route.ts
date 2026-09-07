@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminAuthenticated, getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { formatISTDateKey, nowIST } from '@/lib/time';
 
@@ -48,6 +49,9 @@ interface TeamSummary {
 }
 
 export async function GET(req: NextRequest) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const startDateParam = searchParams.get('startDate');

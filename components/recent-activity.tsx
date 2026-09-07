@@ -145,7 +145,7 @@ const RecentActivity: React.FC<RecentActivityProps> = ({
       {/* Section Header — only shown when hideHeading is false */}
       {!hideHeading && (
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Recent Sessions</h3>
+          <h3 className="card-label">Recent Sessions</h3>
           {onSeeAll && (
             <button
               onClick={onSeeAll}
@@ -179,7 +179,7 @@ const RecentActivity: React.FC<RecentActivityProps> = ({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2, delay: index * 0.05 }}
-              className="bg-card rounded-xl border border-border/50 p-3 shadow-sm dark:shadow-none"
+              className="glass rounded-xl p-3"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5 flex-1 min-w-0">

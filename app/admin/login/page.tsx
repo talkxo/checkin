@@ -51,23 +51,23 @@ function AdminLoginContent() {
     <div className="relative min-h-screen overflow-hidden bg-background px-4 py-8 text-foreground sm:px-6 sm:py-10">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <motion.div
-          className="absolute -left-24 -top-20 h-[20rem] w-[20rem] rounded-full bg-[radial-gradient(circle_at_center,_#67dfc2_0%,_transparent_72%)] opacity-45 blur-2xl"
+          className="absolute -left-24 -top-20 h-[20rem] w-[20rem] rounded-full bg-[radial-gradient(circle_at_center,_var(--ambient-c)_0%,_transparent_72%)] opacity-45 blur-2xl"
           animate={{ x: [0, 180, 80], y: [0, 120, 220] }}
           transition={{ duration: 12, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute -right-28 -top-24 h-[30rem] w-[30rem] rounded-full bg-[radial-gradient(circle_at_center,_#67d9d5_0%,_transparent_72%)] opacity-45 blur-2xl"
+          className="absolute -right-28 -top-24 h-[30rem] w-[30rem] rounded-full bg-[radial-gradient(circle_at_center,_var(--ambient-b)_0%,_transparent_72%)] opacity-45 blur-2xl"
           animate={{ x: [0, -170, -40], y: [0, 140, 240] }}
           transition={{ duration: 13, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute left-1/3 -bottom-44 h-[38rem] w-[38rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,_#59d6b8_0%,_transparent_72%)] opacity-40 blur-2xl"
+          className="absolute left-1/3 -bottom-44 h-[38rem] w-[38rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,_var(--ambient-a)_0%,_transparent_72%)] opacity-40 blur-2xl"
           animate={{ x: [0, 120, -120], y: [0, -180, -40] }}
           transition={{ duration: 14, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }}
         />
       </div>
       <div className="relative z-10 mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-lg items-center justify-center">
-        <div className="relative w-full rounded-[24px] border border-primary/25 bg-gradient-to-b from-primary/10 via-card/90 to-card/85 p-7 shadow-2xl shadow-primary/15 backdrop-blur-sm sm:p-8">
+        <div className="relative w-full glass-strong rounded-[24px] p-7 sm:p-8">
           <div className="mb-6 flex items-center">
             <img
               src="https://pqkph3lzaffmetri.public.blob.vercel-storage.com/1764957051530-Inside-Icon.png"
@@ -102,7 +102,7 @@ function AdminLoginContent() {
                 placeholder="Enter username"
                 required
                 disabled={isLoading}
-                className="h-11 rounded-xl border-border/60 bg-background"
+                className="h-11 rounded-xl bg-background/70"
               />
             </div>
 
@@ -117,7 +117,7 @@ function AdminLoginContent() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter password"
-                  className="h-11 rounded-xl border-border/60 bg-background pr-12"
+                  className="h-11 rounded-xl bg-background/70 pr-12"
                   required
                   disabled={isLoading}
                 />
@@ -146,7 +146,7 @@ function AdminLoginContent() {
             />
             <Button
               type="submit"
-              className="mt-1 h-11 w-full rounded-xl bg-black text-white hover:bg-black/90 dark:bg-black dark:text-white dark:hover:bg-black/90"
+              className="mt-1 h-11 w-full rounded-xl"
               disabled={isLoading || !username.trim() || !password.trim()}
             >
               {isLoading ? (

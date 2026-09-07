@@ -76,7 +76,7 @@ export function AdminAttendanceWorkspace({
         <StatTile label="Hours Logged" value={teamSummary?.totalHours ?? 0} helper="Across all sessions" icon={SlidersHorizontal} />
       </section>
 
-      <section className="sticky top-[88px] z-10 rounded-3xl border border-border/50 bg-background/95 p-4 backdrop-blur-sm">
+      <section className="glass-strong sticky top-[88px] z-10 rounded-3xl p-4">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div>
@@ -102,7 +102,7 @@ export function AdminAttendanceWorkspace({
                 value={searchQuery}
                 onChange={(event) => onSearchQueryChange(event.target.value)}
                 placeholder="Search employees"
-                className="rounded-xl border-border/60 bg-card pl-9"
+                className="rounded-xl bg-background/70 pl-9"
               />
             </div>
             <div className="flex gap-2 overflow-x-auto scrollbar-hide">
@@ -111,7 +111,7 @@ export function AdminAttendanceWorkspace({
                   key={preset}
                   onClick={() => onDateRangePresetChange(preset)}
                   className={`rounded-xl border px-3 py-2 text-sm transition-colors ${
-                    dateRange.preset === preset ? "border-primary/25 bg-primary/10 text-foreground" : "border-border/60 bg-card text-muted-foreground"
+                    dateRange.preset === preset ? "bg-gradient-brand border-transparent text-white shadow-primary" : "glass-hover border-transparent bg-white/40 text-muted-foreground dark:bg-white/5"
                   }`}
                 >
                   {preset === "today"
@@ -130,8 +130,8 @@ export function AdminAttendanceWorkspace({
                 </button>
               ))}
             </div>
-            <Input type="date" value={dateRange.startDate} onChange={(event) => onDateChange("startDate", event.target.value)} className="rounded-xl border-border/60 bg-card" />
-            <Input type="date" value={dateRange.endDate} onChange={(event) => onDateChange("endDate", event.target.value)} className="rounded-xl border-border/60 bg-card" />
+            <Input type="date" value={dateRange.startDate} onChange={(event) => onDateChange("startDate", event.target.value)} className="rounded-xl bg-background/70" />
+            <Input type="date" value={dateRange.endDate} onChange={(event) => onDateChange("endDate", event.target.value)} className="rounded-xl bg-background/70" />
           </div>
 
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -165,8 +165,8 @@ export function AdminAttendanceWorkspace({
         </div>
       </section>
 
-      <section className="rounded-3xl border border-border/50 bg-card">
-        <div className="flex items-center justify-between border-b border-border/50 px-5 py-4">
+      <section className="glass rounded-3xl">
+        <div className="flex items-center justify-between border-b border-glass-border px-5 py-4">
           <div>
             <h3 className="text-lg font-semibold text-foreground">Employee Roster</h3>
             <p className="text-sm text-muted-foreground">{filteredEmployees.length} matching employees</p>
@@ -176,7 +176,7 @@ export function AdminAttendanceWorkspace({
         {filteredEmployees.length ? (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="border-b border-border/50 bg-muted/20 text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <thead className="border-b border-glass-border bg-muted/20 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
                   {[
                     ["name", "Employee"],
@@ -196,7 +196,7 @@ export function AdminAttendanceWorkspace({
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/50">
+              <tbody className="divide-y divide-glass-border">
                 {filteredEmployees.map((employee) => {
                   const latestSession = employee.sessions[employee.sessions.length - 1];
                   return (

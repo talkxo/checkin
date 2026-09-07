@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminAuthenticated, getUserSession } from '@/lib/auth';
 import { callOpenRouter } from '@/lib/ai';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { content, title } = await req.json();
     

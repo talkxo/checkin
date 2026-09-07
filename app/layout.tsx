@@ -34,8 +34,16 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sourceSansPro.variable} ${playfairDisplay.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${sourceSansPro.variable} ${playfairDisplay.variable}`}>
       <head>
+        {/* Apply the persisted theme before first paint — the app is dark-first,
+            so only an explicit 'light' opt-out skips the dark class. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(localStorage.getItem('theme')!=='light'){document.documentElement.classList.add('dark')}}catch(e){document.documentElement.classList.add('dark')}",
+          }}
+        />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

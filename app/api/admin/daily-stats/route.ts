@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminAuthenticated, getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
-import { nowIST } from '@/lib/time';
+import { nowIST, istDateKeyOf } from '@/lib/time';
 
 export async function GET(req: NextRequest) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const range = searchParams.get('range') || 'week';
@@ -54,7 +58,7 @@ export async function GET(req: NextRequest) {
       let remoteHours = 0;
 
       for (const session of userSessions) {
-        const sessionDate = new Date(session.checkin_ts).toISOString().split('T')[0];
+        const sessionDate = istDateKeyOf(session.checkin_ts);
         
         const checkin = new Date(session.checkin_ts);
         const checkout = session.checkout_ts ? new Date(session.checkout_ts) : now;

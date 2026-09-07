@@ -33,7 +33,30 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 246 30% 55%;
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+
+    /* Glass system — frosted panels over the ambient backdrop */
+    --glass-bg: rgba(255, 255, 255, 0.6);
+    --glass-bg-strong: rgba(255, 255, 255, 0.78);
+    --glass-bg-hover: rgba(255, 255, 255, 0.72);
+    --glass-border: rgba(106, 99, 182, 0.16);
+    --glass-highlight: rgba(255, 255, 255, 0.85);
+    --shadow-glass: 0 8px 32px rgba(106, 99, 182, 0.12);
+    --shadow-glass-strong: 0 12px 40px rgba(106, 99, 182, 0.16);
+
+    /* Ambient backdrop blobs (dark mode shifts to luminous variants) */
+    --ambient-a: #6a63b6;
+    --ambient-b: #9f98e8;
+    --ambient-c: #67dfc2;
+
+    /* Semantic action colors (theme-independent, exposed for JS-driven styles) */
+    --color-success: #22c55e;
+    --color-success-deep: #16a34a;
+    --color-danger: #dc2626;
+    --color-danger-deep: #b91c1c;
+    --success-rgb: 34, 197, 94;
+    --danger-rgb: 220, 38, 38;
+    --mint-rgb: 92, 250, 173;
   }
 
   .dark {
@@ -59,6 +82,19 @@
     --border: 217.2 32.6% 20%;
     --input: 217.2 32.6% 20%;
     --ring: 246 30% 65%;
+
+    /* Glass system (dark-first) */
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-bg-strong: rgba(255, 255, 255, 0.08);
+    --glass-bg-hover: rgba(255, 255, 255, 0.09);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-highlight: rgba(255, 255, 255, 0.12);
+    --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.35);
+    --shadow-glass-strong: 0 12px 40px rgba(0, 0, 0, 0.45);
+
+    --ambient-a: #8d86d4;
+    --ambient-b: #6a63b6;
+    --ambient-c: #5cfaad;
   }
 
   html {
@@ -190,6 +226,48 @@
     box-shadow: 0 10px 28px 0 rgba(106, 99, 182, 0.28);
   }
 
+  /* Standardized card title — every card's label uses this */
+  .card-label {
+    @apply text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground;
+  }
+
+  /* Glass system — frosted panels that blur the ambient backdrop behind them */
+  .glass {
+    background-color: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    backdrop-filter: blur(20px) saturate(1.4);
+    box-shadow: inset 0 1px 0 0 var(--glass-highlight), var(--shadow-glass);
+  }
+
+  .glass-strong {
+    background-color: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border);
+    -webkit-backdrop-filter: blur(28px) saturate(1.6);
+    backdrop-filter: blur(28px) saturate(1.6);
+    box-shadow: inset 0 1px 0 0 var(--glass-highlight), var(--shadow-glass-strong);
+  }
+
+  .glass-hover {
+    transition: background-color 0.2s ease-out, transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  }
+
+  .glass-hover:hover {
+    background-color: var(--glass-bg-hover);
+  }
+
+  /* Ambient gradient field for page roots. Applied as background-image on the
+     page container itself (not a negative-z child, which would hide behind
+     the parent's opaque background). Falls back to the flat background when
+     color-mix() is unsupported. */
+  .ambient-page {
+    background-image:
+      radial-gradient(38rem 38rem at 10% -10%, color-mix(in srgb, var(--ambient-a) 24%, transparent), transparent 65%),
+      radial-gradient(32rem 32rem at 105% 15%, color-mix(in srgb, var(--ambient-b) 20%, transparent), transparent 65%),
+      radial-gradient(34rem 34rem at 50% 118%, color-mix(in srgb, var(--ambient-c) 12%, transparent), transparent 62%);
+    background-attachment: fixed;
+  }
+
   /* CSS animations — used by admin, leave, and login pages */
   .fade-in {
     animation: fadeIn 0.3s ease-in-out;
@@ -244,5 +322,21 @@
   }
   .bg-gradient-brand {
     background: linear-gradient(135deg, var(--gradient-from), var(--gradient-to));
+  }
+  /* Fresh-UI accents */
+  .text-gradient {
+    background: linear-gradient(120deg, var(--gradient-from), var(--gradient-to) 55%, var(--ambient-c));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .glow-primary {
+    box-shadow: 0 0 0 1px rgba(106, 99, 182, 0.25), 0 10px 44px rgba(106, 99, 182, 0.35);
+  }
+  .glow-success {
+    box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.3), 0 10px 44px rgba(34, 197, 94, 0.32);
+  }
+  .glow-danger {
+    box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.3), 0 10px 44px rgba(220, 38, 38, 0.32);
   }
 }

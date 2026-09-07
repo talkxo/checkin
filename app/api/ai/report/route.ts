@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminAuthenticated, getUserSession } from '@/lib/auth';
 import { generateAttendanceReport } from '@/lib/ai';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  if (!isAdminAuthenticated() && !getUserSession()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { attendanceData, timeRange } = await req.json();
 

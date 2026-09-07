@@ -133,7 +133,7 @@ export default function PinLogin({ onLoginSuccess }: PinLoginProps) {
   }, [showPinInput]);
 
   return (
-    <div className="rounded-2xl border border-border/50 bg-card p-8 shadow-sm">
+    <div className="glass rounded-2xl p-8">
       <div className="space-y-6">
         <div className="mb-4 flex items-center justify-center">
           <div className="flex h-8 w-8 items-center justify-center">

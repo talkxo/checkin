@@ -32,6 +32,11 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
   const [monthlyData, setMonthlyData] = useState<MonthlyAttendanceData[]>([]);
   const [isLoadingMonthly, setIsLoadingMonthly] = useState(false);
   const [viewMode, setViewMode] = useState<'1month' | '3months'>('1month');
+  const [leaveDates, setLeaveDates] = useState<Set<string>>(new Set());
+  const [holidays, setHolidays] = useState<Map<string, string>>(new Map());
+  const [monthSummaries, setMonthSummaries] = useState<
+    Array<{ present: number; leave: number; holidays: number; hours: number }>
+  >([]);
 
   // Generate days for current week
   const getWeekDays = (date: Date): Date[] => {
@@ -188,14 +193,21 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
       }
       
       const allProcessedDays: MonthlyAttendanceData[] = [];
+      // Leave/holiday data accumulates across the fetched months — each month
+      // fetch returns only its own slice, so merging (not replacing) is what
+      // keeps quarter view from losing other months' leave days.
+      const mergedLeaves = new Set<string>();
+      const mergedHolidays = new Map<string, string>();
 
       // Fetch each month in a single call
       await Promise.all(monthsToFetch.map(async ({ month, year }) => {
         try {
           const response = await fetch(`/api/attendance/monthly?month=${month}&year=${year}`);
           if (!response.ok) return;
-          
-          const { attendance } = await response.json();
+
+          const { attendance, leaveDates: leaveKeys = [], holidays: holidayRows = [] } = await response.json();
+          for (const key of leaveKeys) mergedLeaves.add(key);
+          for (const h of holidayRows) mergedHolidays.set(h.date, h.name);
           
           // Fill in all days for this month
           const lastDay = new Date(year, month, 0).getDate();
@@ -246,6 +258,21 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
       }));
 
       setMonthlyData(allProcessedDays);
+      setLeaveDates(mergedLeaves);
+      setHolidays(mergedHolidays);
+
+      // Per-month summary — present / leave / holidays / hours logged
+      setMonthSummaries(
+        monthsToFetch.map(({ month, year }) => {
+          const prefix = `${year}-${String(month).padStart(2, '0')}`;
+          const days = allProcessedDays.filter((d) => d.date.startsWith(prefix));
+          const present = days.filter((d) => d.status !== 'not_started').length;
+          const leave = [...mergedLeaves].filter((k) => k.startsWith(prefix)).length;
+          const holidaysInMonth = [...mergedHolidays.keys()].filter((k) => k.startsWith(prefix)).length;
+          const hours = days.reduce((sum, d) => sum + d.hours, 0);
+          return { present, leave, holidays: holidaysInMonth, hours: Math.round(hours * 10) / 10 };
+        })
+      );
     } catch (err) {
       console.error('Error fetching monthly data:', err);
     } finally {
@@ -296,7 +323,7 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Calendar</h3>
+            <h3 className="card-label">Calendar</h3>
             {viewMode === '1month' && (
               <p className="text-xs text-muted-foreground mt-0.5">
                 {selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
@@ -390,12 +417,16 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
                         const hours = dayData?.hours || 0;
                         const checkinTime = dayData?.checkinTime || null;
                         
-                        // Determine color based on check-in status
-                        // Priority: checkinStatus > active status
-                        // Show check-in status colors even when session is active
+                        // Determine color: leave > holiday > check-in status
+                        const isOnLeave = leaveDates.has(istDateStr);
+                        const holidayName = holidays.get(istDateStr);
                         let bgColor = isWeekend ? 'bg-muted/50' : 'bg-muted'; // Default greyed for weekends
-                        
-                        if (checkinStatus === 'none') {
+
+                        if (isOnLeave) {
+                          bgColor = isWeekend ? 'bg-primary/50' : 'bg-primary/70';
+                        } else if (holidayName && checkinStatus === 'none') {
+                          bgColor = isWeekend ? 'bg-sky-400/50' : 'bg-sky-500/70';
+                        } else if (checkinStatus === 'none') {
                           // No check-in
                           bgColor = isWeekend ? 'bg-muted/50' : 'bg-muted';
                         } else {
@@ -404,7 +435,7 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
                           switch (checkinStatus) {
                             case 'early':
                             case 'on-time':
-                              bgColor = isWeekend ? 'bg-emerald-400/70' : 'bg-emerald-500';
+                              bgColor = isWeekend ? 'bg-success-300/70' : 'bg-success-500';
                               break;
                             case 'slightly-late':
                             case 'late':
@@ -412,7 +443,7 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
                               break;
                             default:
                               if (status === 'active') {
-                                bgColor = isWeekend ? 'bg-emerald-400/70' : 'bg-emerald-500';
+                                bgColor = isWeekend ? 'bg-success-300/70' : 'bg-success-500';
                               } else {
                                 bgColor = isWeekend ? 'bg-muted/50' : 'bg-muted';
                               }
@@ -420,9 +451,14 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
                         }
                         
                         // Build tooltip text
-                        const tooltipText = checkinTime 
+                        const baseTooltip = checkinTime
                           ? `${day.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}: ${checkinTime} (${checkinStatus === 'none' ? 'No check-in' : checkinStatus})${hours > 0 ? ` - ${hours.toFixed(1)}h` : ''}`
                           : `${day.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}: No attendance`;
+                        const tooltipText = isOnLeave
+                          ? `${baseTooltip} · On leave`
+                          : holidayName
+                            ? `${baseTooltip}${checkinStatus === 'none' ? ` · Holiday: ${holidayName}` : ''}`
+                            : baseTooltip;
                         
                         return (
                           <div
@@ -433,9 +469,9 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
                             title={tooltipText}
                           >
                             {/* Custom tooltip */}
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 elevation-lg">
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-foreground text-background text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 elevation-lg">
                               {tooltipText}
-                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900 dark:border-t-gray-800"></div>
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-foreground"></div>
                             </div>
                           </div>
                         );
@@ -443,17 +479,45 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
                     </div>
                   ))}
                 </div>
+
+                {/* Month summary — present / leave / holidays / hours */}
+                {monthSummaries[monthIdx] && (
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    <span className="rounded-full bg-success-500/10 px-2 py-0.5 text-[10px] font-medium text-success-700 dark:text-success-400">
+                      ✓ {monthSummaries[monthIdx].present} present
+                    </span>
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                      🌴 {monthSummaries[monthIdx].leave} leave
+                    </span>
+                    {monthSummaries[monthIdx].holidays > 0 && (
+                      <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-medium text-sky-600 dark:text-sky-400">
+                        🎉 {monthSummaries[monthIdx].holidays} {monthSummaries[monthIdx].holidays === 1 ? 'holiday' : 'holidays'}
+                      </span>
+                    )}
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      {monthSummaries[monthIdx].hours}h logged
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
-            {/* Legend — compact 3-item */}
-            <div className="flex items-center gap-3 mt-2">
+            {/* Legend — compact */}
+            <div className="flex flex-wrap items-center gap-3 mt-2">
               <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                <span className="w-2 h-2 rounded-full bg-success-500 inline-block" />
                 <span className="text-[10px] text-muted-foreground">On time</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
                 <span className="text-[10px] text-muted-foreground">Late</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-primary/70 inline-block" />
+                <span className="text-[10px] text-muted-foreground">Leave</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-sky-500/70 inline-block" />
+                <span className="text-[10px] text-muted-foreground">Holiday</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-muted inline-block" />

@@ -1,7 +1,7 @@
 import confetti from 'canvas-confetti';
 
-// Brand colors
-const BRAND_COLORS = ['#5cfaad', '#5ff1f5', '#ffffff', '#a0fdd8'];
+// Brand palette — violet leads, mint/aqua as the celebratory accent
+const BRAND_COLORS = ['#6a63b6', '#9f98e8', '#5cfaad', '#5ff1f5'];
 
 /**
  * Big celebration — check-in on time or early

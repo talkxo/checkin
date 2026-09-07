@@ -40,7 +40,7 @@ export default function LeavePage() {
     return (
       <div className="min-h-screen bg-background dark:bg-background flex items-center justify-center p-8">
         <div className="w-full max-w-2xl mx-auto">
-          <div className="bg-card dark:bg-card rounded-2xl elevation-lg p-8 slide-up border border-border/50 dark:border-border">
+          <div className="glass rounded-2xl p-8 slide-up">
             <div className="text-center">
               <div className="w-16 h-16 bg-muted dark:bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg className="w-8 h-8 text-foreground dark:text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,14 +81,14 @@ export default function LeavePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="sticky top-0 z-10 border-b border-border/50 bg-background/90 backdrop-blur-sm">
-        <PageShell variant="wide">
+    <div className="ambient-page min-h-screen bg-background text-foreground">
+      <div className="glass-strong sticky top-0 z-10 rounded-b-2xl">
+        <div className="mx-auto w-full max-w-4xl px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link
                 href="/"
-                className="rounded-xl border border-border/50 bg-card p-2.5 transition-colors duration-200 hover:bg-muted"
+                className="glass-hover rounded-xl border border-glass-border bg-transparent p-2.5 transition-colors duration-200"
                 aria-label="Go back"
               >
                 <ArrowLeft className="w-5 h-5 text-foreground" />
@@ -100,7 +100,7 @@ export default function LeavePage() {
             </div>
             <DarkModeToggle />
           </div>
-        </PageShell>
+        </div>
       </div>
 
       <PageShell variant="wide">

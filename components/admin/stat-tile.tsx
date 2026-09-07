@@ -28,7 +28,7 @@ export function StatTile({
         : "bg-muted/60 text-muted-foreground";
 
   return (
-    <div className="rounded-2xl border border-border/50 bg-card p-4">
+    <div className="glass glass-hover rounded-2xl p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className={WIDGET_TITLE_CLASS}>{label}</p>

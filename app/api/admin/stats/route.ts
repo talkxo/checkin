@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
+import { isAdminAuthenticated, getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { nowIST } from '@/lib/time';
 
 export async function GET(request: Request) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { searchParams } = new URL(request.url);
     const range = searchParams.get('range') || 'week';

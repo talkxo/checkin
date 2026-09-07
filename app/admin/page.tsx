@@ -294,7 +294,7 @@ export default function AdminPage() {
       const delay = (normalizedIndex % 7) * 0.3;
       const isOffice = color === "office";
       const startOpacity = isOffice ? 0.34 : 0.3;
-      const gradient = isOffice ? "#67dfc2" : "#8f7cff";
+      const gradient = isOffice ? "var(--ambient-c)" : "var(--ambient-a)";
       const pathByEdge: Record<number, { x: number[]; y: number[] }> = {
         // left edge -> mostly move rightward
         0: {
@@ -797,7 +797,7 @@ export default function AdminPage() {
   ], [refreshOverview, setShowAddUserDialog, setShowResetDialog, handleExportFilteredAttendance]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
+    <div className="ambient-page relative min-h-screen overflow-hidden bg-background">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         {animatedBlobs.map((blob) => {
           return (
@@ -939,7 +939,7 @@ export default function AdminPage() {
       <EmployeeDetailDrawer employee={selectedEmployee} open={isEmployeeDrawerOpen} onOpenChange={setIsEmployeeDrawerOpen} />
 
       <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-        <DialogContent className="rounded-3xl border-border/60">
+        <DialogContent className="rounded-3xl">
           <DialogHeader>
             <DialogTitle>Reset Active Sessions</DialogTitle>
             <DialogDescription>
@@ -959,7 +959,7 @@ export default function AdminPage() {
       </Dialog>
 
       <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
-        <DialogContent className="rounded-3xl border-border/60">
+        <DialogContent className="rounded-3xl">
           <DialogHeader>
             <DialogTitle>Add User</DialogTitle>
             <DialogDescription>Create a new employee record for attendance and leave tracking.</DialogDescription>
@@ -991,7 +991,7 @@ export default function AdminPage() {
       </Dialog>
 
       <Dialog open={showEditUserDialog} onOpenChange={setShowEditUserDialog}>
-        <DialogContent className="rounded-3xl border-border/60">
+        <DialogContent className="rounded-3xl">
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>Update basic user details and active state.</DialogDescription>

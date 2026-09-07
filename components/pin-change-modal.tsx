@@ -133,17 +133,17 @@ export default function PinChangeModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="glass-strong rounded-2xl p-8 max-w-md w-full">
         <h2 className="text-2xl font-semibold text-foreground mb-2">Change Your PIN</h2>
-        <p className="text-sm text-gray-600 mb-6">
+        <p className="text-sm text-muted-foreground mb-6">
           Hi {employeeName}! For security, please change your PIN to a new 4-digit code.
         </p>
 
         <div className="space-y-4">
           {/* Current PIN */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Current PIN
             </label>
             <Input
@@ -166,7 +166,7 @@ export default function PinChangeModal({
 
           {/* New PIN */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               New PIN
             </label>
             <Input
@@ -189,7 +189,7 @@ export default function PinChangeModal({
 
           {/* Confirm PIN */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Confirm New PIN
             </label>
             <Input
@@ -213,7 +213,7 @@ export default function PinChangeModal({
           {/* Error Message */}
           {error && (
             <div className="text-center">
-              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-3">
+              <p className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-md p-3">
                 {error}
               </p>
             </div>
@@ -236,7 +236,7 @@ export default function PinChangeModal({
           </Button>
 
           {/* Note */}
-          <p className="text-xs text-gray-500 text-center">
+          <p className="text-xs text-muted-foreground text-center">
             ⚠️ You cannot proceed until you change your PIN
           </p>
         </div>

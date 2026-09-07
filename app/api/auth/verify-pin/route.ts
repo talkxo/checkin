@@ -1,7 +1,7 @@
+import { createUserSession, setUserSession } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
-import { createUserSession, setUserSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -88,26 +88,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // --- TEST USER: (Enabled for local testing) ---
-    if (username.toLowerCase() === 'test' && pin === '1234') {
-      await resetRateLimit(ip);
-      const testEmployee = {
-        id: '00000000-0000-0000-0000-000000000001',
-        full_name: 'Test User',
-        slug: 'test-user',
-        email: 'test@localhost',
-      };
-      
-      // Issue secure session cookie
-      const session = createUserSession(testEmployee.id, testEmployee.slug, testEmployee.full_name);
-      await setUserSession(session);
-
-      return NextResponse.json({
-        success: true,
-        employee: testEmployee,
-        pin_change_required: false,
-      });
-    }
+    // --- TEST USER backdoor removed for security ---
 
     // Lookup employee by username (can be full_name, slug, or email)
     let employee = null;

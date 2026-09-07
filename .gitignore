@@ -20,3 +20,13 @@ build
 dist
 # CSV files (may contain sensitive data)
 *.csv
+
+# Build artifacts & caches
+.next-dev
+.next.bak-*
+*.tsbuildinfo
+
+# Local scratch/debug
+scratch/
+.claude/settings.local.json
+zcode.tldraw

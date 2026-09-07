@@ -246,7 +246,7 @@ export function AdminOverviewWorkspace({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl border border-border/50 bg-card px-5 py-5">
+      <section className="glass rounded-3xl px-5 py-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className={WIDGET_TITLE_CLASS}>Glance</p>
@@ -269,7 +269,7 @@ export function AdminOverviewWorkspace({
             <button
               key={card.label}
               onClick={card.action}
-              className="rounded-2xl border border-border/50 bg-muted/20 p-4 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="glass glass-hover rounded-2xl p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-foreground">{card.label}</p>
@@ -289,7 +289,7 @@ export function AdminOverviewWorkspace({
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-3xl border border-border/50 bg-card p-5 xl:col-span-1">
+        <div className="glass rounded-3xl p-5 xl:col-span-1">
           <div>
             <p className={WIDGET_TITLE_CLASS}>Team&apos;s Plan</p>
           </div>
@@ -323,12 +323,12 @@ export function AdminOverviewWorkspace({
           </div>
         </div>
 
-        <div className="rounded-3xl border border-border/50 bg-card p-5 xl:col-span-1">
+        <div className="glass rounded-3xl p-5 xl:col-span-1">
           <div className="flex items-start justify-between">
             <div>
               <p className={WIDGET_TITLE_CLASS}>Team Mood</p>
             </div>
-            <div className="flex items-center gap-1 rounded-xl border border-border/60 bg-muted/30 p-1">
+            <div className="flex items-center gap-1 rounded-xl bg-muted/30 p-1">
               <button
                 onClick={() => setMoodRange("week")}
                 className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
@@ -352,8 +352,8 @@ export function AdminOverviewWorkspace({
             <p className="mt-6 text-sm text-muted-foreground">Loading mood trends…</p>
           ) : (
             <>
-              <div className="mt-4 rounded-2xl border border-border/50 bg-muted/10 px-4 py-3">
-                <div className="mb-3 rounded-xl border border-border/40 bg-background/70 px-3 py-2">
+              <div className="mt-4 rounded-2xl bg-muted/10 px-4 py-3">
+                <div className="mb-3 rounded-xl bg-background/70 px-3 py-2">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Selected mood</p>
                   <p className="mt-1 text-sm font-semibold text-foreground">
                     {activeMoodStat?.label || "N/A"} ·{" "}
@@ -399,8 +399,8 @@ export function AdminOverviewWorkspace({
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-3xl border border-border/50 bg-card">
-          <div className="flex items-center justify-between border-b border-border/50 px-5 py-4">
+        <div className="glass rounded-3xl">
+          <div className="flex items-center justify-between border-b border-glass-border px-5 py-4">
             <div>
               <p className={WIDGET_TITLE_CLASS}>Today&apos;s Roster</p>
             </div>
@@ -410,7 +410,7 @@ export function AdminOverviewWorkspace({
             </div>
           </div>
           {todayData.length ? (
-            <div className="divide-y divide-border/50">
+            <div className="divide-y divide-glass-border">
               {todayData.slice(0, 8).map((person) => (
                 <button
                   key={`${person.name}-${person.firstIn}`}
@@ -442,11 +442,11 @@ export function AdminOverviewWorkspace({
           )}
         </div>
 
-        <div className="rounded-3xl border border-border/50 bg-card px-5 py-4">
+        <div className="glass rounded-3xl px-5 py-4">
           <p className={WIDGET_TITLE_CLASS}>Operational Mix</p>
 
           <div className="mt-5 space-y-4">
-            <div className="rounded-2xl border border-border/50 bg-muted/20 px-4 py-4">
+            <div className="rounded-2xl bg-muted/20 px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Operator Note</p>
               <p className="mt-2 text-sm text-foreground">
                 {missing > 0
@@ -458,7 +458,7 @@ export function AdminOverviewWorkspace({
               </p>
             </div>
 
-            <div className="rounded-2xl border border-border/50 bg-muted/20 px-4 py-4">
+            <div className="rounded-2xl bg-muted/20 px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Upcoming Leaves</p>
               <p className="mt-2 text-sm text-foreground">Includes today and upcoming approved leaves.</p>
               <div className="mt-3 space-y-2">
@@ -471,7 +471,7 @@ export function AdminOverviewWorkspace({
                     const firstName = employee?.full_name?.split(" ")[0] || "Unknown";
                     const isOngoing = leave.start_date <= todayKey && leave.end_date >= todayKey;
                     return (
-                      <div key={leave.id} className="flex items-center justify-between rounded-lg border border-border/40 bg-background/70 px-3 py-2">
+                      <div key={leave.id} className="flex items-center justify-between rounded-lg bg-background/70 px-3 py-2">
                         <div className="min-w-0">
                           <p className="truncate text-xs font-semibold text-foreground">{firstName}</p>
                           <p className="text-[11px] text-muted-foreground">{leaveType?.name || "Leave"}</p>
@@ -493,7 +493,7 @@ export function AdminOverviewWorkspace({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border/50 bg-muted/20 px-4 py-4">
+            <div className="rounded-2xl bg-muted/20 px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Coverage</p>
               <div className="mt-3 space-y-3">
                 <div>
@@ -527,7 +527,7 @@ export function AdminOverviewWorkspace({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border/50 bg-muted/20 p-4">
+            <div className="rounded-2xl bg-muted/20 p-4">
               <div className="flex items-center gap-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Broadcast to Basecamp HQ</p>
                 <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
@@ -543,7 +543,7 @@ export function AdminOverviewWorkspace({
                   value={announcementDraft}
                   onChange={(event) => setAnnouncementDraft(event.target.value)}
                   placeholder="Write your announcement for the team…"
-                  className="min-h-[110px] rounded-xl border-border/60 bg-background/70"
+                  className="min-h-[110px] rounded-xl bg-background/70"
                 />
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs text-muted-foreground">{announcementDraft.length}/2500</p>
@@ -567,7 +567,7 @@ export function AdminOverviewWorkspace({
                   </div>
                 ) : null}
                 {announcementPreview ? (
-                  <div className="rounded-lg border border-border/50 bg-background/70 px-3 py-2">
+                  <div className="rounded-lg bg-background/70 px-3 py-2">
                     <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Sent Preview</p>
                     <pre className="max-h-28 overflow-auto whitespace-pre-wrap text-xs text-foreground">{announcementPreview}</pre>
                   </div>

@@ -82,9 +82,9 @@ export default function WFHPlannerTab({ employeeId, onScheduleSaved }: WFHPlanne
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       {/* Personal plan — Raised card */}
-      <div className="bg-card rounded-2xl border border-border/50 p-4 shadow-sm dark:shadow-none space-y-4">
+      <div className="glass rounded-2xl p-4 space-y-4">
         <div>
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Your Plan</h3>
+          <h3 className="card-label">Your Plan</h3>
           <p className="text-xs text-muted-foreground mt-0.5">Tap the days you&apos;ll be remote. Max 2/week.</p>
         </div>
 
@@ -137,8 +137,8 @@ export default function WFHPlannerTab({ employeeId, onScheduleSaved }: WFHPlanne
       </div>
 
       {/* Team plan — Raised card */}
-      <div className="bg-card rounded-2xl border border-border/50 p-4 shadow-sm dark:shadow-none space-y-3">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Team&apos;s Plan</h3>
+      <div className="glass rounded-2xl p-4 space-y-3">
+        <h3 className="card-label">Team&apos;s Plan</h3>
         <TeamWeekView weekStart={weekStart} />
       </div>
     </motion.div>

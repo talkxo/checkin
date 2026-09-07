@@ -29,6 +29,18 @@ module.exports = {
           600: '#6a63b6',
           700: '#5a54a4',
         },
+        glass: {
+          DEFAULT: "var(--glass-bg)",
+          strong: "var(--glass-bg-strong)",
+          hover: "var(--glass-bg-hover)",
+          border: "var(--glass-border)",
+          highlight: "var(--glass-highlight)",
+        },
+        mint: {
+          DEFAULT: '#5cfaad',
+          soft: '#a0fdd8',
+          aqua: '#5ff1f5',
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminAuthenticated, getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { callOpenRouter } from '@/lib/ai';
 
@@ -6,6 +7,9 @@ export const dynamic = 'force-dynamic';
 
 // GET - Get saved responses with filtering
 export async function GET(req: NextRequest) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId') || 'admin';
@@ -43,6 +47,9 @@ export async function GET(req: NextRequest) {
 
 // POST - Save a new response
 export async function POST(req: NextRequest) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { userId, title, content, tags } = await req.json();
     
@@ -76,6 +83,9 @@ export async function POST(req: NextRequest) {
 
 // PUT - Update a saved response
 export async function PUT(req: NextRequest) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { id, title, content, tags } = await req.json();
     
@@ -111,6 +121,9 @@ export async function PUT(req: NextRequest) {
 
 // DELETE - Delete a saved response
 export async function DELETE(req: NextRequest) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');

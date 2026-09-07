@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Lock, RefreshCw } from 'lucide-react';
+import { formatISTDateKey } from '@/lib/time';
 
 interface Employee {
   id: string;
@@ -168,7 +169,7 @@ export default function PinManagementPage() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `employee-pins-${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `employee-pins-${formatISTDateKey(new Date())}.csv`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -244,7 +245,7 @@ export default function PinManagementPage() {
         )}
 
         {/* Employees Table */}
-        <Card className="rounded-3xl border-border/50 bg-card">
+        <Card className="rounded-3xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Lock className="w-5 h-5" />
@@ -352,7 +353,7 @@ export default function PinManagementPage() {
         </Card>
 
         {/* Instructions */}
-        <div className="rounded-3xl border border-border/50 bg-muted/20 px-5 py-4">
+        <div className="rounded-3xl bg-muted/20 px-5 py-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">How it works</p>
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
             <li>PINs must be exactly 4 digits (0000-9999).</li>

@@ -54,22 +54,22 @@ export function AdminPeopleWorkspace({
   return (
     <div className="space-y-5">
       <section className="grid gap-3 md:grid-cols-3">
-        <div className="rounded-2xl border border-border/50 bg-card p-4">
+        <div className="glass rounded-2xl p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">People</p>
           <p className="mt-2 text-2xl font-semibold [font-variant-numeric:tabular-nums]">{users.length}</p>
         </div>
-        <div className="rounded-2xl border border-border/50 bg-card p-4">
+        <div className="glass rounded-2xl p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Active</p>
           <p className="mt-2 text-2xl font-semibold [font-variant-numeric:tabular-nums]">{activeUsers}</p>
         </div>
-        <div className="rounded-2xl border border-border/50 bg-card p-4">
+        <div className="glass rounded-2xl p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Inactive</p>
           <p className="mt-2 text-2xl font-semibold [font-variant-numeric:tabular-nums]">{users.length - activeUsers}</p>
         </div>
       </section>
 
-      <section className="rounded-3xl border border-border/50 bg-card">
-        <div className="flex flex-col gap-4 border-b border-border/50 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+      <section className="glass rounded-3xl">
+        <div className="flex flex-col gap-4 border-b border-glass-border px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-foreground">People & Access</h2>
             <p className="text-sm text-muted-foreground">Manage employee records without leaving the workspace.</p>
@@ -81,7 +81,7 @@ export function AdminPeopleWorkspace({
                 value={searchQuery}
                 onChange={(event) => onSearchQueryChange(event.target.value)}
                 placeholder="Search people"
-                className="w-[240px] rounded-xl border-border/60 bg-background pl-9"
+                className="w-[240px] rounded-xl bg-background/70 pl-9"
               />
             </div>
             <Button variant="outline" onClick={() => window.location.href = '/admin/pin-management'} className="rounded-xl">
@@ -98,7 +98,7 @@ export function AdminPeopleWorkspace({
         {filteredUsers.length ? (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="border-b border-border/50 bg-muted/20 text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <thead className="border-b border-glass-border bg-muted/20 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th className="px-5 py-3 font-medium">Name</th>
                   <th className="px-5 py-3 font-medium">Email</th>
@@ -108,7 +108,7 @@ export function AdminPeopleWorkspace({
                   <th className="px-5 py-3 font-medium text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/50">
+              <tbody className="divide-y divide-glass-border">
                 {filteredUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-muted/20">
                     <td className="px-5 py-4 font-semibold text-foreground">{user.full_name}</td>

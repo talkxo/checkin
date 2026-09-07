@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminAuthenticated, getUserSession } from '@/lib/auth';
 import { callOpenRouter } from '@/lib/ai';
 import { getEmployeeLeaveBalance } from '@/lib/leave';
 import { supabaseAdmin } from '@/lib/supabase';
@@ -106,6 +107,9 @@ async function embeddingSearch(query: string, topK: number = 5) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isAdminAuthenticated() && !getUserSession()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { query, conversationHistory = [], userSlug } = await request.json();
 

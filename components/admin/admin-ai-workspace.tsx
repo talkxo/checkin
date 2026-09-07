@@ -248,7 +248,7 @@ export function AdminAiWorkspace({
 
   return (
     <div className="space-y-5">
-      <section className="rounded-3xl border border-border/50 bg-card px-5 py-5">
+      <section className="glass rounded-3xl px-5 py-5">
         <div className="flex flex-col gap-4">
           <div className="flex items-start justify-between">
             <div>
@@ -261,7 +261,7 @@ export function AdminAiWorkspace({
             </Button>
           </div>
         <div className="mt-2 w-full max-w-xl">
-          <div className="relative flex items-center rounded-xl border border-border/60 bg-muted/30 p-1">
+          <div className="relative flex items-center rounded-xl bg-muted/30 p-1">
             <motion.div
               layout
               className={`absolute top-1 bottom-1 w-[calc(50%-0.25rem)] rounded-lg bg-primary shadow-sm ${
@@ -292,7 +292,7 @@ export function AdminAiWorkspace({
 
       {activeView === "reports" ? (
       <section className="grid gap-5 xl:grid-cols-[0.92fr_1.08fr]">
-        <div className="rounded-3xl border border-border/50 bg-card px-5 py-5">
+        <div className="glass rounded-3xl px-5 py-5">
           <div className="space-y-5">
             <div>
               <h3 className="text-lg font-semibold text-foreground">Choose Dataset</h3>
@@ -321,13 +321,13 @@ export function AdminAiWorkspace({
                     type="date"
                     value={aiCustomRange.startDate}
                     onChange={(event) => onAiCustomRangeChange({ ...aiCustomRange, startDate: event.target.value })}
-                    className="h-10 rounded-xl border border-border/60 bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                    className="h-10 rounded-xl bg-background/70 px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                   />
                   <input
                     type="date"
                     value={aiCustomRange.endDate}
                     onChange={(event) => onAiCustomRangeChange({ ...aiCustomRange, endDate: event.target.value })}
-                    className="h-10 rounded-xl border border-border/60 bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                    className="h-10 rounded-xl bg-background/70 px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
               ) : null}
@@ -347,7 +347,7 @@ export function AdminAiWorkspace({
                     className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${
                       selectedAiFeature === feature
                         ? "border-primary/25 bg-primary/10"
-                        : "border-border/60 bg-muted/10 hover:bg-muted/20"
+                        : "border-transparent bg-white/40 dark:bg-white/5 hover:bg-muted/20"
                     }`}
                   >
                     <div className="rounded-xl bg-muted/70 p-2">
@@ -367,7 +367,7 @@ export function AdminAiWorkspace({
               <textarea
                 value={promptText}
                 onChange={(event) => onCustomPromptChange(event.target.value)}
-                className="mt-2 min-h-[140px] w-full rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                className="mt-2 min-h-[140px] w-full rounded-2xl bg-background/70 px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
 
@@ -378,7 +378,7 @@ export function AdminAiWorkspace({
           </div>
         </div>
 
-        <div className="rounded-3xl border border-border/50 bg-card px-5 py-5">
+        <div className="glass rounded-3xl px-5 py-5">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-foreground">Output</h3>
@@ -388,18 +388,18 @@ export function AdminAiWorkspace({
 
           <div className="mt-5">
             {reportQueue.length ? (
-              <div className="overflow-hidden rounded-2xl border border-border/60 bg-muted/10">
+              <div className="overflow-hidden rounded-2xl bg-muted/10">
                 <div className="overflow-x-auto">
                   <table className="w-full table-auto">
                     <thead>
-                      <tr className="border-b border-border/60 bg-muted/20 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                      <tr className="border-b border-glass-border bg-muted/20 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                         <th className="px-4 py-3 text-left">Report Name</th>
                         <th className="px-4 py-3 text-left">Period</th>
                         <th className="px-4 py-3 text-left">Requested On</th>
                         <th className="px-4 py-3 text-left">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-border/60">
+                    <tbody className="divide-y divide-glass-border">
                       {reportQueue.map((item, index) => (
                         <motion.tr
                           key={item.id}
@@ -491,9 +491,9 @@ export function AdminAiWorkspace({
       ) : null}
 
       {activeView === "chat" ? (
-      <section className="h-[620px] rounded-3xl border border-border/50 bg-card px-5 py-5">
+      <section className="h-[620px] glass rounded-3xl px-5 py-5">
         <div className="flex h-full min-h-0 flex-col">
-        <div className="flex flex-col gap-3 border-b border-border/50 pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-b border-glass-border pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-lg font-semibold text-foreground">Assistive Chat</h3>
             <p className="text-sm text-muted-foreground">Use prompts to explore attendance deeply.</p>
@@ -527,7 +527,7 @@ export function AdminAiWorkspace({
                 className={`max-w-[88%] rounded-2xl border px-4 py-3 ${
                   message.role === "user"
                     ? "border-primary/20 bg-primary/10 text-foreground"
-                    : "border-border/60 bg-muted/20 text-foreground"
+                    : "border-transparent bg-white/40 dark:bg-white/5 text-foreground"
                 }`}
               >
                 <div className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
@@ -563,7 +563,7 @@ export function AdminAiWorkspace({
           ))}
           {chatLoading ? (
             <div className="flex justify-start">
-              <div className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+              <div className="inline-flex items-center gap-2 rounded-xl bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Thinking with live data...
               </div>
@@ -577,7 +577,7 @@ export function AdminAiWorkspace({
             <button
               key={prompt}
               onClick={() => setChatInput(prompt)}
-              className="rounded-full border border-border/60 bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              className="rounded-full bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
               {prompt}
             </button>
@@ -595,7 +595,7 @@ export function AdminAiWorkspace({
               }
             }}
             placeholder="Ask about trends, outliers, leave pressure, or attendance risk..."
-            className="h-11 flex-1 rounded-xl border border-border/60 bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+            className="h-11 flex-1 rounded-xl bg-background/70 px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
             disabled={chatLoading}
           />
           <Button onClick={sendChat} disabled={chatLoading || !chatInput.trim()} className="h-11 rounded-xl px-4">

@@ -13,44 +13,34 @@ interface ThemeContextType {
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('dark'); // Default to dark mode
+  // Dark-first app: the pre-hydration script in layout.tsx has already applied
+  // the `dark` class before paint, so we default to 'dark' for both SSR and the
+  // first client render and sync the saved preference right after mount.
+  const [theme, setTheme] = useState<Theme>('dark');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    // Check for saved theme preference or default to dark
-    const savedTheme = localStorage.getItem('theme') as Theme | null;
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme) {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') {
       setTheme(savedTheme);
-    } else if (prefersDark) {
-      setTheme('dark');
-    } else {
-      setTheme('dark'); // Default to dark
     }
+    setMounted(true);
   }, []);
 
   useEffect(() => {
     if (!mounted) return;
-    
+
     const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
+    root.classList.toggle('dark', theme === 'dark');
     localStorage.setItem('theme', theme);
   }, [theme, mounted]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
+  // Always provide the context so consumers can render on the first pass;
+  // the class on <html> is already correct via the pre-hydration script.
   return (
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
       {children}
@@ -65,7 +55,3 @@ export function useTheme() {
   }
   return context;
 }
-
-
-
-

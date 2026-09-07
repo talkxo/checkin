@@ -8,7 +8,6 @@ export default function UserPage(){
   const slug = params?.slug as string;
   const [mode,setMode]=useState<'office'|'remote'>('office');
   const [msg,setMsg]=useState('');
-  const [pending,setPending]=useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(()=>{
@@ -49,36 +48,36 @@ export default function UserPage(){
   useEffect(()=>{ if(typeof window!== 'undefined') localStorage.setItem('mode', mode); },[mode]);
 
   if (!slug) {
-    return <div className="min-h-screen bg-white flex items-center justify-center">
-      <p className="text-gray-600">Invalid user</p>
+    return <div className="main-typography ambient-page min-h-screen bg-background flex items-center justify-center">
+      <p className="text-muted-foreground">Invalid user</p>
     </div>;
   }
 
   return (
-    <div className="min-h-screen bg-white p-4">
-      <div className="max-w-md mx-auto">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h1 className="text-2xl font-semibold text-center mb-6 text-gray-800">Check-in for {slug}</h1>
-          
+    <div className="main-typography ambient-page min-h-screen bg-background p-4">
+      <div className="max-w-md mx-auto flex min-h-[85vh] items-center">
+        <div className="glass w-full rounded-3xl p-6">
+          <h1 className="text-2xl font-semibold text-center mb-6 text-foreground">Check-in for {slug}</h1>
+
           <div className="space-y-4">
             <div className="text-center">
-              <p className="text-sm text-gray-600 mb-4">Select your work mode:</p>
+              <p className="text-sm text-muted-foreground mb-4">Select your work mode:</p>
               <div className="flex gap-2 justify-center">
                 <button
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-xl font-medium border transition-all ${
                     mode === 'office'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      ? 'bg-gradient-brand border-transparent text-white shadow-primary'
+                      : 'glass-hover border-glass-border bg-transparent text-muted-foreground'
                   }`}
                   onClick={() => setMode('office')}
                 >
                   Office
                 </button>
                 <button
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-xl font-medium border transition-all ${
                     mode === 'remote'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      ? 'bg-gradient-brand border-transparent text-white shadow-primary'
+                      : 'glass-hover border-glass-border bg-transparent text-muted-foreground'
                   }`}
                   onClick={() => setMode('remote')}
                 >
@@ -89,14 +88,14 @@ export default function UserPage(){
 
             <div className="flex gap-2">
               <button
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50"
+                className="flex-1 bg-gradient-brand text-white font-medium py-3 px-4 rounded-xl shadow-primary button-press transition-all duration-200 disabled:opacity-50"
                 onClick={() => act(mode)}
                 disabled={isSubmitting}
               >
                 {isSubmitting ? 'Checking in...' : 'Check In'}
               </button>
               <button
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50"
+                className="flex-1 bg-destructive text-white font-medium py-3 px-4 rounded-xl button-press transition-colors duration-200 disabled:opacity-50"
                 onClick={checkout}
                 disabled={isSubmitting}
               >
@@ -105,7 +104,7 @@ export default function UserPage(){
             </div>
 
             {msg && (
-              <p className="text-center text-sm text-gray-600">
+              <p className="text-center text-sm text-muted-foreground">
                 {msg}
               </p>
             )}
@@ -115,5 +114,3 @@ export default function UserPage(){
     </div>
   );
 }
-
-

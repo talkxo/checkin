@@ -466,7 +466,7 @@ export default function ScoreBreakdownModal({
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-sm rounded-2xl border border-border/50 bg-card p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-sm rounded-2xl p-0 gap-0 overflow-hidden">
         {/* Header */}
         <div className="px-5 pt-5 pb-4 border-b border-border/50">
           <DialogHeader>

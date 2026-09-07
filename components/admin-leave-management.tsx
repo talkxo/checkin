@@ -340,7 +340,7 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="bg-card dark:bg-card rounded-2xl elevation-lg p-8 text-center fade-in border border-border/50 dark:border-border">
+        <div className="glass rounded-2xl p-8 text-center fade-in">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-foreground dark:text-foreground">Loading...</p>
         </div>
@@ -351,7 +351,7 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
   return (
     <div className="space-y-6">
       {/* Tab Navigation */}
-      <div className="flex gap-1 bg-muted/50 dark:bg-muted/30 p-1 rounded-lg border border-border/50 dark:border-border">
+      <div className="flex gap-1 bg-muted/50 dark:bg-muted/30 p-1 rounded-lg">
         <Button
           variant={activeTab === 'requests' ? 'default' : 'ghost'}
           size="sm"
@@ -405,7 +405,7 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
 
       {/* Leave Requests Tab Content */}
       {activeTab === 'requests' && (
-        <Card className="bg-card dark:bg-card border border-border/50 dark:border-border elevation-md">
+        <Card>
           <CardHeader>
             <CardTitle className="text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>Leave Requests</CardTitle>
             <CardDescription className="text-muted-foreground dark:text-muted-foreground">
@@ -513,7 +513,7 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
 
       {/* Employee Leave Balances Tab Content */}
       {activeTab === 'employees' && (
-        <Card className="bg-card dark:bg-card border border-border/50 dark:border-border elevation-md">
+        <Card>
           <CardHeader>
             <CardTitle className="text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>Employee Leave Balances</CardTitle>
             <CardDescription className="text-muted-foreground dark:text-muted-foreground">
@@ -595,7 +595,7 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
       )}
 
       {activeTab === 'accrual' && (
-        <Card className="bg-card dark:bg-card border border-border/50 dark:border-border elevation-md">
+        <Card>
           <CardHeader>
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
@@ -665,7 +665,7 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
 
       {/* Employee Leave Edit Dialog */}
       <Dialog open={showEmployeeLeaveDialog} onOpenChange={setShowEmployeeLeaveDialog}>
-        <DialogContent className="max-w-2xl bg-card dark:bg-card border border-border/50 dark:border-border">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-foreground dark:text-foreground" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>
               <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
@@ -694,7 +694,7 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
                 const leaveTypeName = leaveType.name;
                 const balance = editingBalances[leaveTypeName] || { total_entitlement: 0, used_leaves: 0, pending_leaves: 0 };
                 return (
-                  <div key={leaveTypeName} className="border border-border/50 dark:border-border rounded-lg p-4 bg-muted/30 dark:bg-muted/20">
+                  <div key={leaveTypeName} className="rounded-lg p-4 bg-muted/30 dark:bg-muted/20">
                     <h4 className="font-semibold mb-3 text-foreground dark:text-foreground">{leaveTypeName}</h4>
                     <div className="grid grid-cols-3 gap-4">
                       <div>

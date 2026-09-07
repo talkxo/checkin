@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminAuthenticated, getUserSession } from '@/lib/auth';
 import { callOpenRouter } from '@/lib/ai';
 
 export const dynamic = 'force-dynamic';
@@ -50,6 +51,9 @@ function buildDataSummary(data: FetchedData): string {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAdminAuthenticated() && !getUserSession()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     // Check if API key is configured
     if (!process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY.trim() === '') {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
+import { getUserSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +10,14 @@ const BCRYPT_ROUNDS = 10;
 export async function POST(req: NextRequest) {
   try {
     const { employeeId, currentPin, newPin } = await req.json();
+
+    const session = getUserSession();
+    if (!session) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+    if (employeeId !== session.id) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
 
     if (!employeeId || !currentPin || !newPin) {
       return NextResponse.json(

@@ -109,12 +109,13 @@ function ScratchGetWellBanner({ onClose }: { onClose: () => void }) {
     if (!ctx) return;
     ctx.scale(dpr, dpr);
     const scratchGradient = ctx.createLinearGradient(0, 0, width, height);
-    scratchGradient.addColorStop(0, '#6ee7b7'); // brighter mint
-    scratchGradient.addColorStop(0.48, '#67e8f9'); // bright aqua
-    scratchGradient.addColorStop(1, '#38bdf8'); // vivid sky blue
+    // Canvas can't read CSS vars — keep these in sync with the brand tokens
+    scratchGradient.addColorStop(0, '#8d86d4'); // brand violet tint
+    scratchGradient.addColorStop(0.48, '#5cfaad'); // mint
+    scratchGradient.addColorStop(1, '#5ff1f5'); // mint aqua
     ctx.fillStyle = scratchGradient;
     ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = 'rgba(15,23,42,0.72)';
+    ctx.fillStyle = 'rgba(15,23,42,0.75)';
     ctx.font = '700 16px system-ui';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -171,7 +172,7 @@ function ScratchGetWellBanner({ onClose }: { onClose: () => void }) {
   }, []);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-fuchsia-400/30 bg-gradient-to-br from-fuchsia-500/15 via-primary/15 to-cyan-500/15 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset]">
+    <div className="relative overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/15 via-mint/10 to-mint-aqua/10 shadow-[0_0_0_1px_rgba(255,255,255,0.06)_inset]">
       <div className="absolute right-3 top-3 z-30">
         <button
           type="button"
@@ -475,7 +476,7 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
   if (!leaveData) {
     return (
       <div className="mx-auto max-w-2xl">
-        <Card className="rounded-3xl border border-border/60 bg-card">
+        <Card className="rounded-3xl">
           <CardContent className="p-8 text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
               <Calendar className="h-8 w-8 text-muted-foreground" />
@@ -525,7 +526,7 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
               </Button>
             </DialogTrigger>
             <DialogContent className="main-typography left-0 top-0 flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 items-center justify-center overflow-y-auto rounded-none border-0 bg-background px-6 py-5 sm:px-6 sm:py-6">
-              <div className="mx-auto w-full max-w-xl space-y-4 rounded-3xl border border-border/60 bg-card p-4 shadow-sm sm:p-5">
+              <div className="mx-auto w-full max-w-xl space-y-4 glass rounded-3xl p-4 sm:p-5">
               <DialogHeader>
                 <DialogTitle className="text-xl font-semibold text-foreground">Request Leave</DialogTitle>
               </DialogHeader>
@@ -732,7 +733,7 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
         </div>
       ) : null}
 
-      <section className="rounded-3xl border border-border/60 bg-card p-5 shadow-sm sm:p-6">
+      <section className="glass rounded-3xl p-5 sm:p-6">
           <div className="mb-5 flex items-center justify-between gap-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">Balance</p>
             <button
@@ -801,7 +802,7 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
           )}
       </section>
 
-      <section className="rounded-3xl border border-border/60 bg-card p-4 shadow-sm sm:p-5">
+      <section className="glass rounded-3xl p-4 sm:p-5">
         <div className="mb-5 flex items-center justify-between gap-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">History</p>
           <button
@@ -896,7 +897,7 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
         )}
       </section>
 
-      <section className="rounded-3xl border border-border/60 bg-card p-5 shadow-sm sm:p-6">
+      <section className="glass rounded-3xl p-5 sm:p-6">
           <div className="mb-5 flex items-center justify-between gap-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">Accrual</p>
             <button

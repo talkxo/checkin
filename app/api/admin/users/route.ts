@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminAuthenticated, getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
 // GET - Get all users
 export async function GET() {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { data, error } = await supabaseAdmin
       .from('employees')
@@ -26,6 +30,9 @@ export async function GET() {
 
 // POST - Add new user
 export async function POST(req: NextRequest) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { fullName, email } = await req.json();
 
@@ -124,6 +131,9 @@ export async function POST(req: NextRequest) {
 
 // PUT - Update user
 export async function PUT(req: NextRequest) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { id, fullName, email, active } = await req.json();
 
@@ -158,6 +168,9 @@ export async function PUT(req: NextRequest) {
 
 // DELETE - Deactivate user (soft delete)
 export async function DELETE(req: NextRequest) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');

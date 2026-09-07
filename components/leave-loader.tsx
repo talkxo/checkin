@@ -22,9 +22,9 @@ export default function LeaveLoader() {
         >
           <Ghost 
             className="w-12 h-12" 
-            stroke="#2dd4bf"
+            stroke="#8d86d4"
             strokeWidth={0.5}
-            style={{ filter: "drop-shadow(0px 5px 8px rgba(45, 212, 191, 0.4))" }}
+            style={{ filter: "drop-shadow(0px 5px 8px rgba(141, 134, 212, 0.4))" }}
           />
         </motion.div>
 

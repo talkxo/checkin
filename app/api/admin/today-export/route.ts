@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminAuthenticated, getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
-import { nowIST, hhmmIST } from '@/lib/time';
+import { nowIST, istDateKeyOf, istDayWindow, hhmmIST } from '@/lib/time';
 
 export async function GET(req: NextRequest) {
+  if (!isAdminAuthenticated() && !getUserSession()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const now = nowIST();
-    const start = new Date(now);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(now);
-    end.setHours(23, 59, 59, 999);
+    const { start, end } = istDayWindow(now);
 
     // Get all employees
     const { data: employees, error: empError } = await supabaseAdmin
@@ -91,7 +92,7 @@ export async function GET(req: NextRequest) {
     ].join('\n');
 
     // Create filename with current date
-    const today = now.toISOString().split('T')[0];
+    const today = istDateKeyOf(now);
     const filename = `attendance_${today}.csv`;
 
     // Return CSV file

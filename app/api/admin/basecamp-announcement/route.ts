@@ -1,3 +1,4 @@
+import { isAdminAuthenticated } from '@/lib/auth';
 import { NextRequest, NextResponse } from "next/server";
 import { postCampfire } from "@/lib/basecamp";
 import { formatISTDateLong, formatISTTimeShort, nowIST } from "@/lib/time";
@@ -41,6 +42,9 @@ function buildAnnouncementMessage(contentLines: string[]): string {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const body = await req.json();
     const message = typeof body?.message === "string" ? body.message : "";

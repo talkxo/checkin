@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminAuthenticated, getUserSession } from '@/lib/auth';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -64,6 +65,9 @@ let knowledgeBase = parseHandbookSections(getHandbookContent());
 
 // GET - Retrieve all knowledge base items
 export async function GET() {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     return NextResponse.json({
       success: true,
@@ -80,6 +84,9 @@ export async function GET() {
 
 // POST - Create a new knowledge base item
 export async function POST(request: NextRequest) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { category, content } = await request.json();
 
@@ -114,6 +121,9 @@ export async function POST(request: NextRequest) {
 
 // PUT - Update an existing knowledge base item
 export async function PUT(request: NextRequest) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { id, category, content } = await request.json();
 
@@ -154,6 +164,9 @@ export async function PUT(request: NextRequest) {
 
 // DELETE - Delete a knowledge base item
 export async function DELETE(request: NextRequest) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

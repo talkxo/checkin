@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminAuthenticated, getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
-import { nowIST } from '@/lib/time';
+import { nowIST, istDateKeyOf, istDayWindow, istMonthWindow } from '@/lib/time';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const timeRange = searchParams.get('range') || 'week';
@@ -17,9 +21,15 @@ export async function GET(req: NextRequest) {
 
     // Handle custom date range
     if (customStartDate && customEndDate) {
-      startDate = new Date(customStartDate);
-      endDate = new Date(customEndDate);
-      endDate.setHours(23, 59, 59, 999);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(customStartDate) && /^\d{4}-\d{2}-\d{2}$/.test(customEndDate)) {
+        // Date-only inputs are IST calendar days
+        startDate = istDayWindow(customStartDate).start;
+        endDate = istDayWindow(customEndDate).end;
+      } else {
+        startDate = new Date(customStartDate);
+        endDate = new Date(customEndDate);
+        endDate.setHours(23, 59, 59, 999);
+      }
     } else {
       // Calculate date range based on parameter
       switch (timeRange) {
@@ -32,12 +42,10 @@ export async function GET(req: NextRequest) {
           startDate.setMonth(now.getMonth() - 1);
           break;
         case 'currentMonth':
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+          ({ start: startDate, end: endDate } = istMonthWindow(0, now));
           break;
         case 'previousMonth':
-          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+          ({ start: startDate, end: endDate } = istMonthWindow(-1, now));
           break;
         default:
           startDate = new Date(now);
@@ -92,7 +100,7 @@ export async function GET(req: NextRequest) {
         id: session.id,
         name: employeeName,
         slug: employeeSlug,
-        date: checkinTime.toISOString().split('T')[0],
+        date: istDateKeyOf(checkinTime),
         checkinTime: checkinTime.toLocaleTimeString('en-GB', { 
           hour: '2-digit', 
           minute: '2-digit',
@@ -107,7 +115,7 @@ export async function GET(req: NextRequest) {
         mood: session.mood,
         moodComment: session.mood_comment || '',
         mode: session.mode,
-        dayOfWeek: checkinTime.toLocaleDateString('en-US', { weekday: 'long' })
+        dayOfWeek: checkinTime.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'Asia/Kolkata' })
       };
     }) || [];
 

@@ -47,7 +47,7 @@ export function WorkspaceShell({
         {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
       </header>
 
-      <nav className="sticky top-0 z-20 -mx-4 border-y border-border/50 bg-background/90 px-4 py-3 backdrop-blur-sm sm:mx-0 sm:rounded-2xl sm:border sm:px-3">
+      <nav className="glass-strong sticky top-0 z-20 -mx-4 rounded-b-3xl px-4 py-3 sm:mx-0 sm:rounded-3xl sm:px-3">
         <div className="flex gap-2 overflow-x-auto scrollbar-hide">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -58,10 +58,10 @@ export function WorkspaceShell({
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
                 className={cn(
-                  "flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  "flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                   isActive
-                    ? "border-primary/20 bg-primary/10 text-foreground"
-                    : "border-border/60 bg-card text-muted-foreground hover:text-foreground"
+                    ? "bg-gradient-brand border-transparent text-white shadow-primary"
+                    : "border-transparent text-muted-foreground glass-hover hover:text-foreground"
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -70,7 +70,7 @@ export function WorkspaceShell({
                   <span
                     className={cn(
                       "rounded-full px-2 py-0.5 text-[11px] [font-variant-numeric:tabular-nums]",
-                      isActive ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                      isActive ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
                     )}
                   >
                     {tab.count}

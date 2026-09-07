@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminAuthenticated, getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
-import { nowIST } from '@/lib/time';
+import { nowIST, istDateKeyOf, istDayWindow } from '@/lib/time';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  if (!isAdminAuthenticated() && !getUserSession()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const range = searchParams.get('range') || 'today'; // today, week, month
@@ -16,7 +20,7 @@ export async function GET(req: NextRequest) {
     // Calculate start date based on range
     switch (range) {
       case 'today':
-        startDate.setHours(0, 0, 0, 0);
+        startDate = istDayWindow(now).start;
         break;
       case 'week':
         startDate.setDate(now.getDate() - 7);
@@ -24,8 +28,11 @@ export async function GET(req: NextRequest) {
       case 'month':
         startDate.setMonth(now.getMonth() - 1);
         break;
+      case 'year':
+        startDate.setFullYear(now.getFullYear() - 1);
+        break;
       default:
-        startDate.setHours(0, 0, 0, 0);
+        startDate = istDayWindow(now).start;
     }
 
     let employeeId: string | null = null;
@@ -73,7 +80,7 @@ export async function GET(req: NextRequest) {
       .gte('checkin_ts', startDate.toISOString())
       .lte('checkin_ts', now.toISOString())
       .order('checkin_ts', { ascending: false })
-      .limit(slug ? 120 : 20);
+      .limit(range === 'year' ? 1000 : slug ? 120 : 20);
 
     if (employeeId) {
       sessionsQuery = sessionsQuery.eq('employee_id', employeeId);
@@ -101,7 +108,7 @@ export async function GET(req: NextRequest) {
           minute: '2-digit',
           timeZone: 'Asia/Kolkata'
         }),
-        date: checkinTime.toISOString().split('T')[0],
+        date: istDateKeyOf(checkinTime),
         mode: session.mode,
         isOpen: !session.checkout_ts,
         timeAgo: getTimeAgo(checkinTime, now)
