@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, Edit, KeyRound, Plus, Search, Trash2, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Check, Copy, Edit, KeyRound, Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,7 @@ export function AdminPeopleWorkspace({
   onEditUser,
   onDeactivateUser,
 }: AdminPeopleWorkspaceProps) {
+  const router = useRouter();
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
   const copySlug = async (slug: string) => {
@@ -49,25 +51,8 @@ export function AdminPeopleWorkspace({
       return a.full_name.localeCompare(b.full_name);
     });
 
-  const activeUsers = users.filter((user) => user.active).length;
-
   return (
     <div className="space-y-5">
-      <section className="grid gap-3 md:grid-cols-3">
-        <div className="glass rounded-2xl p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">People</p>
-          <p className="mt-2 text-2xl font-semibold [font-variant-numeric:tabular-nums]">{users.length}</p>
-        </div>
-        <div className="glass rounded-2xl p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Active</p>
-          <p className="mt-2 text-2xl font-semibold [font-variant-numeric:tabular-nums]">{activeUsers}</p>
-        </div>
-        <div className="glass rounded-2xl p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Inactive</p>
-          <p className="mt-2 text-2xl font-semibold [font-variant-numeric:tabular-nums]">{users.length - activeUsers}</p>
-        </div>
-      </section>
-
       <section className="glass rounded-3xl">
         <div className="flex flex-col gap-4 border-b border-glass-border px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -84,10 +69,6 @@ export function AdminPeopleWorkspace({
                 className="w-[240px] rounded-xl bg-background/70 pl-9"
               />
             </div>
-            <Button variant="outline" onClick={() => window.location.href = '/admin/pin-management'} className="rounded-xl">
-              <KeyRound className="mr-2 h-4 w-4" />
-              PIN Management
-            </Button>
             <Button onClick={onAddUser} className="rounded-xl">
               <Plus className="mr-2 h-4 w-4" />
               Add User
@@ -110,7 +91,12 @@ export function AdminPeopleWorkspace({
               </thead>
               <tbody className="divide-y divide-glass-border">
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-muted/20">
+                  <tr
+                    key={user.id}
+                    className="cursor-pointer hover:bg-muted/20"
+                    onClick={() => router.push(`/admin/people?id=${user.id}`)}
+                    title="Open profile"
+                  >
                     <td className="px-5 py-4 font-semibold text-foreground">{user.full_name}</td>
                     <td className="px-5 py-4 text-muted-foreground">{user.email || "N/A"}</td>
                     <td className="px-5 py-4 font-mono text-xs text-muted-foreground">
@@ -137,13 +123,27 @@ export function AdminPeopleWorkspace({
                     <td className="px-5 py-4 text-muted-foreground">{new Date(user.created_at).toLocaleDateString("en-IN")}</td>
                     <td className="px-5 py-4">
                       <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => onEditUser(user)} className="rounded-xl">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => { e.stopPropagation(); router.push(`/admin/pin-management`); }}
+                          className="rounded-xl"
+                          title="PIN management"
+                        >
+                          <KeyRound className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => { e.stopPropagation(); onEditUser(user); }}
+                          className="rounded-xl"
+                        >
                           <Edit className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => onDeactivateUser(user)}
+                          onClick={(e) => { e.stopPropagation(); onDeactivateUser(user); }}
                           disabled={!user.active}
                           className="rounded-xl text-destructive"
                         >

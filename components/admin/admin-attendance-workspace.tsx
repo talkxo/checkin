@@ -1,11 +1,10 @@
 "use client";
 
-import { ArrowUpDown, Download, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowUpDown, Download, RefreshCw, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { StatTile } from "./stat-tile";
 import type { EmployeeSummary, TeamSummary } from "./types";
 
 type AttendanceStatusFilter = "all" | "active" | "attention" | "missing";
@@ -69,19 +68,15 @@ export function AdminAttendanceWorkspace({
 }: AdminAttendanceWorkspaceProps) {
   return (
     <div className="space-y-5">
-      <section className="grid gap-3 md:grid-cols-4">
-        <StatTile label="Employees" value={teamSummary?.totalEmployees ?? employees.length} helper="In current range" icon={SlidersHorizontal} />
-        <StatTile label="Working Days" value={teamSummary?.totalWorkingDays ?? 0} helper="Expected weekdays" icon={SlidersHorizontal} />
-        <StatTile label="Attendance Rate" value={`${teamSummary?.averageAttendanceRate ?? 0}%`} helper="Team average" icon={SlidersHorizontal} tone="accent" />
-        <StatTile label="Hours Logged" value={teamSummary?.totalHours ?? 0} helper="Across all sessions" icon={SlidersHorizontal} />
-      </section>
-
       <section className="glass-strong sticky top-[88px] z-10 rounded-3xl p-4">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-foreground">Attendance Analysis</h2>
-              <p className="text-sm text-muted-foreground">Updated {lastUpdatedLabel}. Filter the roster, then open any employee for context.</p>
+              <p className="text-sm text-muted-foreground">
+                {teamSummary?.totalEmployees ?? employees.length} people · {teamSummary?.averageAttendanceRate ?? 0}% attendance ·{" "}
+                {teamSummary?.totalHours ?? 0}h logged · updated {lastUpdatedLabel}
+              </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Button variant="outline" onClick={onRefresh} className="rounded-xl">

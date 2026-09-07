@@ -758,7 +758,7 @@ export default function AdminPage() {
     { id: "attendance" as const, label: "Attendance", icon: ShieldCheck },
     { id: "people" as const, label: "People", icon: Users, count: allUsers.length },
     { id: "ai" as const, label: "Assistive AI", icon: Brain },
-    { id: "leave" as const, label: "Leave & Exceptions", icon: Calendar, count: pendingLeaveCount },
+    { id: "leave" as const, label: "Leave", icon: Calendar, count: pendingLeaveCount },
   ];
 
   useRegisterActions([
@@ -915,23 +915,7 @@ export default function AdminPage() {
           ) : null}
 
           {activeTab === "leave" ? (
-            <div className="space-y-4">
-              <StatusBanner
-                variant={pendingLeaveCount > 0 ? "warning" : "info"}
-                title="Leave & Exceptions"
-                message={
-                  pendingLeaveCount > 0
-                    ? `${pendingLeaveCount} pending leave request${pendingLeaveCount > 1 ? "s" : ""} need attention. Session reset is available in the guarded action below.`
-                    : "No pending leave requests right now. Use this workspace to review balances and exceptions."
-                }
-                action={
-                  <Button variant="outline" onClick={() => { setShowResetDialog(true); setResetCountdown(5); }} className="rounded-xl">
-                    Reset Sessions
-                  </Button>
-                }
-              />
-              <AdminLeaveManagement />
-            </div>
+            <AdminLeaveManagement />
           ) : null}
         </WorkspaceShell>
       </div>

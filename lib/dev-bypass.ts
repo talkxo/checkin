@@ -654,6 +654,26 @@ const ROUTES: Array<{ method: string; match: RegExp; handle: Handler }> = [
       return publicEmployee(emp ?? ME);
   } },
   { method: 'DELETE', match: /^\/api\/admin\/users$/, handle: () => ({ success: true }) },
+  // Employee profile (about fields + document links)
+  { method: 'GET', match: /^\/api\/admin\/employees\/[^/]+$/, handle: ({ url }) => {
+      const empId = url.pathname.split('/').pop()!;
+      const emp = world.roster.find((e) => e.id === empId) ?? ME;
+      return {
+        employee: { ...publicEmployee(emp), active: true, date_of_birth: '1996-04-18', phone: '+91 98110 12345', emergency_contact: 'Rohan (brother) · +91 98110 67890', created_at: '2026-01-01T00:00:00Z' },
+        documents: [
+          { id: 'doc-1', label: 'ID card', url: 'https://drive.google.com/drive/folders/demo-id', created_at: new Date().toISOString() },
+          { id: 'doc-2', label: 'Payslip — Aug 2026', url: 'https://drive.google.com/drive/folders/demo-payslip', created_at: new Date().toISOString() },
+        ],
+      };
+  } },
+  { method: 'PATCH', match: /^\/api\/admin\/employees\/[^/]+$/, handle: ({ body }) => ({ employee: body ?? {} }) },
+  { method: 'POST', match: /^\/api\/admin\/employees\/[^/]+$/, handle: ({ body, url }) => ({
+      document: { id: `doc-${Date.now()}`, label: body?.label ?? 'Document', url: body?.url ?? '#', created_at: new Date().toISOString() },
+  }) },
+  { method: 'DELETE', match: /^\/api\/admin\/employees\/[^/]+$/, handle: () => ({ success: true }) },
+  { method: 'GET', match: /^\/api\/admin\/birthdays$/, handle: () => ({
+      birthdays: [{ name: 'Rahul Test', date: '12 Sep', inDays: 4 }],
+  }) },
   { method: 'POST', match: /^\/api\/admin\/set-pin/, handle: () => ({ success: true, message: 'PIN set' }) },
   { method: 'DELETE', match: /^\/api\/admin\/set-pin/, handle: () => ({ success: true, message: 'PIN reset' }) },
   { method: 'GET', match: /^\/api\/admin\/leave-requests$/, handle: ({ url }) => {
