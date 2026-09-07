@@ -339,11 +339,14 @@ export function AdminOverviewWorkspace({
       <div className="space-y-4">
         <div className="glass rounded-3xl p-4">
           <p className="card-label">Upcoming</p>
-          <div className="mt-3 space-y-2.5 text-sm">
+          <div className="mt-3 space-y-3">
             {birthdays.map((b) => (
               <div key={`bd-${b.name}-${b.date}`} className="flex items-center gap-2.5">
-                <Cake className="h-4 w-4 shrink-0 text-primary" />
-                <span className="truncate"><span className="font-medium text-foreground">{b.name}</span> <span className="text-muted-foreground">· {b.date}</span></span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10"><Cake className="h-4 w-4 text-primary" /></span>
+                <span className="min-w-0 truncate">
+                  <span className="block truncate text-sm font-medium leading-tight text-foreground">{b.name}</span>
+                  <span className="block text-xs text-muted-foreground">{b.date}</span>
+                </span>
               </div>
             ))}
             {upcomingLeaves.map((leave) => {
@@ -353,12 +356,12 @@ export function AdminOverviewWorkspace({
               const isOngoing = leave.start_date <= todayKey && leave.end_date >= todayKey;
               return (
                 <div key={leave.id} className="flex items-center gap-2.5">
-                  <Plane className="h-4 w-4 shrink-0 text-sky-500" />
-                  <span className="min-w-0 truncate">
-                    <span className="font-medium text-foreground">{firstName}</span>
-                    <span className="text-muted-foreground"> · {leaveType?.name || "Leave"} · {leave.start_date.slice(5)}</span>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/10"><Plane className="h-4 w-4 text-sky-500" /></span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium leading-tight text-foreground">{firstName}</span>
+                    <span className="block truncate text-xs text-muted-foreground">{leaveType?.name || "Leave"} · {leave.start_date.slice(5)}</span>
                   </span>
-                  {isOngoing ? <span className="ml-auto shrink-0 text-[10px] font-semibold uppercase tracking-wide text-sky-500">now</span> : null}
+                  {isOngoing ? <span className="ml-auto shrink-0 text-xs font-semibold uppercase tracking-wide text-sky-500">now</span> : null}
                 </div>
               );
             })}
@@ -376,7 +379,7 @@ export function AdminOverviewWorkspace({
                 <button
                   key={range}
                   onClick={() => setMoodRange(range)}
-                  className={`rounded-md px-2 py-0.5 text-[11px] font-medium capitalize transition-colors ${
+                  className={`rounded-md px-2 py-0.5 text-xs font-medium capitalize transition-colors ${
                     moodRange === range ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -391,11 +394,11 @@ export function AdminOverviewWorkspace({
                 <div className="flex h-10 w-full items-end rounded bg-muted">
                   <div className={`w-full rounded ${bucketColorMap[row.bucket]}`} style={{ height: `${Math.max(row.pct, row.count > 0 ? 16 : 4)}%` }} />
                 </div>
-                <span className="text-[9px] text-muted-foreground">{row.label}</span>
+                <span className="text-xs text-muted-foreground">{row.label}</span>
               </div>
             ))}
           </div>
-          <p className="mt-1.5 text-[11px] text-muted-foreground">
+          <p className="mt-1.5 text-xs text-muted-foreground">
             {moodStats.total ? `${moodStats.total} this ${moodRange}` : `None this ${moodRange}`}
           </p>
         </div>
@@ -409,7 +412,7 @@ export function AdminOverviewWorkspace({
                 const name = employee?.full_name?.split(" ")[0] || "Unknown";
                 return (
                   <div key={entry.employee_id} className="flex items-center gap-2">
-                    <span className="w-14 truncate text-xs font-medium text-foreground">{name}</span>
+                    <span className="w-14 truncate text-sm font-medium text-foreground">{name}</span>
                     <div className="grid flex-1 grid-cols-5 gap-1">
                       {WEEK_DAYS.map((day) => (
                         <div key={day} className={`h-1.5 rounded-full ${entry.wfh_days?.includes(day) ? "bg-primary" : "bg-muted"}`} />
