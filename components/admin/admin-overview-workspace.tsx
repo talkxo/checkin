@@ -355,16 +355,16 @@ export function AdminOverviewWorkspace({
                         </span>
                       </td>
                       <td className="px-5 py-3">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
+                        <span className={`flex items-center gap-2 whitespace-nowrap ${
                           tile.state === "missing"
-                            ? "bg-destructive/10 text-destructive"
+                            ? "text-destructive"
                             : tile.state === "late"
-                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                              ? "text-amber-600 dark:text-amber-400"
                               : tile.state === "on-leave"
-                                ? "bg-sky-500/10 text-sky-600 dark:text-sky-400"
-                                : "bg-success-500/10 text-success-700 dark:text-success-400"
-                        }`}>
-                          <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
+                                ? "text-sky-600 dark:text-sky-400"
+                                : "text-success-700 dark:text-success-400"
+                        } ${highlight ? "font-medium" : ""}`}>
+                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta.dot}`} />
                           {meta.label}
                         </span>
                       </td>
