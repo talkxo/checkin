@@ -789,6 +789,6 @@ export function installDevBypass(): void {
   console.log(
     '%c[INSYDE dev bypass] Mock APIs active — no database calls. ' +
       'Log in as any seeded teammate (e.g. "Asha Dev") with PIN 1234. Admin: any credentials.',
-    'color:#8d86d4;font-weight:bold;'
+    'color:#a1a1aa;font-weight:bold;'
   );
 }

@@ -22,12 +22,12 @@ module.exports = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         brand: {
-          DEFAULT: '#6a63b6',
-          50: '#f3f2fb',
-          100: '#e8e7f7',
-          500: '#7b74c2',
-          600: '#6a63b6',
-          700: '#5a54a4',
+          DEFAULT: '#222222',
+          50: '#f5f5f5',
+          100: '#e5e5e5',
+          500: '#737373',
+          600: '#222222',
+          700: '#171717',
         },
         glass: {
           DEFAULT: "var(--glass-bg)",

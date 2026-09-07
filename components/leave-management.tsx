@@ -110,7 +110,7 @@ function ScratchGetWellBanner({ onClose }: { onClose: () => void }) {
     ctx.scale(dpr, dpr);
     const scratchGradient = ctx.createLinearGradient(0, 0, width, height);
     // Canvas can't read CSS vars — keep these in sync with the brand tokens
-    scratchGradient.addColorStop(0, '#8d86d4'); // brand violet tint
+    scratchGradient.addColorStop(0, '#4a4a4a'); // brand charcoal tint
     scratchGradient.addColorStop(0.48, '#5cfaad'); // mint
     scratchGradient.addColorStop(1, '#5ff1f5'); // mint aqua
     ctx.fillStyle = scratchGradient;
