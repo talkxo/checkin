@@ -157,7 +157,8 @@ export default function CheckInCard({
                 hour12: true,
                 timeZone: 'Asia/Kolkata',
               })
-              .toLowerCase()}{' '}
+              .toLowerCase()}
+            <br />
             right now
           </p>
         )}
