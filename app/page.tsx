@@ -227,9 +227,32 @@ export default function HomePage() {
   // shell, and installability should be available to any visitor.
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
-    navigator.serviceWorker.register('/sw.js').catch((err) => {
-      console.warn('Service worker registration failed:', err);
+
+    // When a freshly deployed service worker activates, reload once so
+    // users land on the new shell instead of staying on the stale one.
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      const w = window as any;
+      if (w.__swReloaded) return;
+      w.__swReloaded = true;
+      window.location.reload();
     });
+
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((reg) => {
+        // Nudge any waiting worker to take over immediately
+        reg.addEventListener('updatefound', () => {
+          const installing = reg.installing;
+          installing?.addEventListener('statechange', () => {
+            if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+              installing.postMessage('SKIP_WAITING');
+            }
+          });
+        });
+      })
+      .catch((err) => {
+        console.warn('Service worker registration failed:', err);
+      });
   }, []);
 
   // Greeting name — preferred display name wins, else first name on record

@@ -4,7 +4,7 @@
 // — this is a live attendance/check-in app, and stale cached data would show
 // employees incorrect check-in/session state.
 
-const SHELL_CACHE = 'insyde-shell-v1';
+const SHELL_CACHE = 'insyde-shell-v2';
 
 self.addEventListener('install', function(event) {
   event.waitUntil(
@@ -24,6 +24,10 @@ self.addEventListener('activate', function(event) {
       ))
       .then(() => self.clients.claim())
   );
+});
+
+self.addEventListener('message', function(event) {
+  if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('fetch', function(event) {
