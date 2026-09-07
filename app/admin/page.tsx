@@ -805,7 +805,7 @@ export default function AdminPage() {
   ], [refreshOverview, setShowAddUserDialog, setShowResetDialog, handleExportFilteredAttendance]);
 
   return (
-    <div className="ambient-page relative min-h-screen overflow-hidden bg-background">
+    <div className="relative min-h-screen overflow-hidden">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         {animatedBlobs.map((blob) => {
           return (

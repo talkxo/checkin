@@ -81,7 +81,7 @@ export default function LeavePage() {
   }
 
   return (
-    <div className="ambient-page min-h-screen bg-background text-foreground">
+    <div className="min-h-screen text-foreground">
       <div className="glass-strong sticky top-0 z-10 rounded-b-2xl">
         <div className="mx-auto w-full max-w-4xl px-4 py-6">
           <div className="flex items-center justify-between">

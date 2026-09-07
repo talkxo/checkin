@@ -275,7 +275,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="ambient-page main-typography min-h-screen bg-background dark:bg-background">
+    <div className="main-typography min-h-screen">
       <div className="max-w-md mx-auto px-4 py-6 sm:px-6 w-full">
         {showLogin ? (
           // PIN Login Screen

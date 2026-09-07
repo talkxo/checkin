@@ -48,13 +48,13 @@ export default function UserPage(){
   useEffect(()=>{ if(typeof window!== 'undefined') localStorage.setItem('mode', mode); },[mode]);
 
   if (!slug) {
-    return <div className="main-typography ambient-page min-h-screen bg-background flex items-center justify-center">
+    return <div className="main-typography flex min-h-screen items-center justify-center">
       <p className="text-muted-foreground">Invalid user</p>
     </div>;
   }
 
   return (
-    <div className="main-typography ambient-page min-h-screen bg-background p-4">
+    <div className="main-typography min-h-screen p-4">
       <div className="max-w-md mx-auto flex min-h-[85vh] items-center">
         <div className="glass w-full rounded-3xl p-6">
           <h1 className="text-2xl font-semibold text-center mb-6 text-foreground">Check-in for {slug}</h1>

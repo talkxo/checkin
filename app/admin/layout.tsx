@@ -43,7 +43,7 @@ export default function AdminLayout({
   // For login page, just render children without authentication check
   if (pathname === '/admin/login') {
     return (
-      <div className="ambient-page admin-typography min-h-screen bg-background text-foreground">
+      <div className="admin-typography min-h-screen text-foreground">
         {children}
       </div>
     );
@@ -51,7 +51,7 @@ export default function AdminLayout({
 
   if (isLoading) {
     return (
-      <div className="ambient-page admin-typography min-h-screen bg-background flex items-center justify-center">
+      <div className="admin-typography flex min-h-screen items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
@@ -62,7 +62,7 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="ambient-page admin-typography min-h-screen bg-background text-foreground">
+    <div className="admin-typography min-h-screen text-foreground">
       <AdminCommandPalette>
         {children}
       </AdminCommandPalette>

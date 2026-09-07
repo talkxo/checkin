@@ -45,9 +45,9 @@
     --shadow-glass-strong: 0 12px 40px rgba(23, 23, 23, 0.14);
 
     /* Ambient backdrop blobs (dark mode shifts to luminous variants) */
-    --ambient-a: #67dfc2;
-    --ambient-b: #a7edd2;
-    --ambient-c: #d7f8ea;
+    --ambient-a: #5ff1f1;
+    --ambient-b: #67dfc2;
+    --ambient-c: #a7f3d0;
 
     /* Semantic action colors (theme-independent, exposed for JS-driven styles) */
     --color-success: #22c55e;
@@ -92,9 +92,9 @@
     --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.35);
     --shadow-glass-strong: 0 12px 40px rgba(0, 0, 0, 0.45);
 
-    --ambient-a: #1f7a5e;
-    --ambient-b: #67dfc2;
-    --ambient-c: #5cfaad;
+    --ambient-a: #0d9488;
+    --ambient-b: #14b8a6;
+    --ambient-c: #5ff1f1;
   }
 
   html {
@@ -136,7 +136,6 @@
   }
   
   body {
-    background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     height: 100%;
@@ -260,14 +259,65 @@
      page container itself (not a negative-z child, which would hide behind
      the parent's opaque background). Falls back to the flat background when
      color-mix() is unsupported. */
-  .ambient-page {
-    /* Anchored low, sweeping diagonally upward — movement from bottom to the
-       side, keeping the top of the page clean for the logo */
-    background-image:
-      radial-gradient(56rem 40rem at 100% 100%, color-mix(in srgb, var(--ambient-a) 28%, transparent), transparent 72%),
-      radial-gradient(44rem 34rem at -8% 115%, color-mix(in srgb, var(--ambient-b) 22%, transparent), transparent 70%),
-      linear-gradient(to top, color-mix(in srgb, var(--ambient-a) 12%, transparent), transparent 46%);
-    background-attachment: fixed;
+  .ambient-blobs {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .ambient-blobs i {
+    position: absolute;
+    display: block;
+    border-radius: 9999px;
+    filter: blur(70px);
+    will-change: transform;
+  }
+
+  .ambient-blobs i:nth-child(1) {
+    width: 34rem;
+    height: 34rem;
+    left: -8%;
+    top: 55%;
+    background: var(--ambient-a);
+    opacity: 0.35;
+    animation: ambient-drift-a 34s ease-in-out infinite alternate;
+  }
+
+  .ambient-blobs i:nth-child(2) {
+    width: 26rem;
+    height: 26rem;
+    right: -10%;
+    top: 30%;
+    background: var(--ambient-b);
+    opacity: 0.28;
+    animation: ambient-drift-b 41s ease-in-out infinite alternate;
+  }
+
+  .ambient-blobs i:nth-child(3) {
+    width: 20rem;
+    height: 20rem;
+    left: 35%;
+    top: -14%;
+    background: var(--ambient-c);
+    opacity: 0.22;
+    animation: ambient-drift-c 37s ease-in-out infinite alternate;
+  }
+
+  @keyframes ambient-drift-a {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to { transform: translate3d(16vw, -22vh, 0) scale(1.15); }
+  }
+
+  @keyframes ambient-drift-b {
+    from { transform: translate3d(0, 0, 0) scale(1.1); }
+    to { transform: translate3d(-12vw, 18vh, 0) scale(0.9); }
+  }
+
+  @keyframes ambient-drift-c {
+    from { transform: translate3d(0, 0, 0) scale(0.95); }
+    to { transform: translate3d(10vw, 24vh, 0) scale(1.2); }
   }
 
   /* CSS animations — used by admin, leave, and login pages */
@@ -327,11 +377,16 @@
   }
   /* Fresh-UI accents */
   .text-greeting {
-    color: color-mix(in srgb, #67dfc2 62%, #101010);
+    background: linear-gradient(120deg, #5ff1f1 10%, #3ec9b9 90%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
   .dark .text-greeting {
-    color: #67dfc2;
+    background: linear-gradient(120deg, #5ff1f1 10%, #67dfc2 90%);
+    -webkit-background-clip: text;
+    background-clip: text;
   }
 
   .text-gradient {

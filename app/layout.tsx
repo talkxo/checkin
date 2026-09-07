@@ -56,6 +56,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="robots" content="noindex, nofollow" />
       </head>
       <body className={sourceSansPro.className}>
+        <div className="ambient-blobs" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+        </div>
         <Providers>
           {children}
         </Providers>
