@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, CheckCircle, XCircle, Clock, AlertCircle, RefreshCw, Users, Edit, AlertTriangle } from 'lucide-react';
+import { SegmentedControl } from '@/components/admin/segmented';
 import type { LeaveRequest, LeaveType } from '@/types/leave';
 
 interface AdminLeaveManagementProps {
@@ -351,35 +352,16 @@ export default function AdminLeaveManagement({ currentAdminId }: AdminLeaveManag
   return (
     <div className="space-y-6">
       {/* Tab Navigation */}
-      <div className="flex gap-1 bg-muted/50 dark:bg-muted/30 p-1 rounded-lg">
-        <Button
-          variant={activeTab === 'requests' ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => setActiveTab('requests')}
-          className="flex-1"
-        >
-          <Clock className="w-4 h-4 mr-2" />
-          Leave Requests
-        </Button>
-        <Button
-          variant={activeTab === 'employees' ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => setActiveTab('employees')}
-          className="flex-1"
-        >
-          <Users className="w-4 h-4 mr-2" />
-          Employee Leave Balances
-        </Button>
-        <Button
-          variant={activeTab === 'accrual' ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => setActiveTab('accrual')}
-          className="flex-1"
-        >
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Accrual History
-        </Button>
-      </div>
+      <SegmentedControl
+        fullWidth
+        value={activeTab}
+        onChange={(v) => setActiveTab(v as any)}
+        options={[
+          { value: 'requests', label: 'Leave Requests' },
+          { value: 'employees', label: 'Balances' },
+          { value: 'accrual', label: 'Accrual History' },
+        ]}
+      />
 
       {error && (
         <Card className="border-destructive/50 dark:border-destructive/50 bg-destructive/10 dark:bg-destructive/10">

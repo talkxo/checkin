@@ -262,9 +262,9 @@
      color-mix() is unsupported. */
   .ambient-page {
     background-image:
-      radial-gradient(38rem 38rem at 10% -10%, color-mix(in srgb, var(--ambient-a) 24%, transparent), transparent 65%),
-      radial-gradient(32rem 32rem at 105% 15%, color-mix(in srgb, var(--ambient-b) 20%, transparent), transparent 65%),
-      radial-gradient(34rem 34rem at 50% 118%, color-mix(in srgb, var(--ambient-c) 12%, transparent), transparent 62%);
+      radial-gradient(44rem 44rem at 8% -12%, color-mix(in srgb, var(--ambient-a) 34%, transparent), transparent 68%),
+      radial-gradient(38rem 38rem at 106% 12%, color-mix(in srgb, var(--ambient-b) 30%, transparent), transparent 68%),
+      radial-gradient(40rem 40rem at 50% 120%, color-mix(in srgb, var(--ambient-c) 18%, transparent), transparent 65%);
     background-attachment: fixed;
   }
 

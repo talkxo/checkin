@@ -281,6 +281,30 @@ export function AdminOverviewWorkspace({
           </div>
         </section>
 
+        {/* Hero numbers — the day's shape at a glance */}
+        <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="glass rounded-3xl p-5">
+            <p className="card-label">Present</p>
+            <p className="mt-2 text-[32px] font-bold leading-none tabular-nums text-foreground" style={{ fontFamily: 'Funnel Display, system-ui, sans-serif' }}>{presentCount}</p>
+            <p className="mt-1.5 text-xs text-muted-foreground">of {todayData.length} teammates</p>
+          </div>
+          <div className="glass rounded-3xl p-5">
+            <p className="card-label">In office</p>
+            <p className="mt-2 text-[32px] font-bold leading-none tabular-nums text-foreground" style={{ fontFamily: 'Funnel Display, system-ui, sans-serif' }}>{officeCount}</p>
+            <p className="mt-1.5 text-xs text-muted-foreground">on-site today</p>
+          </div>
+          <div className="glass rounded-3xl p-5">
+            <p className="card-label">Remote</p>
+            <p className="mt-2 text-[32px] font-bold leading-none tabular-nums text-foreground" style={{ fontFamily: 'Funnel Display, system-ui, sans-serif' }}>{remoteCount}</p>
+            <p className="mt-1.5 text-xs text-muted-foreground">working from home</p>
+          </div>
+          <div className="glass rounded-3xl border-amber-500/30 p-5">
+            <p className="card-label">Needs attention</p>
+            <p className={`mt-2 text-[32px] font-bold leading-none tabular-nums ${problemCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`} style={{ fontFamily: 'Funnel Display, system-ui, sans-serif' }}>{problemCount}</p>
+            <p className="mt-1.5 text-xs text-muted-foreground">missing or late</p>
+          </div>
+        </section>
+
         <section className="glass rounded-3xl">
           <div className="flex items-center justify-between border-b border-glass-border px-5 py-3.5">
             <p className="card-label">Team</p>
@@ -292,7 +316,7 @@ export function AdminOverviewWorkspace({
               <span className="text-xs text-muted-foreground">All clear</span>
             )}
           </div>
-          <div className="max-h-[430px] overflow-y-auto">
+          <div className="max-h-[430px] overflow-y-auto px-1.5">
             <table className="min-w-full text-sm">
               <thead className="sticky top-0 z-10 border-b border-glass-border bg-background/95 text-left text-xs uppercase tracking-wide text-muted-foreground backdrop-blur-sm">
                 <tr>
@@ -313,11 +337,26 @@ export function AdminOverviewWorkspace({
                       onClick={() => onOpenAttendance({ status: tile.state === "missing" ? "missing" : highlight ? "attention" : "all" })}
                       className={`cursor-pointer transition-colors hover:bg-muted/20 ${highlight ? "bg-destructive/[0.04]" : ""}`}
                     >
-                      <td className="px-5 py-2.5 font-medium text-foreground">{tile.name}</td>
-                      <td className="px-5 py-2.5">
-                        <span className="flex items-center gap-2">
-                          <span className={`h-2 w-2 shrink-0 rounded-full ${meta.dot}`} />
-                          <span className={highlight ? "font-medium text-foreground" : "text-muted-foreground"}>{meta.label}</span>
+                      <td className="px-5 py-3">
+                        <span className="flex items-center gap-3">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-brand text-xs font-semibold text-white">
+                            {tile.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+                          </span>
+                          <span className="font-medium text-foreground">{tile.name}</span>
+                        </span>
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
+                          tile.state === "missing"
+                            ? "bg-destructive/10 text-destructive"
+                            : tile.state === "late"
+                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                              : tile.state === "on-leave"
+                                ? "bg-sky-500/10 text-sky-600 dark:text-sky-400"
+                                : "bg-success-500/10 text-success-700 dark:text-success-400"
+                        }`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
+                          {meta.label}
                         </span>
                       </td>
                       <td className="px-5 py-2.5 text-muted-foreground [font-variant-numeric:tabular-nums]">
@@ -337,7 +376,7 @@ export function AdminOverviewWorkspace({
 
       {/* ── RIGHT COLUMN: longer horizons (week/month/future) ── */}
       <div className="space-y-4">
-        <div className="glass rounded-3xl p-4">
+        <div className="glass rounded-3xl p-5">
           <p className="card-label">Upcoming</p>
           <div className="mt-3 space-y-3">
             {birthdays.map((b) => (
@@ -371,7 +410,7 @@ export function AdminOverviewWorkspace({
           </div>
         </div>
 
-        <div className="glass rounded-3xl p-4">
+        <div className="glass rounded-3xl p-5">
           <div className="flex items-center justify-between">
             <p className="card-label">Team mood</p>
             <div className="flex items-center gap-1 rounded-lg bg-muted/30 p-0.5">
@@ -398,12 +437,19 @@ export function AdminOverviewWorkspace({
               </div>
             ))}
           </div>
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            {moodStats.total ? `${moodStats.total} this ${moodRange}` : `None this ${moodRange}`}
-          </p>
+          {(() => {
+            const lead = moodStats.rows.reduce((a, b) => (b.count > a.count ? b : a), moodStats.rows[0]);
+            return (
+              <p className="mt-2 text-sm font-medium text-foreground">
+                {moodStats.total
+                  ? `${lead.label} — ${lead.count} ${lead.count === 1 ? "entry" : "entries"} (${lead.pct}%)`
+                  : "No data yet"}
+              </p>
+            );
+          })()}
         </div>
 
-        <div className="glass rounded-3xl p-4">
+        <div className="glass rounded-3xl p-5">
           <p className="card-label">Plan coverage</p>
           <div className="mt-3 max-h-[110px] space-y-2 overflow-y-auto pr-1">
             {teamPlanEntries.length ? (
@@ -427,7 +473,7 @@ export function AdminOverviewWorkspace({
           </div>
         </div>
 
-        <div className="glass rounded-3xl p-4">
+        <div className="glass rounded-3xl p-5">
           <p className="card-label">Broadcast to Basecamp</p>
           <Textarea
             value={announcementDraft}

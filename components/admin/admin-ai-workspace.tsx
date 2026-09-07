@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { Bookmark, Bot, Brain, Lightbulb, Loader2, MessageSquareText, RefreshCw, Send, Sparkles, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SegmentedControl } from "@/components/admin/segmented";
 import { EmptyState } from "@/components/ui/empty-state";
 
 type AiFeature = "insights" | "report" | "sentiment";
@@ -261,31 +262,15 @@ export function AdminAiWorkspace({
             </Button>
           </div>
         <div className="mt-2 w-full max-w-xl">
-          <div className="relative flex items-center rounded-xl bg-muted/30 p-1">
-            <motion.div
-              layout
-              className={`absolute top-1 bottom-1 w-[calc(50%-0.25rem)] rounded-lg bg-primary shadow-sm ${
-                activeView === "chat" ? "left-1" : "left-[calc(50%)]"
-              }`}
-              transition={{ type: "spring", stiffness: 320, damping: 30, mass: 0.8 }}
-            />
-            <button
-              onClick={() => setActiveView("chat")}
-              className={`relative z-10 flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
-                activeView === "chat" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Chat
-            </button>
-            <button
-              onClick={() => setActiveView("reports")}
-              className={`relative z-10 flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
-                activeView === "reports" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Reports
-            </button>
-          </div>
+          <SegmentedControl
+            fullWidth
+            value={activeView}
+            onChange={(v) => setActiveView(v as any)}
+            options={[
+              { value: "chat", label: "Chat" },
+              { value: "reports", label: "Reports" },
+            ]}
+          />
         </div>
         </div>
       </section>
@@ -297,23 +282,17 @@ export function AdminAiWorkspace({
             <div>
               <h3 className="text-lg font-semibold text-foreground">Choose Dataset</h3>
               <div className="mt-3 flex flex-wrap gap-2">
-                {([
-                  ["today", "Today"],
-                  ["week", "This Week"],
-                  ["month", "This Month"],
-                  ["lastMonth", "Last Month"],
-                  ["custom", "Custom Range"],
-                ] as const).map(([range, label]) => (
-                  <button
-                    key={range}
-                    onClick={() => onAiTimeRangeChange(range)}
-                    className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
-                      aiTimeRange === range ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
+                <SegmentedControl
+                  value={aiTimeRange}
+                  onChange={(v) => onAiTimeRangeChange(v as any)}
+                  options={[
+                    { value: "today", label: "Today" },
+                    { value: "week", label: "This Week" },
+                    { value: "month", label: "This Month" },
+                    { value: "lastMonth", label: "Last Month" },
+                    { value: "custom", label: "Custom" },
+                  ]}
+                />
               </div>
               {aiTimeRange === "custom" ? (
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -506,17 +485,16 @@ export function AdminAiWorkspace({
             >
               <RefreshCw className="h-3.5 w-3.5" />
             </button>
-            {(["short", "detailed", "report"] as const).map((style) => (
-              <button
-                key={style}
-                onClick={() => setChatStyle(style)}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                  chatStyle === style ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {style === "short" ? "Short" : style === "detailed" ? "Detailed" : "Report"}
-              </button>
-            ))}
+            <SegmentedControl
+              size="sm"
+              value={chatStyle}
+              onChange={(v) => setChatStyle(v as any)}
+              options={[
+                { value: "short", label: "Short" },
+                { value: "detailed", label: "Detailed" },
+                { value: "report", label: "Report" },
+              ]}
+            />
           </div>
         </div>
 

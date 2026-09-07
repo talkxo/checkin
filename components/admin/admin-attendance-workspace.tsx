@@ -1,10 +1,12 @@
 "use client";
 
-import { ArrowUpDown, Download, RefreshCw, Search } from "lucide-react";
+import { ArrowUpDown, Download, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { StatTile } from "./stat-tile";
 import type { EmployeeSummary, TeamSummary } from "./types";
 
 type AttendanceStatusFilter = "all" | "active" | "attention" | "missing";
@@ -68,15 +70,21 @@ export function AdminAttendanceWorkspace({
 }: AdminAttendanceWorkspaceProps) {
   return (
     <div className="space-y-5">
+      {/* Summary — big numbers, restored to their stage */}
+      <section className="grid gap-3 md:grid-cols-4">
+        <StatTile label="People" value={teamSummary?.totalEmployees ?? employees.length} helper="In current range" icon={SlidersHorizontal} />
+        <StatTile label="Attendance" value={`${teamSummary?.averageAttendanceRate ?? 0}%`} helper="Team average" icon={SlidersHorizontal} tone="accent" />
+        <StatTile label="Hours Logged" value={teamSummary?.totalHours ?? 0} helper="Across all sessions" icon={SlidersHorizontal} />
+        <StatTile label="Working Days" value={teamSummary?.totalWorkingDays ?? 0} helper="In current range" icon={SlidersHorizontal} />
+      </section>
+
+      {/* Filter builder */}
       <section className="glass-strong sticky top-[88px] z-10 rounded-3xl p-4">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-foreground">Attendance Analysis</h2>
-              <p className="text-sm text-muted-foreground">
-                {teamSummary?.totalEmployees ?? employees.length} people · {teamSummary?.averageAttendanceRate ?? 0}% attendance ·{" "}
-                {teamSummary?.totalHours ?? 0}h logged · updated {lastUpdatedLabel}
-              </p>
+              <p className="text-sm text-muted-foreground">{filteredEmployees.length} of {employees.length} matching · updated {lastUpdatedLabel}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Button variant="outline" onClick={onRefresh} className="rounded-xl">
@@ -90,71 +98,71 @@ export function AdminAttendanceWorkspace({
             </div>
           </div>
 
-          <div className="grid gap-3 xl:grid-cols-[1.2fr_auto_auto_auto]">
+          {/* Structured filters: one row, labeled fields */}
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.2fr_repeat(4, minmax(0,1fr))]">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={searchQuery}
                 onChange={(event) => onSearchQueryChange(event.target.value)}
                 placeholder="Search employees"
-                className="rounded-xl bg-background/70 pl-9"
+                className="h-10 rounded-xl bg-background/70 pl-9"
               />
             </div>
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-              {["today", "yesterday", "thisWeek", "currentMonth", "previousMonth", "last7Days", "last30Days"].map((preset) => (
-                <button
-                  key={preset}
-                  onClick={() => onDateRangePresetChange(preset)}
-                  className={`rounded-xl border px-3 py-2 text-sm transition-colors ${
-                    dateRange.preset === preset ? "bg-gradient-brand border-transparent text-white shadow-primary" : "glass-hover border-transparent bg-white/40 text-muted-foreground dark:bg-white/5"
-                  }`}
-                >
-                  {preset === "today"
-                    ? "Today"
-                    : preset === "yesterday"
-                    ? "Yesterday"
-                    : preset === "thisWeek"
-                    ? "This Week"
-                    : preset === "currentMonth"
-                    ? "This Month"
-                    : preset === "previousMonth"
-                    ? "Previous Month"
-                    : preset === "last7Days"
-                    ? "Last 7 Days"
-                    : "Last 30 Days"}
-                </button>
-              ))}
-            </div>
-            <Input type="date" value={dateRange.startDate} onChange={(event) => onDateChange("startDate", event.target.value)} className="rounded-xl bg-background/70" />
-            <Input type="date" value={dateRange.endDate} onChange={(event) => onDateChange("endDate", event.target.value)} className="rounded-xl bg-background/70" />
-          </div>
 
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-wrap gap-2">
-              {statusChips.map((chip) => (
-                <button
-                  key={chip.id}
-                  onClick={() => onStatusFilterChange(chip.id)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                    statusFilter === chip.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {chip.label}
-                </button>
-              ))}
+            <div className="grid gap-1">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Range</span>
+              <Select value={dateRange.preset} onValueChange={(v) => { if (v !== "custom") onDateRangePresetChange(v); }}>
+                <SelectTrigger className="h-10 rounded-xl bg-background/70"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="yesterday">Yesterday</SelectItem>
+                  <SelectItem value="thisWeek">This Week</SelectItem>
+                  <SelectItem value="currentMonth">This Month</SelectItem>
+                  <SelectItem value="previousMonth">Previous Month</SelectItem>
+                  <SelectItem value="last7Days">Last 7 Days</SelectItem>
+                  <SelectItem value="last30Days">Last 30 Days</SelectItem>
+                  <SelectItem value="custom">Custom</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {modeChips.map((chip) => (
-                <button
-                  key={chip.id}
-                  onClick={() => onModeFilterChange(chip.id)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                    modeFilter === chip.id ? "bg-primary/10 text-foreground" : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {chip.label}
-                </button>
-              ))}
+
+            <div className="grid gap-1">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Status</span>
+              <Select value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as any)}>
+                <SelectTrigger className="h-10 rounded-xl bg-background/70"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {statusChips.map((chip) => (
+                    <SelectItem key={chip.id} value={chip.id}>{chip.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-1">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Mode</span>
+              <Select value={modeFilter} onValueChange={(v) => onModeFilterChange(v as any)}>
+                <SelectTrigger className="h-10 rounded-xl bg-background/70"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {modeChips.map((chip) => (
+                    <SelectItem key={chip.id} value={chip.id}>{chip.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-1">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Dates {dateRange.preset === "custom" ? "" : "(custom only)"}</span>
+              {dateRange.preset === "custom" ? (
+                <div className="flex gap-2">
+                  <Input type="date" value={dateRange.startDate} onChange={(event) => onDateChange("startDate", event.target.value)} className="h-10 rounded-xl bg-background/70" />
+                  <Input type="date" value={dateRange.endDate} onChange={(event) => onDateChange("endDate", event.target.value)} className="h-10 rounded-xl bg-background/70" />
+                </div>
+              ) : (
+                <div className="flex h-10 items-center rounded-xl border border-dashed border-glass-border px-3 text-xs text-muted-foreground/60">
+                  {dateRange.startDate} → {dateRange.endDate}
+                </div>
+              )}
             </div>
           </div>
         </div>
