@@ -17,6 +17,7 @@ import {
 import DarkModeToggle from "@/components/dark-mode-toggle";
 import { WorkspaceShell } from "@/components/admin/workspace-shell";
 import { EmployeeDetailDrawer } from "@/components/admin/employee-detail-drawer";
+import { EmployeeProfile } from "@/components/admin/employee-profile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -129,6 +130,7 @@ export default function AdminPage() {
   const [isLoadingAttendance, setIsLoadingAttendance] = useState(false);
   const [attendanceSearchQuery, setAttendanceSearchQuery] = useState("");
   const [peopleSearchQuery, setPeopleSearchQuery] = useState("");
+  const [peopleId, setPeopleId] = useState<string | null>(null);
   const [attendanceStatusFilter, setAttendanceStatusFilter] = useState<AttendanceStatusFilter>("all");
   const [attendanceModeFilter, setAttendanceModeFilter] = useState<AttendanceModeFilter>("all");
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({
@@ -190,6 +192,9 @@ export default function AdminPage() {
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
     const preset = searchParams.get("preset");
+    const peopleId = searchParams.get("id");
+    if (peopleId) setPeopleId(peopleId);
+    else setPeopleId(null);
 
     if (tab) setActiveTab(tab);
     if (status) setAttendanceStatusFilter(status);
@@ -220,9 +225,12 @@ export default function AdminPage() {
     else params.delete("people_q");
     if (dateRange.startDate) params.set("startDate", dateRange.startDate);
     if (dateRange.endDate) params.set("endDate", dateRange.endDate);
+    if (peopleId) params.set("id", peopleId);
+    else params.delete("id");
     router.replace(`/admin?${params.toString()}`, { scroll: false });
   }, [
     activeTab,
+    peopleId,
     attendanceModeFilter,
     attendanceSearchQuery,
     attendanceStatusFilter,
@@ -885,7 +893,17 @@ export default function AdminPage() {
             />
           ) : null}
 
-          {activeTab === "people" ? (
+          {activeTab === "people" && peopleId ? (
+            <EmployeeProfile
+              employeeId={peopleId}
+              onBack={() => {
+                setPeopleId(null);
+                router.replace("/admin?tab=people", { scroll: false });
+              }}
+            />
+          ) : null}
+
+          {activeTab === "people" && !peopleId ? (
             <AdminPeopleWorkspace
               users={allUsers}
               searchQuery={peopleSearchQuery}

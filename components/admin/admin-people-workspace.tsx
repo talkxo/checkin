@@ -94,7 +94,7 @@ export function AdminPeopleWorkspace({
                   <tr
                     key={user.id}
                     className="cursor-pointer hover:bg-muted/20"
-                    onClick={() => router.push(`/admin/people?id=${user.id}`)}
+                    onClick={() => router.push(`/admin?tab=people&id=${user.id}`)}
                     title="Open profile"
                   >
                     <td className="px-5 py-4 font-semibold text-foreground">{user.full_name}</td>
