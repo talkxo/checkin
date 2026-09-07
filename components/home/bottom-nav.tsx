@@ -23,7 +23,7 @@ const TABS: Array<{ id: HomeTab; icon: string; label: string }> = [
 export default function BottomNav({ activeTab, onChange }: BottomNavProps) {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50">
-      <div className="mx-auto w-full max-w-md px-4 pb-[calc(16px+env(safe-area-inset-bottom))]">
+      <div className="mx-auto w-full max-w-md px-4 pb-[calc(16px+env(safe-area-inset-bottom))] sm:px-6">
         <nav className="glass-strong pointer-events-auto flex h-16 items-center justify-around rounded-full px-3">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
