@@ -18,12 +18,20 @@ create policy "Anyone can read holidays"
   for select
   using (true);
 
--- Seed with the fixed-date holidays for the current cycle. Floating festivals
--- (Diwali, Holi, Eid) are added per year by the admin.
+-- Seed with the official 2026 holiday list. Next year's list (floating
+-- festivals included) is inserted by the admin in the holidays table.
 insert into public.holidays (name, date) values
+  ('Republic Day', '2026-01-26'),
+  ('Holi', '2026-03-04'),
+  ('Id-Ul-Fitr', '2026-03-21'),
+  ('Ram Navmi', '2026-03-26'),
   ('Independence Day', '2026-08-15'),
-  ('Gandhi Jayanti', '2026-10-02'),
-  ('Diwali', '2026-11-08'),
-  ('Christmas', '2026-12-25'),
-  ('Republic Day', '2027-01-26')
+  ('Raksha Bandhan', '2026-08-28'),
+  ('Janmashtami', '2026-09-04'),
+  ('Mahatma Gandhi Jayanti', '2026-10-02'),
+  ('Dussehra', '2026-10-20'),
+  ('Diwali (Deepavali)', '2026-11-08'),
+  ('Goverdhan Puja', '2026-11-09'),
+  ('Guru Nanak Dev Jayanti', '2026-11-24'),
+  ('Christmas Day', '2026-12-25')
 on conflict (name, date) do nothing;
