@@ -47,6 +47,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (typeof body.dateOfBirth === 'string') updates.date_of_birth = body.dateOfBirth || null;
     if (typeof body.phone === 'string') updates.phone = body.phone || null;
     if (typeof body.emergencyContact === 'string') updates.emergency_contact = body.emergencyContact || null;
+    if (typeof body.gender === 'string') updates.gender = body.gender || null;
     if (typeof body.fullName === 'string' && body.fullName.trim()) updates.full_name = body.fullName.trim();
     if (typeof body.active === 'boolean') updates.active = body.active;
 
@@ -88,6 +89,19 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'URL must start with http:// or https://' }, { status: 400 });
     }
 
+    // Verify the link responds over HTTP (200-299 = reachable). Some hosts
+    // reject HEAD, so fall back to a ranged GET.
+    let reachable: boolean | null = null;
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 6000);
+      const head = await fetch(url, { method: 'HEAD', redirect: 'follow', signal: controller.signal });
+      clearTimeout(timer);
+      reachable = head.ok;
+    } catch {
+      reachable = false;
+    }
+
     const { data, error } = await supabaseAdmin
       .from('employee_documents')
       .insert({ employee_id: id, label, url, created_by: 'admin' })
@@ -95,7 +109,36 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ document: data });
+    return NextResponse.json({ document: data, reachable });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
+// Standalone link check — used by the "verify" action on saved documents
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  if (!isAdminAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  try {
+    const { url } = await req.json();
+    if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) {
+      return NextResponse.json({ error: 'A valid URL is required' }, { status: 400 });
+    }
+    let reachable = false;
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 6000);
+      const head = await fetch(url, { method: 'HEAD', redirect: 'follow', signal: controller.signal });
+      clearTimeout(timer);
+      reachable = head.ok;
+    } catch {
+      reachable = false;
+    }
+    return NextResponse.json({ reachable });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },

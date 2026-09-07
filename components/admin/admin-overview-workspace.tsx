@@ -281,27 +281,36 @@ export function AdminOverviewWorkspace({
           </div>
         </section>
 
-        {/* Hero numbers — the day's shape at a glance */}
-        <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <div className="glass rounded-3xl p-5">
-            <p className="card-label">Present</p>
-            <p className="mt-2 text-[32px] font-bold leading-none tabular-nums text-foreground" style={{ fontFamily: 'Funnel Display, system-ui, sans-serif' }}>{presentCount}</p>
-            <p className="mt-1.5 text-xs text-muted-foreground">of {todayData.length} teammates</p>
+        {/* Present — the master number, with its breakdown as a segmented bar */}
+        <section className="glass rounded-3xl p-5">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="card-label">Present today</p>
+              <p className="mt-2 text-[44px] font-bold leading-none tabular-nums text-foreground" style={{ fontFamily: 'Funnel Display, system-ui, sans-serif' }}>
+                {presentCount}
+                <span className="ml-1 text-xl font-medium text-muted-foreground">of {todayData.length}</span>
+              </p>
+            </div>
+            <button
+              onClick={() => onOpenAttendance({ status: problemCount > 0 ? "attention" : "all" })}
+              className="glass glass-hover rounded-2xl px-4 py-3 text-left"
+            >
+              <p className="card-label">Attention</p>
+              <p className={`mt-1 text-[28px] font-bold leading-none tabular-nums ${problemCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`} style={{ fontFamily: 'Funnel Display, system-ui, sans-serif' }}>{problemCount}</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">missing or late — review</p>
+            </button>
           </div>
-          <div className="glass rounded-3xl p-5">
-            <p className="card-label">In office</p>
-            <p className="mt-2 text-[32px] font-bold leading-none tabular-nums text-foreground" style={{ fontFamily: 'Funnel Display, system-ui, sans-serif' }}>{officeCount}</p>
-            <p className="mt-1.5 text-xs text-muted-foreground">on-site today</p>
-          </div>
-          <div className="glass rounded-3xl p-5">
-            <p className="card-label">Remote</p>
-            <p className="mt-2 text-[32px] font-bold leading-none tabular-nums text-foreground" style={{ fontFamily: 'Funnel Display, system-ui, sans-serif' }}>{remoteCount}</p>
-            <p className="mt-1.5 text-xs text-muted-foreground">working from home</p>
-          </div>
-          <div className="glass rounded-3xl border-amber-500/30 p-5">
-            <p className="card-label">Needs attention</p>
-            <p className={`mt-2 text-[32px] font-bold leading-none tabular-nums ${problemCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`} style={{ fontFamily: 'Funnel Display, system-ui, sans-serif' }}>{problemCount}</p>
-            <p className="mt-1.5 text-xs text-muted-foreground">missing or late</p>
+          <div className="mt-4">
+            <div className="flex h-2 overflow-hidden rounded-full bg-muted">
+              <div className="bg-primary" style={{ width: `${todayData.length ? (officeCount / todayData.length) * 100 : 0}%` }} title="In office" />
+              <div className="bg-sky-500" style={{ width: `${todayData.length ? (remoteCount / todayData.length) * 100 : 0}%` }} title="Remote" />
+              <div className="bg-destructive/50" style={{ width: `${todayData.length ? ((todayData.length - presentCount) / todayData.length) * 100 : 0}%` }} title="No check-in" />
+            </div>
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-primary" /> {officeCount} in office</span>
+              <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-sky-500" /> {remoteCount} remote</span>
+              <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-destructive/50" /> {todayData.length - presentCount} no check-in</span>
+            </div>
           </div>
         </section>
 
