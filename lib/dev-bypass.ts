@@ -331,12 +331,28 @@ function dashboardInit() {
   };
 }
 
-function attendanceReport() {
+function attendanceReport(startDate?: string | null, endDate?: string | null) {
+  const startKey = startDate || istDateKey(-30);
+  const endKey = endDate || istDateKey();
+  const inRange = (iso: string) => {
+    const key = istDateKeyOfIso(iso);
+    return key >= startKey && key <= endKey;
+  };
+  // Working days in range (Mon–Fri between startKey and endKey, capped at 31)
+  const [sy, sm, sd] = startKey.split('-').map(Number);
+  const [ey, em, ed] = endKey.split('-').map(Number);
+  let elapsedWorkingDays = 0;
+  for (const cursor = new Date(Date.UTC(sy, sm - 1, sd)); cursor <= new Date(Date.UTC(ey, em - 1, ed)); cursor.setUTCDate(cursor.getUTCDate() + 1)) {
+    const dow = cursor.getUTCDay();
+    if (dow >= 1 && dow <= 5) elapsedWorkingDays++;
+  }
+  elapsedWorkingDays = Math.min(elapsedWorkingDays, 31);
+
   const employeeSummaries = world.roster.map((e) => {
-    const sessions = world.sessions.filter((s) => s.employee_id === e.id);
+    const sessions = world.sessions.filter((s) => s.employee_id === e.id && inRange(s.checkin_ts));
     const liveForEmployee =
-      e.id === ME.id && world.openSession
-        ? [{ ...world.openSession, date: istDateKeyOfIso(world.openSession.checkin_ts) }]
+      e.id === ME.id && world.openSession && inRange(world.openSession.checkin_ts)
+        ? [world.openSession]
         : [];
     const mapped: Json[] = [...sessions, ...liveForEmployee.map((s) => ({ ...s }))].map((s) => ({
       id: s.id,
@@ -359,7 +375,6 @@ function attendanceReport() {
       const [h, m] = String(s.hoursWorked).match(/(\d+)h (\d+)m/)?.slice(1).map(Number) ?? [0, 0];
       return sum + h + m / 60;
     }, 0);
-    const elapsedWorkingDays = 22;
     const daysPresent = uniqueDays.size;
 
     return {
@@ -368,7 +383,7 @@ function attendanceReport() {
       slug: e.slug,
       daysPresent,
       missedDays: Math.max(0, elapsedWorkingDays - daysPresent),
-      elapsedWorkingDays,
+      elapsedWorkingDays: Math.max(elapsedWorkingDays, daysPresent),
       approvedLeaveDays: 0,
       pendingLeaveDays: 0,
       officeDays,
@@ -377,20 +392,19 @@ function attendanceReport() {
       officeHours: Math.round(totalHours * 0.6 * 10) / 10,
       remoteHours: Math.round(totalHours * 0.4 * 10) / 10,
       averageHoursPerDay: daysPresent ? Math.round((totalHours / daysPresent) * 10) / 10 : 0,
-      attendanceRate: Math.round((daysPresent / elapsedWorkingDays) * 100),
+      attendanceRate: Math.min(100, Math.round((daysPresent / Math.max(1, elapsedWorkingDays)) * 100)),
       sessions: mapped,
     };
   });
 
-  const totalWorkingDays = 22;
   return {
     employeeSummaries,
     teamSummary: {
       totalEmployees: world.roster.length,
-      totalWorkingDays,
-      elapsedWorkingDays: totalWorkingDays,
+      totalWorkingDays: elapsedWorkingDays,
+      elapsedWorkingDays,
       totalHours: Math.round(employeeSummaries.reduce((s, e) => s + e.totalHours, 0)),
-      averageAttendanceRate: Math.round(employeeSummaries.reduce((s, e) => s + e.attendanceRate, 0) / employeeSummaries.length),
+      averageAttendanceRate: Math.min(100, Math.round(employeeSummaries.reduce((s, e) => s + e.attendanceRate, 0) / Math.max(1, employeeSummaries.length))),
       officePercentage: 55,
       remotePercentage: 45,
       dateRange: { startDate: istDateKey(-30), endDate: istDateKey() },
@@ -688,7 +702,7 @@ const ROUTES: Array<{ method: string; match: RegExp; handle: Handler }> = [
       if (req) req.status = body?.action === 'approve' ? 'approved' : 'rejected';
       return { success: true };
   } },
-  { method: 'GET', match: /^\/api\/admin\/attendance-report$/, handle: () => attendanceReport() },
+  { method: 'GET', match: /^\/api\/admin\/attendance-report$/, handle: ({ url }) => attendanceReport(url.searchParams.get('startDate'), url.searchParams.get('endDate')) },
   { method: 'GET', match: /^\/api\/admin\/recent-activity$/, handle: ({ url }) =>
       recentActivity(url.searchParams.get('range'), url.searchParams.get('slug'))
   },

@@ -150,7 +150,7 @@ export default function EmployeeProfilePage() {
   if (!employee) return null;
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto max-w-4xl space-y-5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -176,31 +176,33 @@ export default function EmployeeProfilePage() {
             <p className="card-label">About</p>
             {savedNotice && <span className="text-xs font-medium text-success-600 dark:text-success-400">{savedNotice}</span>}
           </div>
-          <div className="mt-4 grid gap-3">
-            <div className="grid gap-1.5">
+          <div className="mt-4 grid gap-x-4 gap-y-3 sm:grid-cols-2">
+            <div className="grid gap-1 sm:col-span-2">
               <Label htmlFor="fullName" className="text-xs text-muted-foreground">Full name</Label>
-              <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} className="rounded-xl bg-background/70" />
+              <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} className="h-9 rounded-lg bg-background/70" />
             </div>
-            <div className="grid gap-1.5">
+            <div className="grid gap-1">
               <Label htmlFor="dob" className="text-xs text-muted-foreground">Birthday 🎂</Label>
-              <Input id="dob" type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} className="rounded-xl bg-background/70" />
+              <Input id="dob" type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} className="h-9 rounded-lg bg-background/70" />
             </div>
-            <div className="grid gap-1.5">
+            <div className="grid gap-1">
               <Label htmlFor="phone" className="text-xs text-muted-foreground">Phone</Label>
-              <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91…" className="rounded-xl bg-background/70" />
+              <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91…" className="h-9 rounded-lg bg-background/70" />
             </div>
-            <div className="grid gap-1.5">
+            <div className="grid gap-1">
               <Label htmlFor="emergency" className="text-xs text-muted-foreground">Emergency contact</Label>
-              <Input id="emergency" value={emergencyContact} onChange={(e) => setEmergencyContact(e.target.value)} placeholder="Name · number" className="rounded-xl bg-background/70" />
+              <Input id="emergency" value={emergencyContact} onChange={(e) => setEmergencyContact(e.target.value)} placeholder="Name · number" className="h-9 rounded-lg bg-background/70" />
             </div>
-            <div className="grid gap-1.5">
+            <div className="grid gap-1">
               <Label className="text-xs text-muted-foreground">Email</Label>
-              <p className="text-sm text-foreground">{employee.email || '—'}</p>
+              <p className="flex h-9 items-center text-sm text-foreground">{employee.email || '—'}</p>
             </div>
           </div>
-          <Button onClick={saveAbout} disabled={isSaving} className="mt-4 w-full rounded-xl">
-            {isSaving ? 'Saving…' : 'Save details'}
-          </Button>
+          <div className="mt-4 flex justify-end">
+            <Button onClick={saveAbout} disabled={isSaving} size="sm" className="rounded-lg">
+              {isSaving ? 'Saving…' : 'Save details'}
+            </Button>
+          </div>
         </section>
 
         {/* Documents */}
@@ -230,12 +232,13 @@ export default function EmployeeProfilePage() {
           </div>
 
           <div className="mt-4 space-y-2 border-t border-glass-border pt-4">
-            <Input value={docLabel} onChange={(e) => setDocLabel(e.target.value)} placeholder="Label — e.g. ID card, Payslip Aug" className="rounded-xl bg-background/70" />
-            <Input value={docUrl} onChange={(e) => setDocUrl(e.target.value)} placeholder="https://drive.google.com/…" className="rounded-xl bg-background/70" />
-            <Button onClick={addDocument} disabled={isAddingDoc || !docLabel.trim() || !docUrl.trim()} size="sm" className="w-full rounded-xl">
-              <Plus className="mr-1 h-3.5 w-3.5" />
-              {isAddingDoc ? 'Adding…' : 'Add link'}
-            </Button>
+            <div className="flex gap-2">
+              <Input value={docLabel} onChange={(e) => setDocLabel(e.target.value)} placeholder="Label — e.g. ID card" className="h-9 flex-1 rounded-lg bg-background/70" />
+              <Input value={docUrl} onChange={(e) => setDocUrl(e.target.value)} placeholder="https://drive.google.com/…" className="h-9 flex-[1.4] rounded-lg bg-background/70" />
+              <Button onClick={addDocument} disabled={isAddingDoc || !docLabel.trim() || !docUrl.trim()} size="sm" className="h-9 rounded-lg">
+                {isAddingDoc ? '…' : 'Add'}
+              </Button>
+            </div>
           </div>
         </section>
       </div>

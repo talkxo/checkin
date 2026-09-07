@@ -6,12 +6,12 @@ import nextDynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { useRegisterActions } from "kbar";
 import {
-  Brain,
-  Calendar,
-  Eye,
+  CalendarCheck,
+  Gauge,
   LogOut,
+  Plane,
   RefreshCw,
-  ShieldCheck,
+  Sparkles,
   Users,
 } from "lucide-react";
 import DarkModeToggle from "@/components/dark-mode-toggle";
@@ -754,11 +754,11 @@ export default function AdminPage() {
   };
 
   const tabs = [
-    { id: "overview" as const, label: "Overview", icon: Eye },
-    { id: "attendance" as const, label: "Attendance", icon: ShieldCheck },
+    { id: "overview" as const, label: "Overview", icon: Gauge },
+    { id: "attendance" as const, label: "Attendance", icon: CalendarCheck },
     { id: "people" as const, label: "People", icon: Users, count: allUsers.length },
-    { id: "ai" as const, label: "Assistive AI", icon: Brain },
-    { id: "leave" as const, label: "Leave", icon: Calendar, count: pendingLeaveCount },
+    { id: "ai" as const, label: "Assistive AI", icon: Sparkles },
+    { id: "leave" as const, label: "Leave", icon: Plane, count: pendingLeaveCount },
   ];
 
   useRegisterActions([

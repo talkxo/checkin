@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Cake, RefreshCw, UserMinus } from "lucide-react";
+import { ArrowRight, Cake, Plane, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { EmptyState } from "@/components/ui/empty-state";
 import { formatISTDateKey, getMondayOfWeek } from "@/lib/time";
 import type { AdminStats, TodayData } from "./types";
 
@@ -69,11 +67,22 @@ function normalizeMoodBucket(moodValue: string | null | undefined): MoodBucket {
   return "unknown";
 }
 
-interface AttentionItem {
+type PersonState = "in-office" | "remote" | "late" | "missing" | "on-leave" | "done";
+
+interface PersonTile {
   name: string;
-  reason: string;
-  status: "missing" | "late";
+  detail: string;
+  state: PersonState;
 }
+
+const STATE_META: Record<PersonState, { label: string; dot: string }> = {
+  "in-office": { label: "In office", dot: "bg-success-500" },
+  remote: { label: "Remote", dot: "bg-primary" },
+  late: { label: "Late", dot: "bg-amber-500" },
+  missing: { label: "Not checked in", dot: "bg-destructive" },
+  "on-leave": { label: "On leave", dot: "bg-sky-500" },
+  done: { label: "Done for the day", dot: "bg-success-700" },
+};
 
 export function AdminOverviewWorkspace({
   todayData,
@@ -87,7 +96,6 @@ export function AdminOverviewWorkspace({
   const [teamPlanEntries, setTeamPlanEntries] = useState<TeamPlanEntry[]>([]);
   const [moodRange, setMoodRange] = useState<MoodRange>("week");
   const [moodEntries, setMoodEntries] = useState<MoodDataEntry[]>([]);
-  const [activeMoodBucket, setActiveMoodBucket] = useState<MoodBucket>("positive");
   const [announcementDraft, setAnnouncementDraft] = useState("");
   const [isSendingAnnouncement, setIsSendingAnnouncement] = useState(false);
   const [announcementFeedback, setAnnouncementFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -144,6 +152,58 @@ export function AdminOverviewWorkspace({
     loadBirthdays();
   }, [moodRange]);
 
+  const todayKey = useMemo(() => formatISTDateKey(new Date()), []);
+
+  const onLeaveFirstNames = useMemo(() => {
+    const set = new Set<string>();
+    for (const leave of upcomingLeaves) {
+      if (leave.start_date <= todayKey && leave.end_date >= todayKey) {
+        const employee = Array.isArray(leave.employees) ? leave.employees[0] : leave.employees;
+        const first = employee?.full_name?.split(" ")[0];
+        if (first) set.add(first);
+      }
+    }
+    return set;
+  }, [upcomingLeaves, todayKey]);
+
+  // The whole team, one tile each — problems highlighted in place
+  const teamTiles = useMemo<PersonTile[]>(() => {
+    return todayData.map((person) => {
+      const firstName = person.name.split(" ")[0];
+      const [hour, minute] = (person.firstIn || "").split(":").map(Number);
+      const isLate =
+        person.status !== "Not Started" &&
+        !Number.isNaN(hour) &&
+        hour * 60 + minute >= ADMIN_LATE_CUTOFF_MINUTES;
+
+      if (onLeaveFirstNames.has(firstName)) {
+        return { name: person.name, detail: "Approved leave", state: "on-leave" as PersonState };
+      }
+      if (person.status === "Not Started") {
+        return { name: person.name, detail: "No check-in yet", state: "missing" as PersonState };
+      }
+      if (isLate) {
+        return { name: person.name, detail: `In at ${person.firstIn} · late`, state: "late" as PersonState };
+      }
+      if (person.status === "Complete") {
+        return { name: person.name, detail: `Out ${person.lastOut !== "N/A" ? person.lastOut : ""}`.trim(), state: "done" as PersonState };
+      }
+      return {
+        name: person.name,
+        detail: `In at ${person.firstIn}${person.mode === "remote" ? " · remote" : ""}`,
+        state: (person.mode === "remote" ? "remote" : "in-office") as PersonState,
+      };
+    });
+  }, [todayData, onLeaveFirstNames]);
+
+  const tileOrder: Record<PersonState, number> = { missing: 0, late: 1, "in-office": 2, remote: 2, done: 3, "on-leave": 4 };
+  const sortedTiles = useMemo(
+    () => [...teamTiles].sort((a, b) => tileOrder[a.state] - tileOrder[b.state]),
+    [teamTiles]
+  );
+
+  const problemCount = teamTiles.filter((t) => t.state === "missing" || t.state === "late").length;
+
   const moodStats = useMemo(() => {
     const base: Record<MoodBucket, number> = { positive: 0, neutral: 0, low: 0, unknown: 0 };
     for (const mood of moodEntries) {
@@ -161,13 +221,6 @@ export function AdminOverviewWorkspace({
     };
   }, [moodEntries]);
 
-  const activeMoodStat = useMemo(
-    () => moodStats.rows.find((row) => row.bucket === activeMoodBucket) || moodStats.rows[0],
-    [activeMoodBucket, moodStats.rows]
-  );
-
-  const todayKey = useMemo(() => formatISTDateKey(new Date()), []);
-
   const handleSendAnnouncement = async () => {
     setAnnouncementFeedback(null);
     const content = announcementDraft.trim();
@@ -175,7 +228,6 @@ export function AdminOverviewWorkspace({
       setAnnouncementFeedback({ type: "error", message: "Write an announcement before sending." });
       return;
     }
-
     setIsSendingAnnouncement(true);
     try {
       const response = await fetch("/api/admin/basecamp-announcement", {
@@ -197,87 +249,101 @@ export function AdminOverviewWorkspace({
     }
   };
 
-  // Attention queue — missing first, then late
-  const attentionItems = useMemo<AttentionItem[]>(() => {
-    const items: AttentionItem[] = [];
-    for (const person of todayData) {
-      const [hour, minute] = (person.firstIn || "").split(":").map(Number);
-      const isLate =
-        person.status !== "Not Started" &&
-        !Number.isNaN(hour) &&
-        hour * 60 + minute >= ADMIN_LATE_CUTOFF_MINUTES;
-      if (person.status === "Not Started") {
-        items.push({ name: person.name, reason: "No check-in yet", status: "missing" });
-      } else if (isLate) {
-        items.push({ name: person.name, reason: `Checked in at ${person.firstIn}`, status: "late" });
-      }
-    }
-    return items.sort((a, b) => (a.status === "missing" ? -1 : 1));
-  }, [todayData]);
-
-  const presentCount = todayData.filter((p) => p.status !== "Not Started").length;
   const officeCount = todayData.filter((p) => p.mode === "office" && p.status !== "Not Started").length;
   const remoteCount = todayData.filter((p) => p.mode === "remote" && p.status !== "Not Started").length;
-  const plannedCount = new Set(teamPlanEntries.map((e) => e.employee_id)).size;
+  const presentCount = todayData.filter((p) => p.status !== "Not Started").length;
 
   return (
-    <div className="space-y-5">
-      {/* Status sentence */}
-      <section className="glass rounded-3xl px-5 py-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="card-label">Today</p>
-            <p className="mt-1.5 text-lg font-semibold text-foreground">
-              {officeCount} in office · {remoteCount} remote · {presentCount} of {todayData.length} present
-            </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">Updated {lastUpdatedLabel}</p>
+    <div className="grid gap-4 xl:grid-cols-[1.6fr_1fr] xl:items-start">
+      {/* ── LEFT COLUMN: everything scoped to today ── */}
+      <div className="space-y-4">
+        <section className="glass rounded-3xl px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="card-label">Today</p>
+              <p className="mt-1 text-lg font-semibold text-foreground">
+                {officeCount} in office · {remoteCount} remote · {presentCount} of {todayData.length} present
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">Updated {lastUpdatedLabel}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {pendingLeaveCount > 0 ? (
+                <Button variant="outline" size="sm" onClick={onOpenLeave} className="rounded-xl border-amber-500/40 text-amber-600 dark:text-amber-400">
+                  {pendingLeaveCount} approval{pendingLeaveCount > 1 ? "s" : ""} pending
+                  <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                </Button>
+              ) : null}
+              <Button variant="outline" size="sm" onClick={onRefresh} className="rounded-xl">
+                <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+            </div>
           </div>
-          <Button variant="outline" size="sm" onClick={onRefresh} className="rounded-xl">
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-        </div>
-      </section>
+        </section>
 
-      <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-        {/* Attention queue */}
-        <div className="glass rounded-3xl p-5">
-          <div className="flex items-center justify-between">
-            <p className="card-label">Needs attention</p>
-            {attentionItems.length > 0 ? (
-              <Badge variant="secondary" className="rounded-full">{attentionItems.length}</Badge>
-            ) : null}
-          </div>
-          <div className="mt-4 space-y-2">
-            {attentionItems.length === 0 ? (
-              <EmptyState title="All clear" description="Everyone checked in on time." />
+        <section className="glass rounded-3xl">
+          <div className="flex items-center justify-between border-b border-glass-border px-5 py-3.5">
+            <p className="card-label">Team</p>
+            {problemCount > 0 ? (
+              <button onClick={() => onOpenAttendance({ status: "attention" })} className="text-xs font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">
+                {problemCount} need{problemCount > 1 ? "" : "s"} attention — review
+              </button>
             ) : (
-              attentionItems.map((item) => (
-                <button
-                  key={item.name}
-                  onClick={() => onOpenAttendance({ status: item.status === "missing" ? "missing" : "attention" })}
-                  className="glass-hover flex w-full items-center justify-between gap-3 rounded-2xl bg-muted/20 px-4 py-3 text-left"
-                >
-                  <div className="flex items-center gap-3">
-                    <UserMinus className={`h-4 w-4 ${item.status === "missing" ? "text-destructive" : "text-amber-500"}`} />
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">{item.reason}</p>
-                    </div>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                </button>
-              ))
+              <span className="text-xs text-muted-foreground">All clear</span>
             )}
           </div>
+          <div className="max-h-[430px] overflow-y-auto">
+            <table className="min-w-full text-sm">
+              <thead className="sticky top-0 z-10 border-b border-glass-border bg-background/95 text-left text-xs uppercase tracking-wide text-muted-foreground backdrop-blur-sm">
+                <tr>
+                  <th className="px-5 py-2.5 font-medium">Name</th>
+                  <th className="px-5 py-2.5 font-medium">Status</th>
+                  <th className="px-5 py-2.5 font-medium">Check in</th>
+                  <th className="px-5 py-2.5 font-medium">Mode</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-glass-border">
+                {sortedTiles.map((tile) => {
+                  const meta = STATE_META[tile.state];
+                  const source = todayData.find((p) => p.name === tile.name);
+                  const highlight = tile.state === "missing" || tile.state === "late";
+                  return (
+                    <tr
+                      key={tile.name}
+                      onClick={() => onOpenAttendance({ status: tile.state === "missing" ? "missing" : highlight ? "attention" : "all" })}
+                      className={`cursor-pointer transition-colors hover:bg-muted/20 ${highlight ? "bg-destructive/[0.04]" : ""}`}
+                    >
+                      <td className="px-5 py-2.5 font-medium text-foreground">{tile.name}</td>
+                      <td className="px-5 py-2.5">
+                        <span className="flex items-center gap-2">
+                          <span className={`h-2 w-2 shrink-0 rounded-full ${meta.dot}`} />
+                          <span className={highlight ? "font-medium text-foreground" : "text-muted-foreground"}>{meta.label}</span>
+                        </span>
+                      </td>
+                      <td className="px-5 py-2.5 text-muted-foreground [font-variant-numeric:tabular-nums]">
+                        {source && source.status !== "Not Started" ? source.firstIn : "—"}
+                      </td>
+                      <td className="px-5 py-2.5 text-muted-foreground capitalize">
+                        {source && source.status !== "Not Started" ? source.mode : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
 
-          {/* Upcoming leaves + birthdays */}
-          <div className="mt-5 space-y-2 border-t border-glass-border pt-4">
+      {/* ── RIGHT COLUMN: longer horizons (week/month/future) ── */}
+      <div className="space-y-4">
+        <div className="glass rounded-3xl p-4">
+          <p className="card-label">Upcoming</p>
+          <div className="mt-3 space-y-2.5 text-sm">
             {birthdays.map((b) => (
-              <div key={`bd-${b.name}-${b.date}`} className="flex items-center gap-2 text-sm">
-                <Cake className="h-4 w-4 text-primary" />
-                <span className="font-medium text-foreground">{b.name}</span>
-                <span className="text-muted-foreground">· {b.date}</span>
+              <div key={`bd-${b.name}-${b.date}`} className="flex items-center gap-2.5">
+                <Cake className="h-4 w-4 shrink-0 text-primary" />
+                <span className="truncate"><span className="font-medium text-foreground">{b.name}</span> <span className="text-muted-foreground">· {b.date}</span></span>
               </div>
             ))}
             {upcomingLeaves.map((leave) => {
@@ -286,137 +352,99 @@ export function AdminOverviewWorkspace({
               const firstName = employee?.full_name?.split(" ")[0] || "Unknown";
               const isOngoing = leave.start_date <= todayKey && leave.end_date >= todayKey;
               return (
-                <div key={leave.id} className="flex items-center justify-between gap-2 text-sm">
+                <div key={leave.id} className="flex items-center gap-2.5">
+                  <Plane className="h-4 w-4 shrink-0 text-sky-500" />
                   <span className="min-w-0 truncate">
                     <span className="font-medium text-foreground">{firstName}</span>
-                    <span className="text-muted-foreground"> · {leaveType?.name || "Leave"} · {leave.start_date}</span>
+                    <span className="text-muted-foreground"> · {leaveType?.name || "Leave"} · {leave.start_date.slice(5)}</span>
                   </span>
-                  {isOngoing ? <Badge className="rounded-full">ongoing</Badge> : null}
+                  {isOngoing ? <span className="ml-auto shrink-0 text-[10px] font-semibold uppercase tracking-wide text-sky-500">now</span> : null}
                 </div>
               );
             })}
             {birthdays.length === 0 && upcomingLeaves.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No upcoming leaves or birthdays.</p>
+              <p className="text-xs text-muted-foreground">Nothing upcoming.</p>
             ) : null}
           </div>
         </div>
 
-        {/* Mood + plan + broadcast */}
-        <div className="space-y-5">
-          <div className="glass rounded-3xl p-5">
-            <div className="flex items-start justify-between">
-              <p className="card-label">Team mood</p>
-              <div className="flex items-center gap-1 rounded-xl bg-muted/30 p-1">
-                {(["week", "month"] as const).map((range) => (
-                  <button
-                    key={range}
-                    onClick={() => setMoodRange(range)}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-medium capitalize transition-colors ${
-                      moodRange === range ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {range}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-4 flex h-20 items-end gap-2">
-              {moodStats.rows.map((row) => (
+        <div className="glass rounded-3xl p-4">
+          <div className="flex items-center justify-between">
+            <p className="card-label">Team mood</p>
+            <div className="flex items-center gap-1 rounded-lg bg-muted/30 p-0.5">
+              {(["week", "month"] as const).map((range) => (
                 <button
-                  key={`bar-${row.bucket}`}
-                  onClick={() => setActiveMoodBucket(row.bucket)}
-                  className="flex flex-1 flex-col items-center gap-1 focus-visible:outline-none"
+                  key={range}
+                  onClick={() => setMoodRange(range)}
+                  className={`rounded-md px-2 py-0.5 text-[11px] font-medium capitalize transition-colors ${
+                    moodRange === range ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
                 >
-                  <div className={`relative flex h-14 w-full items-end rounded-md bg-muted transition-all ${
-                    activeMoodBucket === row.bucket ? "ring-2 ring-primary/40" : ""
-                  }`}>
-                    <div
-                      className={`w-full rounded-md ${bucketColorMap[row.bucket]}`}
-                      style={{ height: `${Math.max(row.pct, row.count > 0 ? 14 : 4)}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground">{row.label}</span>
+                  {range}
                 </button>
               ))}
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {moodStats.total
-                ? `${moodStats.total} check-in${moodStats.total > 1 ? "s" : ""} this ${moodRange} · ${activeMoodStat?.label ?? "—"} leads`
-                : `No mood check-ins this ${moodRange}.`}
-            </p>
           </div>
+          <div className="mt-3 flex h-14 items-end gap-2">
+            {moodStats.rows.map((row) => (
+              <div key={`bar-${row.bucket}`} className="flex flex-1 flex-col items-center gap-1">
+                <div className="flex h-10 w-full items-end rounded bg-muted">
+                  <div className={`w-full rounded ${bucketColorMap[row.bucket]}`} style={{ height: `${Math.max(row.pct, row.count > 0 ? 16 : 4)}%` }} />
+                </div>
+                <span className="text-[9px] text-muted-foreground">{row.label}</span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
+            {moodStats.total ? `${moodStats.total} this ${moodRange}` : `None this ${moodRange}`}
+          </p>
+        </div>
 
-          <div className="glass rounded-3xl p-5">
-            <p className="card-label">Plan coverage</p>
-            <div className="mt-3 max-h-[120px] space-y-2 overflow-y-auto pr-1">
-              {teamPlanEntries.length ? (
-                teamPlanEntries.slice(0, 6).map((entry) => {
-                  const employee = Array.isArray(entry.employees) ? entry.employees[0] : entry.employees;
-                  const name = employee?.full_name?.split(" ")[0] || "Unknown";
-                  return (
-                    <div key={entry.employee_id} className="flex items-center gap-2">
-                      <span className="w-16 truncate text-xs font-medium text-foreground">{name}</span>
-                      <div className="grid flex-1 grid-cols-5 gap-1">
-                        {WEEK_DAYS.map((day) => (
-                          <div key={day} className={`h-1.5 rounded-full ${entry.wfh_days?.includes(day) ? "bg-primary" : "bg-muted"}`} />
-                        ))}
-                      </div>
+        <div className="glass rounded-3xl p-4">
+          <p className="card-label">Plan coverage</p>
+          <div className="mt-3 max-h-[110px] space-y-2 overflow-y-auto pr-1">
+            {teamPlanEntries.length ? (
+              teamPlanEntries.slice(0, 6).map((entry) => {
+                const employee = Array.isArray(entry.employees) ? entry.employees[0] : entry.employees;
+                const name = employee?.full_name?.split(" ")[0] || "Unknown";
+                return (
+                  <div key={entry.employee_id} className="flex items-center gap-2">
+                    <span className="w-14 truncate text-xs font-medium text-foreground">{name}</span>
+                    <div className="grid flex-1 grid-cols-5 gap-1">
+                      {WEEK_DAYS.map((day) => (
+                        <div key={day} className={`h-1.5 rounded-full ${entry.wfh_days?.includes(day) ? "bg-primary" : "bg-muted"}`} />
+                      ))}
                     </div>
-                  );
-                })
-              ) : (
-                <p className="text-sm text-muted-foreground">No plans submitted for this week.</p>
-              )}
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {plannedCount} of {todayData.length} planned this week
-            </p>
-          </div>
-
-          <div className="glass rounded-3xl p-5">
-            <p className="card-label">Broadcast to Basecamp</p>
-            <Textarea
-              value={announcementDraft}
-              onChange={(event) => setAnnouncementDraft(event.target.value)}
-              placeholder="Write your announcement for the team…"
-              className="mt-3 min-h-[80px] rounded-xl bg-background/70"
-            />
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <p className="text-xs text-muted-foreground">{announcementDraft.length}/2500</p>
-              <Button
-                onClick={handleSendAnnouncement}
-                disabled={isSendingAnnouncement || !announcementDraft.trim()}
-                size="sm"
-                className="rounded-xl"
-              >
-                {isSendingAnnouncement ? "Sending…" : "Send"}
-              </Button>
-            </div>
-            {announcementFeedback ? (
-              <p className={`mt-2 text-xs ${announcementFeedback.type === "success" ? "text-success-600 dark:text-success-400" : "text-destructive"}`}>
-                {announcementFeedback.message}
-              </p>
-            ) : null}
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-xs text-muted-foreground">No plans for this week yet.</p>
+            )}
           </div>
         </div>
-      </section>
 
-      {pendingLeaveCount > 0 ? (
-        <button
-          onClick={onOpenLeave}
-          className="glass glass-hover flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left"
-        >
-          <div className="flex items-start gap-3">
-            <UserMinus className="mt-0.5 h-4 w-4 text-amber-500" />
-            <div>
-              <p className="text-sm font-semibold text-foreground">Pending leave approvals</p>
-              <p className="text-sm text-muted-foreground">{pendingLeaveCount} request{pendingLeaveCount > 1 ? "s" : ""} need a decision.</p>
-            </div>
+        <div className="glass rounded-3xl p-4">
+          <p className="card-label">Broadcast to Basecamp</p>
+          <Textarea
+            value={announcementDraft}
+            onChange={(event) => setAnnouncementDraft(event.target.value)}
+            placeholder="Write your announcement for the team…"
+            className="mt-3 min-h-[64px] rounded-xl bg-background/70"
+          />
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">{announcementDraft.length}/2500</p>
+            <Button onClick={handleSendAnnouncement} disabled={isSendingAnnouncement || !announcementDraft.trim()} size="sm" className="rounded-xl">
+              {isSendingAnnouncement ? "Sending…" : "Send"}
+            </Button>
           </div>
-          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-        </button>
-      ) : null}
+          {announcementFeedback ? (
+            <p className={`mt-1.5 text-xs ${announcementFeedback.type === "success" ? "text-success-600 dark:text-success-400" : "text-destructive"}`}>
+              {announcementFeedback.message}
+            </p>
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 }
