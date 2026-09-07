@@ -261,10 +261,12 @@
      the parent's opaque background). Falls back to the flat background when
      color-mix() is unsupported. */
   .ambient-page {
+    /* Anchored low, sweeping diagonally upward — movement from bottom to the
+       side, keeping the top of the page clean for the logo */
     background-image:
-      radial-gradient(44rem 44rem at 8% -12%, color-mix(in srgb, var(--ambient-a) 34%, transparent), transparent 68%),
-      radial-gradient(38rem 38rem at 106% 12%, color-mix(in srgb, var(--ambient-b) 30%, transparent), transparent 68%),
-      radial-gradient(40rem 40rem at 50% 120%, color-mix(in srgb, var(--ambient-c) 18%, transparent), transparent 65%);
+      radial-gradient(56rem 40rem at 100% 100%, color-mix(in srgb, var(--ambient-a) 28%, transparent), transparent 72%),
+      radial-gradient(44rem 34rem at -8% 115%, color-mix(in srgb, var(--ambient-b) 22%, transparent), transparent 70%),
+      linear-gradient(to top, color-mix(in srgb, var(--ambient-a) 12%, transparent), transparent 46%);
     background-attachment: fixed;
   }
 
