@@ -250,8 +250,10 @@ function monthlyAttendance(): Json {
     attendance: map,
     leaveDates: [istDateKey(-12), istDateKey(-11), istDateKey(-4)],
     holidays: [
+      { date: '2026-09-04', name: 'Janmashtami' },
       { date: '2026-10-02', name: 'Gandhi Jayanti' },
-      { date: '2026-11-09', name: 'Diwali' },
+      { date: '2026-10-20', name: 'Dussehra' },
+      { date: '2026-11-09', name: 'Goverdhan Puja' },
       { date: '2026-12-25', name: 'Christmas' },
     ],
   };
