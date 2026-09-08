@@ -30,3 +30,4 @@ dist
 scratch/
 .claude/settings.local.json
 zcode.tldraw
+CLAUDE.md
