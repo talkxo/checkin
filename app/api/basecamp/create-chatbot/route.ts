@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAccessToken } from '@/lib/basecamp';
+import { getAccessToken, BASECAMP_API_HOST, basecampAccountId, basecampProjectId, basecampChatId } from '@/lib/basecamp';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +28,8 @@ export async function POST(req: NextRequest) {
 
     if (process.env.NODE_ENV === 'development') console.log('Creating chatbot with data:', chatbotData);
 
-    const response = await fetch(`https://3.basecampapi.com/${process.env.BC_ACCOUNT_ID}/buckets/${process.env.BC_PROJECT_ID}/chats/${process.env.BC_CHAT_ID}/chatbots.json`, {
+    const chatbotUrl = `${BASECAMP_API_HOST}/${basecampAccountId}/buckets/${basecampProjectId}/chats/${basecampChatId}/chatbots.json`;
+    const response = await fetch(chatbotUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,

@@ -1,7 +1,11 @@
 import { getSetting, setSetting } from './settings';
 
 const tokenUrl = 'https://launchpad.37signals.com/authorization/token';
-const endpoint = () => `https://3.basecampapi.com/${process.env.BC_ACCOUNT_ID}/buckets/${process.env.BC_PROJECT_ID}/chats/${process.env.BC_CHAT_ID}/lines.json`;
+export const BASECAMP_API_HOST = 'https://3.basecampapi.com';
+export const basecampAccountId = process.env.BC_ACCOUNT_ID;
+export const basecampProjectId = process.env.BC_PROJECT_ID;
+export const basecampChatId = process.env.BC_CHAT_ID;
+const endpoint = () => `${BASECAMP_API_HOST}/${basecampAccountId}/buckets/${basecampProjectId}/chats/${basecampChatId}/lines.json`;
 
 async function refresh(old: any) {
   try {
@@ -62,7 +66,8 @@ export async function getAccessToken() {
 export async function postCampfire(content: string) {
   try {
     const access = await getAccessToken();
-    const res = await fetch(endpoint(), { 
+    const url = endpoint();
+    const res = await fetch(url, { 
       method: 'POST', 
       headers: { 
         'Authorization': `Bearer ${access}`, 

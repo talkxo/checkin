@@ -646,28 +646,26 @@ export default function AdminPage() {
   };
 
   const loadHistoricalData = async (range: AiRange) => {
-    const params = new URLSearchParams();
-    if (range === "lastMonth") params.set("range", "previousMonth");
-    else params.set("range", range);
+    const url = new URL("/api/admin/historical-data", window.location.origin);
+    url.searchParams.set("range", range === "lastMonth" ? "previousMonth" : range);
     if (range === "custom" && aiCustomRange.startDate && aiCustomRange.endDate) {
-      params.set("startDate", aiCustomRange.startDate);
-      params.set("endDate", aiCustomRange.endDate);
+      url.searchParams.set("startDate", aiCustomRange.startDate);
+      url.searchParams.set("endDate", aiCustomRange.endDate);
     }
-    const response = await fetch(`/api/admin/historical-data?${params.toString()}`);
+    const response = await fetch(url);
     if (!response.ok) return [];
     const data = await response.json();
     return data.attendanceData || [];
   };
 
   const loadMoodData = async (range: AiRange) => {
-    const params = new URLSearchParams();
-    if (range === "lastMonth") params.set("range", "previousMonth");
-    else params.set("range", range);
+    const url = new URL("/api/admin/mood-data", window.location.origin);
+    url.searchParams.set("range", range === "lastMonth" ? "previousMonth" : range);
     if (range === "custom" && aiCustomRange.startDate && aiCustomRange.endDate) {
-      params.set("startDate", aiCustomRange.startDate);
-      params.set("endDate", aiCustomRange.endDate);
+      url.searchParams.set("startDate", aiCustomRange.startDate);
+      url.searchParams.set("endDate", aiCustomRange.endDate);
     }
-    const response = await fetch(`/api/admin/mood-data?${params.toString()}`);
+    const response = await fetch(url);
     if (!response.ok) return [];
     const data = await response.json();
     return data.moodData || [];
