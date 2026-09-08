@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { Building2, CalendarClock, Check, ClipboardList, Plus, Send, Sparkles, Trash2, UserRound, Users, X } from 'lucide-react';
+import { CalendarClock, Check, Plus, Send, Sparkles, Trash2, UserRound, Users } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import {
@@ -26,11 +26,9 @@ import {
 const DRAFT_KEY = 'insyde-beta-signup-draft';
 
 const STEPS = [
-  { title: 'First, introduce yourself', subtitle: 'So we know who to set the workspace up for.', icon: UserRound },
-  { title: 'About your organisation', subtitle: 'The basics of the company this instance is for.', icon: Building2 },
+  { title: 'About you & your company', subtitle: 'The basics, so we know who we are setting this up for.', icon: UserRound },
   { title: 'Your work week', subtitle: 'How your team runs its day — we will match check-ins to it.', icon: CalendarClock },
-  { title: 'Your team & tools', subtitle: 'Who is coming in first, and what you already use.', icon: Users },
-  { title: 'Review & send', subtitle: 'One last look before we start building your instance.', icon: ClipboardList },
+  { title: 'Your team & tools', subtitle: 'Who is coming in first, and anything else we should know.', icon: Users },
 ] as const;
 
 const initialData = (): BetaSignupData => ({
@@ -70,14 +68,11 @@ export default function SignupWizard() {
     }
   }, [data, reference]);
 
-  // Celebrate the send-off
+  // A quiet silver send-off
   useEffect(() => {
     if (!reference) return;
     localStorage.removeItem(DRAFT_KEY);
-    const colors = ['#5cfaad', '#5ff1f5', '#222222', '#a0fdd8'];
-    confetti({ particleCount: 130, spread: 85, origin: { y: 0.55 }, colors });
-    const t = setTimeout(() => confetti({ particleCount: 70, spread: 110, origin: { y: 0.4 }, colors }), 450);
-    return () => clearTimeout(t);
+    confetti({ particleCount: 110, spread: 85, origin: { y: 0.55 }, colors: ['#e2e8f0', '#cbd5e1', '#94a3b8', '#0f172a'] });
   }, [reference]);
 
   const set = useCallback(<K extends keyof BetaSignupData>(key: K, value: BetaSignupData[K]) => {
@@ -136,18 +131,10 @@ export default function SignupWizard() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const jumpTo = (target: number) => {
-    if (target === step || target > step) return; // review links go backwards only
-    setErrors({});
-    setDirection(-1);
-    setStep(target);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const submit = async () => {
     if (submitting) return;
     // Final gate — any step could still be incomplete after a draft restore
-    for (let s = 0; s <= 3; s++) {
+    for (let s = 0; s <= 2; s++) {
       const stepErrors = validateStep(s, data);
       if (Object.keys(stepErrors).length > 0) {
         setErrors(stepErrors);
@@ -185,10 +172,20 @@ export default function SignupWizard() {
   }
 
   const CurrentIcon = STEPS[step].icon;
+  const isLast = step === STEPS.length - 1;
 
   return (
-    <div className="main-typography min-h-screen">
-      <div className="mx-auto w-full max-w-md px-4 py-6 sm:px-6">
+    <div
+      className="main-typography min-h-screen"
+      style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8f9fb 45%, #eef0f4 100%)' }}
+    >
+      {/* soft silver sheen */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 top-0 h-72"
+        style={{ background: 'radial-gradient(60% 100% at 70% 0%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 70%)' }}
+      />
+      <div className="relative mx-auto w-full max-w-md px-4 py-6 sm:px-6">
         {/* Header — wordmark only, intentionally no links off this page */}
         <header className="flex items-center justify-between pb-5">
           <div className="flex items-center gap-2.5">
@@ -197,33 +194,28 @@ export default function SignupWizard() {
               alt="INSYDE"
               className="h-8 w-8 object-contain"
             />
-            <span className="text-sm font-bold uppercase tracking-[0.28em] text-foreground">INSYDE</span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-gradient-brand px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-primary">
+            <span className="text-sm font-bold uppercase tracking-[0.28em] text-slate-900">INSYDE</span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
               <Sparkles className="h-3 w-3" /> Beta
             </span>
           </div>
-          <p className="text-xs font-medium text-muted-foreground">
-            Step {step + 1} <span className="text-muted-foreground/60">of {STEPS.length}</span>
+          <p className="text-xs font-medium text-slate-500">
+            Step {step + 1} <span className="text-slate-400">of {STEPS.length}</span>
           </p>
         </header>
 
         {/* Segmented progress */}
         <div className="flex gap-1.5 pb-6" role="progressbar" aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={step + 1}>
           {STEPS.map((_, i) => (
-            <div key={i} className="h-1 flex-1 overflow-hidden rounded-full bg-foreground/10">
+            <div key={i} className="h-1 flex-1 overflow-hidden rounded-full bg-slate-200/80">
               <div
-                className={cn(
-                  'h-full rounded-full bg-gradient-brand transition-all duration-500',
-                  i <= step ? 'w-full' : 'w-0'
-                )}
+                className={cn('h-full rounded-full bg-slate-900 transition-all duration-500', i <= step ? 'w-full' : 'w-0')}
               />
             </div>
           ))}
         </div>
 
-        {/* Step content — enter-only animation. Deliberately no AnimatePresence:
-            exit-gated swaps hang wherever rAF is throttled (background tabs,
-            embedded browsers) and would freeze the wizard mid-step. */}
+        {/* Step content — enter-only animation (no exit-gated swaps) */}
         <motion.div
           key={step}
           initial={{ opacity: 0, x: 24 * direction }}
@@ -232,27 +224,26 @@ export default function SignupWizard() {
         >
           {/* Step heading */}
           <div className="flex items-start gap-3 pb-5">
-            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-brand text-white shadow-primary">
+            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-md shadow-slate-900/15">
               <CurrentIcon className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="font-cal-sans text-[22px] font-semibold leading-tight text-foreground">{STEPS[step].title}</h1>
-              <p className="mt-1 text-sm text-muted-foreground">{STEPS[step].subtitle}</p>
+              <h1 className="font-cal-sans text-[22px] font-semibold leading-tight text-slate-900">{STEPS[step].title}</h1>
+              <p className="mt-1 text-sm text-slate-500">{STEPS[step].subtitle}</p>
             </div>
           </div>
 
           {/* Step card */}
           <form
-            className="glass rounded-3xl p-5"
+            className="rounded-3xl border border-slate-200/90 bg-white/90 p-5 shadow-[0_10px_36px_rgba(15,23,42,0.07)] backdrop-blur-sm"
             onSubmit={(e) => {
               e.preventDefault();
-              step === STEPS.length - 1 ? submit() : goNext();
+              isLast ? submit() : goNext();
             }}
           >
-            {step === 0 && <ContactStep data={data} errors={errors} set={set} />}
-            {step === 1 && <OrgStep data={data} errors={errors} set={set} />}
-            {step === 2 && <RhythmStep data={data} errors={errors} set={set} />}
-            {step === 3 && (
+            {step === 0 && <AboutStep data={data} errors={errors} set={set} />}
+            {step === 1 && <RhythmStep data={data} errors={errors} set={set} />}
+            {step === 2 && (
               <TeamStep
                 data={data}
                 errors={errors}
@@ -262,7 +253,6 @@ export default function SignupWizard() {
                 removeTeamMember={removeTeamMember}
               />
             )}
-            {step === 4 && <ReviewStep data={data} set={set} onJump={jumpTo} />}
 
             {/* Honeypot — visually removed, keyboard-invisible */}
             <input
@@ -276,7 +266,7 @@ export default function SignupWizard() {
             />
 
             {submitError && (
-              <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+              <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-600">
                 {submitError}
               </p>
             )}
@@ -287,23 +277,16 @@ export default function SignupWizard() {
                 <button
                   type="button"
                   onClick={goBack}
-                  className="button-press glass-hover h-11 rounded-xl border border-glass-border px-5 text-sm font-semibold text-foreground"
+                  className="button-press h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                 >
                   Back
                 </button>
               )}
-              {step < STEPS.length - 1 ? (
-                <button
-                  type="submit"
-                  className="button-press h-11 flex-1 rounded-xl bg-gradient-brand text-sm font-semibold text-white shadow-primary hover:brightness-110"
-                >
-                  Continue
-                </button>
-              ) : (
+              {isLast ? (
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="button-press h-11 flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-brand text-sm font-semibold text-white shadow-primary hover:brightness-110 disabled:opacity-60"
+                  className="button-press inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-slate-900 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition-colors hover:bg-slate-800 disabled:opacity-60"
                 >
                   {submitting ? (
                     <>
@@ -317,11 +300,18 @@ export default function SignupWizard() {
                     </>
                   )}
                 </button>
+              ) : (
+                <button
+                  type="submit"
+                  className="button-press h-11 flex-1 rounded-xl bg-slate-900 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition-colors hover:bg-slate-800"
+                >
+                  Continue
+                </button>
               )}
             </div>
           </form>
 
-          <p className="px-2 pt-4 text-center text-xs leading-relaxed text-muted-foreground">
+          <p className="px-2 pt-4 text-center text-xs leading-relaxed text-slate-400">
             Your details go straight to the INSYDE team — nothing is shared, and we will only
             email you about your setup.
           </p>
@@ -346,7 +336,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="card-label mb-1.5 block">
+      <label className="mb-1.5 block text-[10px] font-semibold uppercase leading-4 tracking-[0.18em] text-slate-500">
         {label}
         {required && <span className="ml-0.5 text-red-400">*</span>}
       </label>
@@ -356,7 +346,7 @@ function Field({
   );
 }
 
-const inputCls = 'h-11 rounded-xl border-glass-border bg-background/40 text-[15px] dark:bg-white/5';
+const inputCls = 'h-11 rounded-xl border-slate-200 bg-white text-[15px] text-slate-900 placeholder:text-slate-400';
 
 function TextInput({
   value,
@@ -395,8 +385,8 @@ function Chip({
       className={cn(
         'button-press rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-all',
         selected
-          ? 'border-transparent bg-gradient-brand text-white shadow-primary'
-          : 'glass-hover border-glass-border bg-transparent text-foreground',
+          ? 'border-slate-900 bg-slate-900 text-white shadow-md shadow-slate-900/20'
+          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50',
         className
       )}
     >
@@ -405,9 +395,13 @@ function Chip({
   );
 }
 
-/* ──────────────────────────── step 1 — contact ─────────────────────────── */
+function GroupLabel({ children }: { children: React.ReactNode }) {
+  return <p className="card-label pb-3">{children}</p>;
+}
 
-function ContactStep({
+/* ─────────────────── step 1 — you + organisation ──────────────────── */
+
+function AboutStep({
   data,
   errors,
   set,
@@ -417,106 +411,100 @@ function ContactStep({
   set: <K extends keyof BetaSignupData>(key: K, value: BetaSignupData[K]) => void;
 }) {
   return (
-    <div className="space-y-4">
-      <Field label="Your full name" required error={errors.contact_name}>
-        <TextInput
-          value={data.contact_name}
-          onChange={(v) => set('contact_name', v)}
-          placeholder="Asha Verma"
-          autoComplete="name"
-        />
-      </Field>
-      <Field label="Work email" required error={errors.contact_email}>
-        <TextInput
-          value={data.contact_email}
-          onChange={(v) => set('contact_email', v)}
-          placeholder="asha@yourcompany.com"
-          type="email"
-          inputMode="email"
-          autoComplete="email"
-        />
-      </Field>
-      <Field label="What do you do here?">
-        <div className="flex flex-wrap gap-2">
-          {CONTACT_ROLES.map((r) => (
-            <Chip key={r} selected={data.contact_role === r} onClick={() => set('contact_role', data.contact_role === r ? '' : r)}>
-              {r}
-            </Chip>
-          ))}
+    <div className="space-y-5">
+      <div>
+        <GroupLabel>You</GroupLabel>
+        <div className="space-y-4">
+          <Field label="Your full name" required error={errors.contact_name}>
+            <TextInput
+              value={data.contact_name}
+              onChange={(v) => set('contact_name', v)}
+              placeholder="Asha Verma"
+              autoComplete="name"
+            />
+          </Field>
+          <Field label="Work email" required error={errors.contact_email}>
+            <TextInput
+              value={data.contact_email}
+              onChange={(v) => set('contact_email', v)}
+              placeholder="asha@yourcompany.com"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+            />
+          </Field>
+          <Field label="What do you do here?">
+            <div className="flex flex-wrap gap-2">
+              {CONTACT_ROLES.map((r) => (
+                <Chip key={r} selected={data.contact_role === r} onClick={() => set('contact_role', data.contact_role === r ? '' : r)}>
+                  {r}
+                </Chip>
+              ))}
+            </div>
+          </Field>
+          <Field label="Phone (optional)" error={errors.contact_phone}>
+            <TextInput
+              value={data.contact_phone}
+              onChange={(v) => set('contact_phone', v)}
+              placeholder="+91 98765 43210"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+            />
+          </Field>
         </div>
-      </Field>
-      <Field label="Phone (optional)" error={errors.contact_phone}>
-        <TextInput
-          value={data.contact_phone}
-          onChange={(v) => set('contact_phone', v)}
-          placeholder="+91 98765 43210"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-        />
-      </Field>
+      </div>
+
+      <div className="border-t border-slate-100 pt-5">
+        <GroupLabel>Your company</GroupLabel>
+        <div className="space-y-4">
+          <Field label="Company name" required error={errors.company_name}>
+            <TextInput
+              value={data.company_name}
+              onChange={(v) => set('company_name', v)}
+              placeholder="Acme Studio"
+              autoComplete="organization"
+            />
+          </Field>
+          <Field label="Website (optional)" error={errors.website}>
+            <TextInput
+              value={data.website}
+              onChange={(v) => set('website', v)}
+              placeholder="acmestudio.com"
+              inputMode="url"
+              autoComplete="url"
+            />
+          </Field>
+          <Field label="Industry">
+            <div className="flex flex-wrap gap-2">
+              {INDUSTRIES.map((ind) => (
+                <Chip key={ind} selected={data.industry === ind} onClick={() => set('industry', data.industry === ind ? '' : ind)}>
+                  {ind}
+                </Chip>
+              ))}
+            </div>
+          </Field>
+          <Field label="Team size">
+            <div className="flex flex-wrap gap-2">
+              {COMPANY_SIZES.map((size) => (
+                <Chip
+                  key={size}
+                  selected={data.company_size === size}
+                  onClick={() => set('company_size', data.company_size === size ? '' : size)}
+                  className="flex-1 basis-16"
+                >
+                  {size}
+                </Chip>
+              ))}
+            </div>
+          </Field>
+        </div>
+      </div>
     </div>
   );
 }
 
-/* ────────────────────────── step 2 — organisation ──────────────────────── */
-
-function OrgStep({
-  data,
-  errors,
-  set,
-}: {
-  data: BetaSignupData;
-  errors: FieldErrors;
-  set: <K extends keyof BetaSignupData>(key: K, value: BetaSignupData[K]) => void;
-}) {
-  return (
-    <div className="space-y-4">
-      <Field label="Company name" required error={errors.company_name}>
-        <TextInput
-          value={data.company_name}
-          onChange={(v) => set('company_name', v)}
-          placeholder="Acme Studio"
-          autoComplete="organization"
-        />
-      </Field>
-      <Field label="Website (optional)" error={errors.website}>
-        <TextInput
-          value={data.website}
-          onChange={(v) => set('website', v)}
-          placeholder="acmestudio.com"
-          inputMode="url"
-          autoComplete="url"
-        />
-      </Field>
-      <Field label="Industry">
-        <div className="flex flex-wrap gap-2">
-          {INDUSTRIES.map((ind) => (
-            <Chip key={ind} selected={data.industry === ind} onClick={() => set('industry', data.industry === ind ? '' : ind)}>
-              {ind}
-            </Chip>
-          ))}
-        </div>
-      </Field>
-      <Field label="Team size" error={errors.company_size}>
-        <div className="flex flex-wrap gap-2">
-          {COMPANY_SIZES.map((size) => (
-            <Chip
-              key={size}
-              selected={data.company_size === size}
-              onClick={() => set('company_size', data.company_size === size ? '' : size)}
-              className="flex-1 basis-16"
-            >
-              {size}
-            </Chip>
-          ))}
-        </div>
-      </Field>
-    </div>
-  );
-}
-
-/* ─────────────────────────── step 3 — work week ────────────────────────── */
+/* ─────────────────────────── step 2 — work week ────────────────────────── */
 
 function RhythmStep({
   data,
@@ -545,8 +533,8 @@ function RhythmStep({
               className={cn(
                 'button-press flex flex-col items-center gap-1.5 rounded-2xl border px-2 py-4 text-sm font-semibold transition-all',
                 data.work_model === m.value
-                  ? 'border-transparent bg-gradient-brand text-white shadow-primary'
-                  : 'glass-hover border-glass-border bg-transparent text-foreground'
+                  ? 'border-slate-900 bg-slate-900 text-white shadow-md shadow-slate-900/20'
+                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
               )}
             >
               <span className="text-xl" aria-hidden>
@@ -579,7 +567,7 @@ function RhythmStep({
             type="time"
             value={data.work_start_time}
             onChange={(e) => set('work_start_time', e.target.value)}
-            className={cn(inputCls, 'w-full border bg-transparent px-3 text-[15px] outline-none')}
+            className={cn(inputCls, 'w-full border px-3 outline-none')}
           />
         </Field>
         <Field label="Day ends" required error={errors.work_end_time}>
@@ -587,7 +575,7 @@ function RhythmStep({
             type="time"
             value={data.work_end_time}
             onChange={(e) => set('work_end_time', e.target.value)}
-            className={cn(inputCls, 'w-full border bg-transparent px-3 text-[15px] outline-none')}
+            className={cn(inputCls, 'w-full border px-3 outline-none')}
           />
         </Field>
       </div>
@@ -596,11 +584,11 @@ function RhythmStep({
         <select
           value={data.timezone}
           onChange={(e) => set('timezone', e.target.value)}
-          className={cn(inputCls, 'w-full border bg-transparent px-3 outline-none')}
+          className={cn(inputCls, 'w-full border px-3 outline-none')}
         >
           {TIMEZONES.map((tz) => (
             <option key={tz} value={tz}>
-              {tz.replace('_', ' ')} (IST{tz === 'Asia/Kolkata' ? '' : ' etc.'})
+              {tz.replace('_', ' ')}
             </option>
           ))}
         </select>
@@ -609,7 +597,7 @@ function RhythmStep({
   );
 }
 
-/* ─────────────────────────── step 4 — team & tools ─────────────────────── */
+/* ─────────────────────── step 3 — team, tools, send ─────────────────────── */
 
 function TeamStep({
   data,
@@ -629,15 +617,13 @@ function TeamStep({
   return (
     <div className="space-y-5">
       <div>
-        <div className="flex items-baseline justify-between">
-          <label className="card-label">
-            Teammates joining the beta
-            <span className="ml-2 normal-case tracking-normal text-muted-foreground/70">
-              ({data.team_members.length}/{MAX_TEAM_ROWS})
-            </span>
-          </label>
-        </div>
-        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+        <label className="card-label">
+          Teammates joining the beta
+          <span className="ml-2 normal-case tracking-normal text-slate-400">
+            ({data.team_members.length}/{MAX_TEAM_ROWS})
+          </span>
+        </label>
+        <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
           Add the people we should create accounts for first — you can always invite more later.
         </p>
 
@@ -647,13 +633,13 @@ function TeamStep({
               key={i}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative rounded-2xl border border-glass-border bg-background/40 p-3 dark:bg-white/5"
+              className="relative rounded-2xl border border-slate-200 bg-slate-50/60 p-3"
             >
               <button
                 type="button"
                 onClick={() => removeTeamMember(i)}
                 aria-label={`Remove ${m.name || 'teammate'}`}
-                className="absolute right-2 top-2 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-500"
+                className="absolute right-2 top-2 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-500/10 hover:text-red-500"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
@@ -664,7 +650,7 @@ function TeamStep({
                     onChange={(e) => setTeamMember(i, 'name', e.target.value)}
                     placeholder="Full name"
                     autoComplete="off"
-                    className={cn(inputCls, 'w-full border bg-transparent px-3 text-sm outline-none', errors[`team_name_${i}`] && 'border-red-500/60')}
+                    className={cn(inputCls, 'w-full border px-3 text-sm outline-none', errors[`team_name_${i}`] && 'border-red-400')}
                   />
                   {errors[`team_name_${i}`] && <p className="mt-1 text-xs font-medium text-red-500">{errors[`team_name_${i}`]}</p>}
                 </div>
@@ -673,7 +659,7 @@ function TeamStep({
                   onChange={(e) => setTeamMember(i, 'role', e.target.value)}
                   placeholder="Role (optional)"
                   autoComplete="off"
-                  className={cn(inputCls, 'w-full border bg-transparent px-3 text-sm outline-none')}
+                  className={cn(inputCls, 'w-full border px-3 text-sm outline-none')}
                 />
                 <div className="col-span-2">
                   <input
@@ -683,7 +669,7 @@ function TeamStep({
                     type="email"
                     inputMode="email"
                     autoComplete="off"
-                    className={cn(inputCls, 'w-full border bg-transparent px-3 text-sm outline-none', errors[`team_email_${i}`] && 'border-red-500/60')}
+                    className={cn(inputCls, 'w-full border px-3 text-sm outline-none', errors[`team_email_${i}`] && 'border-red-400')}
                   />
                   {errors[`team_email_${i}`] && <p className="mt-1 text-xs font-medium text-red-500">{errors[`team_email_${i}`]}</p>}
                 </div>
@@ -696,7 +682,7 @@ function TeamStep({
           type="button"
           onClick={addTeamMember}
           disabled={data.team_members.length >= MAX_TEAM_ROWS}
-          className="button-press mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-glass-border py-3 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-40"
+          className="button-press mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white py-3 text-sm font-semibold text-slate-500 transition-colors hover:border-slate-400 hover:text-slate-700 disabled:opacity-40"
         >
           <Plus className="h-4 w-4" />
           Add teammate
@@ -722,113 +708,6 @@ function TeamStep({
           })}
         </div>
       </Field>
-    </div>
-  );
-}
-
-/* ─────────────────────────── step 5 — review ───────────────────────────── */
-
-function ReviewRow({ label, value }: { label: string; value?: string }) {
-  if (!value) return null;
-  return (
-    <div className="flex items-start justify-between gap-4 py-2">
-      <span className="shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
-      <span className="text-right text-sm font-medium text-foreground">{value}</span>
-    </div>
-  );
-}
-
-function ReviewSection({
-  title,
-  onEdit,
-  children,
-}: {
-  title: string;
-  onEdit: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-glass-border p-3.5">
-      <div className="flex items-center justify-between">
-        <p className="card-label">{title}</p>
-        <button
-          type="button"
-          onClick={onEdit}
-          className="rounded-lg px-2 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/10"
-        >
-          Edit
-        </button>
-      </div>
-      <div className="divide-y divide-glass-border/60">{children}</div>
-    </div>
-  );
-}
-
-function ReviewStep({
-  data,
-  set,
-  onJump,
-}: {
-  data: BetaSignupData;
-  set: <K extends keyof BetaSignupData>(key: K, value: BetaSignupData[K]) => void;
-  onJump: (step: number) => void;
-}) {
-  const dayLabels = WORK_DAYS.filter((d) => data.work_days.includes(d.value))
-    .map((d) => d.label)
-    .join(' · ');
-  const model = WORK_MODELS.find((m) => m.value === data.work_model);
-
-  return (
-    <div className="space-y-3">
-      <ReviewSection title="You" onEdit={() => onJump(0)}>
-        <ReviewRow label="Name" value={data.contact_name} />
-        <ReviewRow label="Email" value={data.contact_email} />
-        <ReviewRow label="Role" value={data.contact_role} />
-        <ReviewRow label="Phone" value={data.contact_phone} />
-      </ReviewSection>
-
-      <ReviewSection title="Organisation" onEdit={() => onJump(1)}>
-        <ReviewRow label="Company" value={data.company_name} />
-        <ReviewRow label="Website" value={data.website} />
-        <ReviewRow label="Industry" value={data.industry} />
-        <ReviewRow label="Size" value={data.company_size && `${data.company_size} people`} />
-      </ReviewSection>
-
-      <ReviewSection title="Work week" onEdit={() => onJump(2)}>
-        <ReviewRow label="Mode" value={model && `${model.emoji} ${model.label}`} />
-        <ReviewRow label="Days" value={dayLabels} />
-        <ReviewRow label="Hours" value={data.work_start_time && data.work_end_time ? `${data.work_start_time} – ${data.work_end_time}` : ''} />
-        <ReviewRow label="Time zone" value={data.timezone} />
-      </ReviewSection>
-
-      <ReviewSection title={`Team (${data.team_members.length})`} onEdit={() => onJump(3)}>
-        {data.team_members.length === 0 ? (
-          <div className="py-2">
-            <ReviewRow label="Invites" value="Just you for now" />
-          </div>
-        ) : (
-          <div className="space-y-2 py-2.5">
-            {data.team_members.map((m, i) => (
-              <div key={i} className="flex items-center justify-between gap-3 text-sm">
-                <span className="font-medium text-foreground">
-                  {m.name}
-                  {m.role && <span className="font-normal text-muted-foreground"> · {m.role}</span>}
-                </span>
-                {m.email && <span className="truncate text-xs text-muted-foreground">{m.email}</span>}
-              </div>
-            ))}
-          </div>
-        )}
-        {data.tools.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 py-2.5">
-            {data.tools.map((t) => (
-              <span key={t} className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-                {t}
-              </span>
-            ))}
-          </div>
-        )}
-      </ReviewSection>
 
       <Field label="Anything else we should know? (optional)">
         <textarea
@@ -837,7 +716,7 @@ function ReviewStep({
           rows={3}
           maxLength={1000}
           placeholder="Shifts, policies, existing systems — anything that helps us set you up…"
-          className="w-full resize-none rounded-xl border border-glass-border bg-background/40 px-3 py-2.5 text-sm outline-none placeholder:text-muted-foreground dark:bg-white/5"
+          className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400"
         />
       </Field>
     </div>
@@ -848,34 +727,34 @@ function ReviewStep({
 
 function SuccessScreen({ reference, email, name }: { reference: string; email: string; name: string }) {
   return (
-    <div className="main-typography flex min-h-screen items-center justify-center">
+    <div className="main-typography flex min-h-screen items-center justify-center" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8f9fb 45%, #eef0f4 100%)' }}>
       <motion.div
         initial={{ opacity: 0, y: 24, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
         className="mx-auto w-full max-w-md px-4 sm:px-6"
       >
-        <div className="glass rounded-3xl p-8 text-center">
+        <div className="rounded-3xl border border-slate-200/90 bg-white/95 p-8 text-center shadow-[0_16px_48px_rgba(15,23,42,0.09)]">
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.15, type: 'spring', stiffness: 260, damping: 18 }}
-            className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-brand text-white shadow-primary"
+            className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-lg shadow-slate-900/25"
           >
             <Check className="h-8 w-8" strokeWidth={3} />
           </motion.div>
 
-          <h1 className="font-cal-sans mt-5 text-2xl font-semibold text-foreground">
+          <h1 className="font-cal-sans mt-5 text-2xl font-semibold text-slate-900">
             You&rsquo;re on the list, {name}!
           </h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-sm leading-relaxed text-slate-500">
             We have everything we need to start shaping your INSYDE instance. A confirmation is
-            headed to <span className="font-semibold text-foreground">{email}</span>.
+            headed to <span className="font-semibold text-slate-900">{email}</span>.
           </p>
 
-          <div className="mt-6 rounded-2xl border border-dashed border-glass-border bg-background/40 px-4 py-3 dark:bg-white/5">
-            <p className="card-label">Your reference</p>
-            <p className="mt-1 font-mono text-lg font-bold tracking-widest text-foreground">{reference}</p>
+          <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3">
+            <p className="text-[10px] font-semibold uppercase leading-4 tracking-[0.18em] text-slate-500">Your reference</p>
+            <p className="mt-1 font-mono text-lg font-bold tracking-widest text-slate-900">{reference}</p>
           </div>
 
           <div className="mt-6 space-y-2.5 text-left">
@@ -884,8 +763,8 @@ function SuccessScreen({ reference, email, name }: { reference: string; email: s
               'You get your instance link and first logins by email.',
               'Your team checks in on day one. 🎉',
             ].map((line, i) => (
-              <div key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                <span className="mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+              <div key={i} className="flex items-start gap-2.5 text-sm text-slate-500">
+                <span className="mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-700">
                   {i + 1}
                 </span>
                 {line}
@@ -893,12 +772,12 @@ function SuccessScreen({ reference, email, name }: { reference: string; email: s
             ))}
           </div>
 
-          <p className="mt-6 border-t border-glass-border pt-4 text-xs text-muted-foreground">
+          <p className="mt-6 border-t border-slate-100 pt-4 text-xs text-slate-400">
             Questions? Just reply to the confirmation email — a human reads every one.
           </p>
         </div>
 
-        <p className="pt-4 text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+        <p className="pt-4 text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">
           INSYDE · Beta program
         </p>
       </motion.div>
