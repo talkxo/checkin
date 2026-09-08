@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { CalendarClock, Check, Plus, Send, Sparkles, Trash2, UserRound, Users } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import {
   BetaSignupData,
@@ -188,15 +187,14 @@ export default function SignupWizard() {
       <div className="relative mx-auto w-full max-w-md px-4 py-6 sm:px-6">
         {/* Header — wordmark only, intentionally no links off this page */}
         <header className="flex items-center justify-between pb-5">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <img
               src="https://pqkph3lzaffmetri.public.blob.vercel-storage.com/1764957051530-Inside-Icon.png"
               alt="INSYDE"
               className="h-8 w-8 object-contain"
             />
-            <span className="text-sm font-bold uppercase tracking-[0.28em] text-slate-900">INSYDE</span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
-              <Sparkles className="h-3 w-3" /> Beta
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+              <Sparkles className="h-2.5 w-2.5" /> Beta
             </span>
           </div>
           <p className="text-xs font-medium text-slate-500">
@@ -346,7 +344,8 @@ function Field({
   );
 }
 
-const inputCls = 'h-11 rounded-xl border-slate-200 bg-white text-[15px] text-slate-900 placeholder:text-slate-400';
+const inputCls =
+  'h-11 rounded-xl border border-slate-200 bg-white px-3 text-[15px] text-slate-900 placeholder:text-slate-400 outline-none transition-[border-color,box-shadow] focus:border-slate-400 focus:ring-4 focus:ring-slate-900/5 disabled:cursor-not-allowed';
 
 function TextInput({
   value,
@@ -355,12 +354,12 @@ function TextInput({
 }: {
   value: string;
   onChange: (v: string) => void;
-} & Omit<React.ComponentProps<typeof Input>, 'value' | 'onChange'>) {
+} & Omit<React.ComponentProps<'input'>, 'value' | 'onChange'>) {
   return (
-    <Input
+    <input
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={cn(inputCls, props.className)}
+      className={cn(inputCls, 'w-full', props.className)}
       {...props}
     />
   );
@@ -396,7 +395,7 @@ function Chip({
 }
 
 function GroupLabel({ children }: { children: React.ReactNode }) {
-  return <p className="card-label pb-3">{children}</p>;
+  return <p className="pb-3 text-[10px] font-semibold uppercase leading-4 tracking-[0.18em] text-slate-400">{children}</p>;
 }
 
 /* ─────────────────── step 1 — you + organisation ──────────────────── */
@@ -567,7 +566,7 @@ function RhythmStep({
             type="time"
             value={data.work_start_time}
             onChange={(e) => set('work_start_time', e.target.value)}
-            className={cn(inputCls, 'w-full border px-3 outline-none')}
+            className={cn(inputCls, 'w-full')}
           />
         </Field>
         <Field label="Day ends" required error={errors.work_end_time}>
@@ -575,7 +574,7 @@ function RhythmStep({
             type="time"
             value={data.work_end_time}
             onChange={(e) => set('work_end_time', e.target.value)}
-            className={cn(inputCls, 'w-full border px-3 outline-none')}
+            className={cn(inputCls, 'w-full')}
           />
         </Field>
       </div>
@@ -584,7 +583,7 @@ function RhythmStep({
         <select
           value={data.timezone}
           onChange={(e) => set('timezone', e.target.value)}
-          className={cn(inputCls, 'w-full border px-3 outline-none')}
+          className={cn(inputCls, 'w-full')}
         >
           {TIMEZONES.map((tz) => (
             <option key={tz} value={tz}>
@@ -617,7 +616,7 @@ function TeamStep({
   return (
     <div className="space-y-5">
       <div>
-        <label className="card-label">
+        <label className="text-[10px] font-semibold uppercase leading-4 tracking-[0.18em] text-slate-500">
           Teammates joining the beta
           <span className="ml-2 normal-case tracking-normal text-slate-400">
             ({data.team_members.length}/{MAX_TEAM_ROWS})
@@ -716,7 +715,7 @@ function TeamStep({
           rows={3}
           maxLength={1000}
           placeholder="Shifts, policies, existing systems — anything that helps us set you up…"
-          className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400"
+          className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-[border-color,box-shadow] placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-900/5"
         />
       </Field>
     </div>
