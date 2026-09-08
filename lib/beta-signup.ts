@@ -2,11 +2,13 @@
 // Used by the client wizard for per-step validation and by the
 // /api/beta-signup route for server-side re-validation.
 
-export interface TeamMember {
-  name: string;
-  email: string;
-  role: string;
-}
+// The four goals the wizard asks about — multi-select, capped at 3.
+export const GOALS = [
+  'Build org-wide discipline',
+  'Optimise teamwork & space',
+  'Formalise HR processes',
+  'Frictionless attendance adoption',
+] as const;
 
 export interface BetaSignupData {
   contact_name: string;
@@ -25,7 +27,7 @@ export interface BetaSignupData {
   work_end_time: string;
   timezone: string;
 
-  team_members: TeamMember[];
+  goals: string[];
   tools: string[];
 
   notes: string;
@@ -50,7 +52,7 @@ export const emptySignup = (): BetaSignupData => ({
   work_end_time: '',
   timezone: 'Asia/Kolkata',
 
-  team_members: [],
+  goals: [],
   tools: [],
 
   notes: '',
@@ -93,9 +95,7 @@ export const TIMEZONES = [
   'Europe/London',
   'America/New_York',
   'America/Los_Angeles',
-] as const;
-
-export const TOOLS = [
+] as const;export const TOOLS = [
   'Basecamp',
   'Slack',
   'Google Workspace',
@@ -113,8 +113,6 @@ export const CONTACT_ROLES = [
   'Team Lead',
   'Other',
 ] as const;
-
-export const MAX_TEAM_ROWS = 30;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -148,10 +146,7 @@ export function validateStep(step: number, d: BetaSignupData): FieldErrors {
   }
 
   if (step === 2) {
-    d.team_members.forEach((m, i) => {
-      if (!m.name.trim()) errors[`team_name_${i}`] = 'Name required.';
-      else if (m.email.trim() && !isValidEmail(m.email)) errors[`team_email_${i}`] = 'Email does not look right.';
-    });
+    if (d.goals.length === 0) errors.goals = 'Pick at least one.';
   }
 
   return errors;
@@ -182,11 +177,7 @@ export function sanitizeForSubmit(d: BetaSignupData): BetaSignupData {
     work_end_time: clip(d.work_end_time, 5),
     timezone: clip(d.timezone, 40),
 
-    team_members: d.team_members.slice(0, MAX_TEAM_ROWS).map((m) => ({
-      name: clip(m.name, 80),
-      email: clip(m.email, 120).toLowerCase(),
-      role: clip(m.role, 60),
-    })),
+    goals: d.goals.filter((g) => (GOALS as readonly string[]).includes(g)).slice(0, 3),
     tools: d.tools.slice(0, 20),
 
     notes: clip(d.notes, 1000),

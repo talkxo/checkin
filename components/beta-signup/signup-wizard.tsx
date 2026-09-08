@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { Check, ChevronDown, Plus, Send, Sparkles, Trash2 } from 'lucide-react';
+import { Check, ChevronDown, ClipboardList, Send, ShieldCheck, Sparkles, Users, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   BetaSignupData,
@@ -11,11 +11,10 @@ import {
   CONTACT_ROLES,
   emptySignup,
   FieldErrors,
+  GOALS,
   INDUSTRIES,
-  MAX_TEAM_ROWS,
   TIMEZONES,
   TOOLS,
-  TeamMember,
   WORK_DAYS,
   WORK_MODELS,
   validateStep,
@@ -95,32 +94,6 @@ export default function SignupWizard() {
     });
     setSubmitError('');
   }, []);
-
-  const setTeamMember = (index: number, key: keyof TeamMember, value: string) => {
-    setData((d) => {
-      const members = d.team_members.map((m, i) => (i === index ? { ...m, [key]: value } : m));
-      return { ...d, team_members: members };
-    });
-    setErrors((e) => {
-      const nameErr = `team_${key}_${index}`;
-      if (!(nameErr in e)) return e;
-      const next = { ...e };
-      delete next[nameErr];
-      return next;
-    });
-  };
-
-  const addTeamMember = () => {
-    if (data.team_members.length >= MAX_TEAM_ROWS) return;
-    set('team_members', [...data.team_members, { name: '', email: '', role: '' }]);
-  };
-
-  const removeTeamMember = (index: number) => {
-    set(
-      'team_members',
-      data.team_members.filter((_, i) => i !== index)
-    );
-  };
 
   const goNext = () => {
     const stepErrors = validateStep(step, data);
@@ -249,16 +222,7 @@ export default function SignupWizard() {
           }}>
             {step === 0 && <AboutStep data={data} errors={errors} set={set} />}
             {step === 1 && <RhythmStep data={data} errors={errors} set={set} />}
-            {step === 2 && (
-              <TeamStep
-                data={data}
-                errors={errors}
-                set={set}
-                setTeamMember={setTeamMember}
-                addTeamMember={addTeamMember}
-                removeTeamMember={removeTeamMember}
-              />
-            )}
+            {step === 2 && <TeamStep data={data} errors={errors} set={set} />}
 
             {/* Honeypot — visually removed, keyboard-invisible */}
             <input
@@ -660,123 +624,98 @@ function RhythmStep({
   );
 }
 
-/* ─────────────────────── step 3 — team, tools, send ─────────────────────── */
+/* ─────────────────────── step 3 — goals, tools, send ─────────────────────── */
 
-function ConfigStrip({ data }: { data: BetaSignupData }) {
-  const model = WORK_MODELS.find((m) => m.value === data.work_model);
-  const days = WORK_DAYS.filter((d) => data.work_days.includes(d.value));
-  const dayLabel =
-    days.length === 7 ? 'All week' : days.length === 5 && ['mon', 'tue', 'wed', 'thu', 'fri'].every((d) => data.work_days.includes(d))
-      ? 'Mon–Fri'
-      : days.map((d) => d.label).join(', ');
-  const size = data.company_size && SIZE_META[data.company_size] ? `${SIZE_META[data.company_size].approx} people` : '';
-  const items = [
-    data.company_name,
-    model && `${model.emoji} ${model.label}`,
-    dayLabel,
-    data.work_start_time && data.work_end_time && `${data.work_start_time}–${data.work_end_time}`,
-    size,
-  ].filter(Boolean) as string[];
-
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {items.map((item) => (
-        <motion.span
-          key={item}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 26 }}
-          className="rounded-full border border-slate-200/90 bg-white/75 px-3 py-1 text-[13px] font-medium text-slate-600"
-        >
-          {item}
-        </motion.span>
-      ))}
-    </div>
-  );
-}
+const GOAL_ICONS = [ShieldCheck, Users, ClipboardList, Zap];
 
 function TeamStep({
   data,
   errors,
   set,
-  setTeamMember,
-  addTeamMember,
-  removeTeamMember,
 }: {
   data: BetaSignupData;
   errors: FieldErrors;
   set: <K extends keyof BetaSignupData>(key: K, value: BetaSignupData[K]) => void;
-  setTeamMember: (index: number, key: keyof TeamMember, value: string) => void;
-  addTeamMember: () => void;
-  removeTeamMember: (index: number) => void;
 }) {
+  // Multi-select capped at three of four — a fourth attempt nudges instead of selects
+  const [capHint, setCapHint] = useState(false);
+
+  const toggleGoal = (goal: string) => {
+    const selected = data.goals.includes(goal);
+    if (!selected && data.goals.length >= 3) {
+      setCapHint(true);
+      return;
+    }
+    setCapHint(false);
+    set('goals', selected ? data.goals.filter((g) => g !== goal) : [...data.goals, goal]);
+  };
+
   return (
     <>
       {/* live summary of everything set so far */}
       <ConfigStrip data={data} />
 
-      <div className={cn(cardCls, 'space-y-4 p-5')}>
-        <AnimatePresence initial={false}>
-          {data.team_members.map((m, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.97 }}
-              className="relative rounded-2xl border border-slate-200/90 bg-white/80 p-3"
-            >
-              <button
-                type="button"
-                onClick={() => removeTeamMember(i)}
-                aria-label={`Remove ${m.name || 'teammate'}`}
-                className="absolute right-2 top-2 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-500/10 hover:text-red-500"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-              <div className="grid grid-cols-2 gap-2 pr-8">
-                <div>
-                  <input
-                    value={m.name}
-                    onChange={(e) => setTeamMember(i, 'name', e.target.value)}
-                    placeholder="Full name"
-                    autoComplete="off"
-                    className={cn(inputCls, 'text-base', errors[`team_name_${i}`] && 'border-red-400')}
-                  />
-                  {errors[`team_name_${i}`] && <p className="mt-1 text-xs font-medium text-red-500">{errors[`team_name_${i}`]}</p>}
-                </div>
-                <input
-                  value={m.role}
-                  onChange={(e) => setTeamMember(i, 'role', e.target.value)}
-                  placeholder="Role"
-                  autoComplete="off"
-                  className={inputCls}
-                />
-                <div className="col-span-2">
-                  <input
-                    value={m.email}
-                    onChange={(e) => setTeamMember(i, 'email', e.target.value)}
-                    placeholder="Work email (optional)"
-                    type="email"
-                    inputMode="email"
-                    autoComplete="off"
-                    className={cn(inputCls, errors[`team_email_${i}`] && 'border-red-400')}
-                  />
-                  {errors[`team_email_${i}`] && <p className="mt-1 text-xs font-medium text-red-500">{errors[`team_email_${i}`]}</p>}
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-
-        <button
-          type="button"
-          onClick={addTeamMember}
-          disabled={data.team_members.length >= MAX_TEAM_ROWS}
-          className="button-press flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white/50 py-3 text-sm font-semibold text-slate-500 transition-colors hover:border-slate-400 hover:text-slate-700 disabled:opacity-40"
-        >
-          <Plus className="h-4 w-4" />
-          Add teammate
-        </button>
+      <div className={cn(cardCls, 'p-5')}>
+        <Field label="What's the goal?" error={errors.goals}>
+          <div className="grid grid-cols-2 gap-2">
+            {GOALS.map((goal, i) => {
+              const Icon = GOAL_ICONS[i];
+              const selected = data.goals.includes(goal);
+              return (
+                <motion.button
+                  key={goal}
+                  type="button"
+                  onClick={() => toggleGoal(goal)}
+                  aria-pressed={selected}
+                  whileTap={{ scale: 0.97 }}
+                  className={cn(
+                    'flex h-28 flex-col items-start justify-between rounded-2xl border p-3.5 text-left transition-all',
+                    selected
+                      ? 'border-slate-900 bg-slate-900 text-white shadow-md shadow-slate-900/20'
+                      : 'border-slate-200/90 bg-white/70 text-slate-700 hover:border-slate-300 hover:bg-white'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'flex h-8 w-8 items-center justify-center rounded-xl',
+                      selected ? 'bg-white/15 text-white' : 'bg-slate-100/90 text-slate-600'
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span className="text-sm font-semibold leading-snug">{goal}</span>
+                </motion.button>
+              );
+            })}
+          </div>
+          <div className="min-h-5 pt-1.5">
+            <AnimatePresence initial={false}>
+              {capHint ? (
+                <motion.p
+                  key="cap"
+                  initial={{ opacity: 0, y: -2 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-xs font-medium text-slate-500"
+                >
+                  Pick up to three — the ones that matter most.
+                </motion.p>
+              ) : (
+                errors.goals && (
+                  <motion.p
+                    key="err"
+                    initial={{ opacity: 0, y: -2 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="text-xs font-medium text-red-500"
+                  >
+                    {errors.goals}
+                  </motion.p>
+                )
+              )}
+            </AnimatePresence>
+          </div>
+        </Field>
       </div>
 
       <div className={cn(cardCls, 'space-y-4 p-5')}>
@@ -812,6 +751,38 @@ function TeamStep({
         </Field>
       </div>
     </>
+  );
+}
+function ConfigStrip({ data }: { data: BetaSignupData }) {
+  const model = WORK_MODELS.find((m) => m.value === data.work_model);
+  const days = WORK_DAYS.filter((d) => data.work_days.includes(d.value));
+  const dayLabel =
+    days.length === 7 ? 'All week' : days.length === 5 && ['mon', 'tue', 'wed', 'thu', 'fri'].every((d) => data.work_days.includes(d))
+      ? 'Mon–Fri'
+      : days.map((d) => d.label).join(', ');
+  const size = data.company_size && SIZE_META[data.company_size] ? `${SIZE_META[data.company_size].approx} people` : '';
+  const items = [
+    data.company_name,
+    model && `${model.emoji} ${model.label}`,
+    dayLabel,
+    data.work_start_time && data.work_end_time && `${data.work_start_time}–${data.work_end_time}`,
+    size,
+  ].filter(Boolean) as string[];
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {items.map((item) => (
+        <motion.span
+          key={item}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 26 }}
+          className="rounded-full border border-slate-200/90 bg-white/75 px-3 py-1 text-[13px] font-medium text-slate-600"
+        >
+          {item}
+        </motion.span>
+      ))}
+    </div>
   );
 }
 

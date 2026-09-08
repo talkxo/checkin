@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import {
   BetaSignupData,
   emptySignup,
+  GOALS,
   sanitizeForSubmit,
   validateAll,
   WORK_DAYS,
@@ -14,6 +15,7 @@ import {
 // contact-email dedupe. Burst throttling is handled at the platform edge.
 const ALLOWED_WORK_DAYS = new Set<string>(WORK_DAYS.map((d) => d.value));
 const ALLOWED_MODELS = new Set<string>(WORK_MODELS.map((m) => m.value));
+const ALLOWED_GOALS = new Set<string>(GOALS);
 const ALLOWED_LIST_FIELDS = new Set([
   'Design / Creative', 'Software / IT', 'Marketing / Agency', 'Consulting', 'E-commerce',
   'Education', 'Healthcare', 'Finance', 'Other', '1–10', '11–30', '31–75', '76–150', '150+',
@@ -37,7 +39,9 @@ export async function POST(req: NextRequest) {
   raw.work_days = Array.isArray(raw.work_days)
     ? raw.work_days.filter((d: unknown) => typeof d === 'string' && ALLOWED_WORK_DAYS.has(d))
     : [];
-  raw.team_members = Array.isArray(raw.team_members) ? raw.team_members : [];
+  raw.goals = Array.isArray(raw.goals)
+    ? raw.goals.filter((g: unknown) => typeof g === 'string' && ALLOWED_GOALS.has(g)).slice(0, 3)
+    : [];
   raw.tools = Array.isArray(raw.tools)
     ? raw.tools.filter((t: unknown) => typeof t === 'string' && t.length <= 40)
     : [];
@@ -78,7 +82,7 @@ export async function POST(req: NextRequest) {
       work_start_time: payload.work_start_time || null,
       work_end_time: payload.work_end_time || null,
       timezone: payload.timezone,
-      team_members: payload.team_members,
+      goals: payload.goals,
       tools: payload.tools,
       notes: payload.notes || null,
     })
