@@ -669,7 +669,7 @@ function TeamStep({
                   aria-pressed={selected}
                   whileTap={{ scale: 0.97 }}
                   className={cn(
-                    'flex h-28 flex-col items-start justify-between rounded-2xl border p-3.5 text-left transition-all',
+                    'relative flex h-28 flex-col justify-center rounded-2xl border p-3.5 pr-14 text-left transition-all',
                     selected
                       ? 'border-slate-900 bg-slate-900 text-white shadow-md shadow-slate-900/20'
                       : 'border-slate-200/90 bg-white/70 text-slate-700 hover:border-slate-300 hover:bg-white'
@@ -677,7 +677,7 @@ function TeamStep({
                 >
                   <span
                     className={cn(
-                      'flex h-8 w-8 items-center justify-center rounded-xl',
+                      'absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-xl',
                       selected ? 'bg-white/15 text-white' : 'bg-slate-100/90 text-slate-600'
                     )}
                   >
@@ -688,7 +688,7 @@ function TeamStep({
               );
             })}
           </div>
-          <div className="min-h-5 pt-1.5">
+          <div className="min-h-5 pt-3">
             <AnimatePresence initial={false}>
               {capHint ? (
                 <motion.p
@@ -698,7 +698,7 @@ function TeamStep({
                   exit={{ opacity: 0 }}
                   className="text-xs font-medium text-slate-500"
                 >
-                  Pick up to three — the ones that matter most.
+                  Pick up to three — that&rsquo;s the deal. No clean sweeps!
                 </motion.p>
               ) : (
                 errors.goals && (

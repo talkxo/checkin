@@ -4,10 +4,10 @@
 
 // The four goals the wizard asks about — multi-select, capped at 3.
 export const GOALS = [
-  'Build org-wide discipline',
+  'Org-wide discipline',
   'Optimise teamwork & space',
   'Formalise HR processes',
-  'Frictionless attendance adoption',
+  'Frictionless attendance',
 ] as const;
 
 export interface BetaSignupData {
