@@ -51,8 +51,8 @@ export default function OptionsMenu({
     return () => document.removeEventListener('mousedown', onOutside);
   }, [open]);
 
-  const themes: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
-    { value: 'auto', label: 'Auto', icon: Sun },
+  const themes: Array<{ value: Theme; label: string; icon?: typeof Sun; glyph?: string }> = [
+    { value: 'auto', label: 'Auto', glyph: 'A' },
     { value: 'light', label: 'Light', icon: Sun },
     { value: 'dark', label: 'Dark', icon: Moon },
   ];
@@ -137,7 +137,6 @@ export default function OptionsMenu({
               </span>
               <div className="flex items-center gap-0.5 rounded-lg bg-black/5 p-0.5 dark:bg-white/10">
                 {themes.map((t) => {
-                  const Icon = t.icon;
                   const active = theme === t.value;
                   return (
                     <button
@@ -149,7 +148,11 @@ export default function OptionsMenu({
                         active ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
                       }`}
                     >
-                      <Icon className="h-3.5 w-3.5" />
+                      {t.icon ? (
+                        <t.icon className="h-3.5 w-3.5" />
+                      ) : (
+                        <span className="text-[11px] font-bold leading-none">{t.glyph}</span>
+                      )}
                     </button>
                   );
                 })}
