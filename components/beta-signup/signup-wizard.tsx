@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { Check, ChevronDown, Plus, Send, Sparkles, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -24,24 +24,30 @@ import {
 
 const DRAFT_KEY = 'insyde-beta-signup-draft';
 
-const STEPS = [
-  { kicker: 'About you & company' },
-  { kicker: 'Work week' },
-  { kicker: 'Team & tools' },
-] as const;
+const STEPS = ['About you & company', 'Work week', 'Team & tools'] as const;
 
 const initialData = (): BetaSignupData => ({
   ...emptySignup(),
   work_days: ['mon', 'tue', 'wed', 'thu', 'fri'],
 });
 
+// One type scale across every control. 16px inputs also stop iOS zoom-on-focus.
 const cardCls =
   'rounded-3xl border border-white/70 bg-white/55 shadow-[0_10px_36px_rgba(15,23,42,0.07)] backdrop-blur-xl';
-
 const inputCls =
-  'h-11 w-full rounded-xl border border-slate-200/90 bg-white/85 px-3 text-[15px] text-slate-900 placeholder:text-slate-400 outline-none transition-[border-color,box-shadow] focus:border-slate-400 focus:ring-4 focus:ring-slate-900/5 disabled:cursor-not-allowed';
+  'h-12 w-full rounded-xl border border-slate-200/90 bg-white/85 px-3.5 text-base text-slate-900 placeholder:text-slate-400 outline-none transition-[border-color,box-shadow] focus:border-slate-400 focus:ring-4 focus:ring-slate-900/5 disabled:cursor-not-allowed';
+const labelCls = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500';
+const chipCls =
+  'button-press inline-flex h-10 items-center justify-center rounded-xl border px-3.5 text-sm font-medium transition-all';
 
-const labelCls = 'mb-1.5 block text-[10px] font-semibold uppercase leading-4 tracking-[0.18em] text-slate-500';
+// Team size bucket → representative headcount + dots in the visualisation
+const SIZE_META: Record<string, { approx: string; dots: number }> = {
+  '1–10': { approx: '~5', dots: 3 },
+  '11–30': { approx: '~20', dots: 5 },
+  '31–75': { approx: '~50', dots: 7 },
+  '76–150': { approx: '~100', dots: 9 },
+  '150+': { approx: '150+', dots: 12 },
+};
 
 export default function SignupWizard() {
   const [data, setData] = useState<BetaSignupData>(initialData);
@@ -54,7 +60,6 @@ export default function SignupWizard() {
   const hydrated = useRef(false);
   const hpRef = useRef<HTMLInputElement>(null);
 
-  // Restore an in-progress draft once on mount
   useEffect(() => {
     try {
       const saved = localStorage.getItem(DRAFT_KEY);
@@ -65,7 +70,6 @@ export default function SignupWizard() {
     hydrated.current = true;
   }, []);
 
-  // Autosave the draft as the user types (kept until they submit)
   useEffect(() => {
     if (!hydrated.current || reference) return;
     try {
@@ -75,7 +79,6 @@ export default function SignupWizard() {
     }
   }, [data, reference]);
 
-  // A quiet silver send-off
   useEffect(() => {
     if (!reference) return;
     localStorage.removeItem(DRAFT_KEY);
@@ -140,7 +143,6 @@ export default function SignupWizard() {
 
   const submit = async () => {
     if (submitting) return;
-    // Final gate — any step could still be incomplete after a draft restore
     for (let s = 0; s <= 2; s++) {
       const stepErrors = validateStep(s, data);
       if (Object.keys(stepErrors).length > 0) {
@@ -172,13 +174,15 @@ export default function SignupWizard() {
     }
   };
 
-  const firstName = useMemo(() => data.contact_name.trim().split(/\s+/)[0] || 'there', [data.contact_name]);
+  const firstName = useMemo(() => data.contact_name.trim().split(/\s+/)[0] || '', [data.contact_name]);
 
   if (reference) {
-    return <SuccessScreen reference={reference} email={data.contact_email} name={firstName} />;
+    return <SuccessScreen reference={reference} email={data.contact_email} name={firstName || 'there'} />;
   }
 
   const isLast = step === STEPS.length - 1;
+  // Step 1's kicker greets the user as soon as they type their name
+  const kicker = step === 0 && firstName ? `Hello, ${firstName}` : STEPS[step];
 
   return (
     <div
@@ -193,7 +197,6 @@ export default function SignupWizard() {
       </div>
 
       <div className="relative mx-auto w-full max-w-md px-4 py-6 sm:px-6">
-        {/* Header — icon + beta tag only, no links off this page */}
         <header className="flex items-center justify-between pb-5">
           <div className="flex items-center gap-2">
             <img
@@ -210,7 +213,6 @@ export default function SignupWizard() {
           </p>
         </header>
 
-        {/* Segmented progress */}
         <div className="flex gap-1.5 pb-4" role="progressbar" aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={step + 1}>
           {STEPS.map((_, i) => (
             <div key={i} className="h-1 flex-1 overflow-hidden rounded-full bg-slate-300/60">
@@ -219,14 +221,27 @@ export default function SignupWizard() {
           ))}
         </div>
 
-        {/* Step content — enter-only animation (no exit-gated swaps) */}
         <motion.div
           key={step}
           initial={{ opacity: 0, x: 24 * direction }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
         >
-          <p className="pb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">{STEPS[step].kicker}</p>
+          {/* single kicker per step — greets by name once they type it */}
+          <div className="pb-3 pt-1">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.p
+                key={kicker}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.18 }}
+                className="text-[13px] font-semibold uppercase tracking-[0.18em] text-slate-400"
+              >
+                {kicker}
+              </motion.p>
+            </AnimatePresence>
+          </div>
 
           <form className="space-y-4" onSubmit={(e) => {
             e.preventDefault();
@@ -260,13 +275,12 @@ export default function SignupWizard() {
               <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-600">{submitError}</p>
             )}
 
-            {/* Nav */}
             <div className="flex items-center gap-3 pt-1">
               {step > 0 && (
                 <button
                   type="button"
                   onClick={goBack}
-                  className="button-press h-11 rounded-xl border border-slate-200/90 bg-white/70 px-5 text-sm font-semibold text-slate-700 backdrop-blur transition-colors hover:bg-white"
+                  className="button-press h-12 rounded-xl border border-slate-200/90 bg-white/70 px-5 text-[15px] font-semibold text-slate-700 backdrop-blur transition-colors hover:bg-white"
                 >
                   Back
                 </button>
@@ -274,9 +288,7 @@ export default function SignupWizard() {
               <button
                 type="submit"
                 disabled={submitting}
-                className={cn(
-                  'button-press inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-slate-900 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition-colors hover:bg-slate-800 disabled:opacity-60'
-                )}
+                className="button-press inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-slate-900 text-[15px] font-semibold text-white shadow-lg shadow-slate-900/20 transition-colors hover:bg-slate-800 disabled:opacity-60"
               >
                 {submitting ? (
                   <>
@@ -294,11 +306,6 @@ export default function SignupWizard() {
               </button>
             </div>
           </form>
-
-          <p className="px-2 pt-4 text-center text-xs leading-relaxed text-slate-400">
-            Your details go straight to the INSYDE team — nothing is shared, and we will only
-            email you about your setup.
-          </p>
         </motion.div>
       </div>
     </div>
@@ -364,18 +371,18 @@ function SelectInput({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={cn(inputCls, 'appearance-none pr-9', !value && 'text-slate-400')}
+        className={cn(inputCls, 'appearance-none pr-10', !value && 'text-slate-400')}
       >
         <option value="" disabled hidden>
           {placeholder}
         </option>
         {options.map((opt) => (
-          <option key={opt} value={opt} className="text-slate-900">
+          <option key={opt} value={opt} className="text-base text-slate-900">
             {opt}
           </option>
         ))}
       </select>
-      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+      <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
     </div>
   );
 }
@@ -397,7 +404,7 @@ function Chip({
       onClick={onClick}
       aria-pressed={selected}
       className={cn(
-        'button-press rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-all',
+        chipCls,
         selected
           ? 'border-slate-900 bg-slate-900 text-white shadow-md shadow-slate-900/20'
           : 'border-slate-200/90 bg-white/70 text-slate-700 hover:border-slate-300 hover:bg-white',
@@ -422,9 +429,7 @@ function AboutStep({
 }) {
   return (
     <>
-      {/* About you */}
       <div className={cn(cardCls, 'space-y-4 p-5')}>
-        <p className="text-[10px] font-semibold uppercase leading-4 tracking-[0.18em] text-slate-400">About you</p>
         <Field label="Full name" required error={errors.contact_name}>
           <TextInput
             value={data.contact_name}
@@ -447,15 +452,15 @@ function AboutStep({
           <SelectInput
             value={data.contact_role}
             onChange={(v) => set('contact_role', v)}
-            placeholder="Select your role"
+            placeholder="Select"
             options={CONTACT_ROLES}
           />
         </Field>
-        <Field label="Phone (optional)" error={errors.contact_phone}>
+        <Field label="Phone" error={errors.contact_phone}>
           <TextInput
             value={data.contact_phone}
             onChange={(v) => set('contact_phone', v)}
-            placeholder="+91 98765 43210"
+            placeholder="Optional"
             type="tel"
             inputMode="tel"
             autoComplete="tel"
@@ -463,9 +468,7 @@ function AboutStep({
         </Field>
       </div>
 
-      {/* Your company */}
       <div className={cn(cardCls, 'space-y-4 p-5')}>
-        <p className="text-[10px] font-semibold uppercase leading-4 tracking-[0.18em] text-slate-400">Your company</p>
         <Field label="Company name" required error={errors.company_name}>
           <TextInput
             value={data.company_name}
@@ -474,11 +477,11 @@ function AboutStep({
             autoComplete="organization"
           />
         </Field>
-        <Field label="Website (optional)" error={errors.website}>
+        <Field label="Website" error={errors.website}>
           <TextInput
             value={data.website}
             onChange={(v) => set('website', v)}
-            placeholder="acmestudio.com"
+            placeholder="Optional"
             inputMode="url"
             autoComplete="url"
           />
@@ -487,7 +490,7 @@ function AboutStep({
           <SelectInput
             value={data.industry}
             onChange={(v) => set('industry', v)}
-            placeholder="Select industry"
+            placeholder="Select"
             options={INDUSTRIES}
           />
         </Field>
@@ -502,7 +505,7 @@ function AboutStep({
                   onClick={() => set('company_size', selected ? '' : size)}
                   aria-pressed={selected}
                   className={cn(
-                    'button-press h-10 text-xs font-semibold transition-colors',
+                    'button-press h-11 text-[13px] font-semibold transition-colors',
                     i > 0 && 'border-l border-slate-200/90',
                     selected ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100/70'
                   )}
@@ -512,6 +515,40 @@ function AboutStep({
               );
             })}
           </div>
+          {/* live visualisation of the selected size */}
+          <AnimatePresence initial={false}>
+            {data.company_size && SIZE_META[data.company_size] && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+                className="overflow-hidden"
+              >
+                <div className="flex items-center gap-2 pt-2.5">
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: SIZE_META[data.company_size].dots }).map((_, i) => (
+                      <motion.span
+                        key={`${data.company_size}-${i}`}
+                        initial={{ opacity: 0, scale: 0.4 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: i * 0.035, type: 'spring', stiffness: 400, damping: 22 }}
+                        className="block h-2 w-2 rounded-full bg-slate-800"
+                      />
+                    ))}
+                  </div>
+                  <motion.span
+                    key={SIZE_META[data.company_size].approx}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-[13px] font-semibold text-slate-600"
+                  >
+                    {SIZE_META[data.company_size].approx} people
+                  </motion.span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Field>
       </div>
     </>
@@ -545,13 +582,13 @@ function RhythmStep({
               onClick={() => set('work_model', m.value)}
               aria-pressed={data.work_model === m.value}
               className={cn(
-                'button-press flex flex-col items-center gap-1 rounded-2xl border px-2 py-3.5 text-sm font-semibold transition-all',
+                'button-press flex h-14 flex-col items-center justify-center gap-0.5 rounded-2xl border text-sm font-semibold transition-all',
                 data.work_model === m.value
                   ? 'border-slate-900 bg-slate-900 text-white shadow-md shadow-slate-900/20'
                   : 'border-slate-200/90 bg-white/70 text-slate-700 hover:border-slate-300 hover:bg-white'
               )}
             >
-              <span className="text-lg" aria-hidden>
+              <span className="text-lg leading-none" aria-hidden>
                 {m.emoji}
               </span>
               {m.label}
@@ -561,17 +598,26 @@ function RhythmStep({
       </Field>
 
       <Field label="Working days" required error={errors.work_days}>
-        <div className="flex flex-wrap gap-2">
-          {WORK_DAYS.map((d) => (
-            <Chip
-              key={d.value}
-              selected={data.work_days.includes(d.value)}
-              onClick={() => toggleDay(d.value)}
-              className="flex-1 basis-12 rounded-full text-xs font-semibold uppercase"
-            >
-              {d.label}
-            </Chip>
-          ))}
+        <div className="grid grid-cols-7 gap-1.5">
+          {WORK_DAYS.map((d) => {
+            const selected = data.work_days.includes(d.value);
+            return (
+              <button
+                key={d.value}
+                type="button"
+                onClick={() => toggleDay(d.value)}
+                aria-pressed={selected}
+                className={cn(
+                  'button-press h-10 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all',
+                  selected
+                    ? 'bg-slate-900 text-white shadow-md shadow-slate-900/20'
+                    : 'border border-slate-200/90 bg-white/70 text-slate-600 hover:border-slate-300 hover:bg-white'
+                )}
+              >
+                {d.label}
+              </button>
+            );
+          })}
         </div>
       </Field>
 
@@ -599,15 +645,15 @@ function RhythmStep({
           <select
             value={data.timezone}
             onChange={(e) => set('timezone', e.target.value)}
-            className={cn(inputCls, 'appearance-none pr-9')}
+            className={cn(inputCls, 'appearance-none pr-10')}
           >
             {TIMEZONES.map((tz) => (
-              <option key={tz} value={tz} className="text-slate-900">
+              <option key={tz} value={tz} className="text-base text-slate-900">
                 {tz.replace('_', ' ')}
               </option>
             ))}
           </select>
-          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         </div>
       </Field>
     </div>
@@ -615,6 +661,39 @@ function RhythmStep({
 }
 
 /* ─────────────────────── step 3 — team, tools, send ─────────────────────── */
+
+function ConfigStrip({ data }: { data: BetaSignupData }) {
+  const model = WORK_MODELS.find((m) => m.value === data.work_model);
+  const days = WORK_DAYS.filter((d) => data.work_days.includes(d.value));
+  const dayLabel =
+    days.length === 7 ? 'All week' : days.length === 5 && ['mon', 'tue', 'wed', 'thu', 'fri'].every((d) => data.work_days.includes(d))
+      ? 'Mon–Fri'
+      : days.map((d) => d.label).join(', ');
+  const size = data.company_size && SIZE_META[data.company_size] ? `${SIZE_META[data.company_size].approx} people` : '';
+  const items = [
+    data.company_name,
+    model && `${model.emoji} ${model.label}`,
+    dayLabel,
+    data.work_start_time && data.work_end_time && `${data.work_start_time}–${data.work_end_time}`,
+    size,
+  ].filter(Boolean) as string[];
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {items.map((item) => (
+        <motion.span
+          key={item}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 26 }}
+          className="rounded-full border border-slate-200/90 bg-white/75 px-3 py-1 text-[13px] font-medium text-slate-600"
+        >
+          {item}
+        </motion.span>
+      ))}
+    </div>
+  );
+}
 
 function TeamStep({
   data,
@@ -632,24 +711,18 @@ function TeamStep({
   removeTeamMember: (index: number) => void;
 }) {
   return (
-    <div className={cn(cardCls, 'space-y-5 p-5')}>
-      <div>
-        <div className="flex items-baseline justify-between">
-          <label className={labelCls}>First accounts</label>
-          <span className="text-[10px] font-medium text-slate-400">
-            {data.team_members.length}/{MAX_TEAM_ROWS}
-          </span>
-        </div>
-        <p className="-mt-0.5 text-xs leading-relaxed text-slate-400">
-          Invite now or add people later — up to you.
-        </p>
+    <>
+      {/* live summary of everything set so far */}
+      <ConfigStrip data={data} />
 
-        <div className="mt-3 space-y-3">
+      <div className={cn(cardCls, 'space-y-4 p-5')}>
+        <AnimatePresence initial={false}>
           {data.team_members.map((m, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97 }}
               className="relative rounded-2xl border border-slate-200/90 bg-white/80 p-3"
             >
               <button
@@ -667,7 +740,7 @@ function TeamStep({
                     onChange={(e) => setTeamMember(i, 'name', e.target.value)}
                     placeholder="Full name"
                     autoComplete="off"
-                    className={cn(inputCls, 'text-sm', errors[`team_name_${i}`] && 'border-red-400')}
+                    className={cn(inputCls, 'text-base', errors[`team_name_${i}`] && 'border-red-400')}
                   />
                   {errors[`team_name_${i}`] && <p className="mt-1 text-xs font-medium text-red-500">{errors[`team_name_${i}`]}</p>}
                 </div>
@@ -676,7 +749,7 @@ function TeamStep({
                   onChange={(e) => setTeamMember(i, 'role', e.target.value)}
                   placeholder="Role"
                   autoComplete="off"
-                  className={cn(inputCls, 'text-sm')}
+                  className={inputCls}
                 />
                 <div className="col-span-2">
                   <input
@@ -686,57 +759,59 @@ function TeamStep({
                     type="email"
                     inputMode="email"
                     autoComplete="off"
-                    className={cn(inputCls, 'text-sm', errors[`team_email_${i}`] && 'border-red-400')}
+                    className={cn(inputCls, errors[`team_email_${i}`] && 'border-red-400')}
                   />
                   {errors[`team_email_${i}`] && <p className="mt-1 text-xs font-medium text-red-500">{errors[`team_email_${i}`]}</p>}
                 </div>
               </div>
             </motion.div>
           ))}
-        </div>
+        </AnimatePresence>
 
         <button
           type="button"
           onClick={addTeamMember}
           disabled={data.team_members.length >= MAX_TEAM_ROWS}
-          className="button-press mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white/50 py-3 text-sm font-semibold text-slate-500 transition-colors hover:border-slate-400 hover:text-slate-700 disabled:opacity-40"
+          className="button-press flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white/50 py-3 text-sm font-semibold text-slate-500 transition-colors hover:border-slate-400 hover:text-slate-700 disabled:opacity-40"
         >
           <Plus className="h-4 w-4" />
           Add teammate
         </button>
       </div>
 
-      <Field label="Tools you already use">
-        <div className="flex flex-wrap gap-2">
-          {TOOLS.map((tool) => {
-            const selected = data.tools.includes(tool);
-            return (
-              <Chip
-                key={tool}
-                selected={selected}
-                onClick={() => set('tools', selected ? data.tools.filter((t) => t !== tool) : [...data.tools, tool])}
-              >
-                <span className="inline-flex items-center gap-1.5">
-                  {selected && <Check className="h-3.5 w-3.5" />}
-                  {tool}
-                </span>
-              </Chip>
-            );
-          })}
-        </div>
-      </Field>
+      <div className={cn(cardCls, 'space-y-4 p-5')}>
+        <Field label="Tools you already use">
+          <div className="flex flex-wrap gap-2">
+            {TOOLS.map((tool) => {
+              const selected = data.tools.includes(tool);
+              return (
+                <Chip
+                  key={tool}
+                  selected={selected}
+                  onClick={() => set('tools', selected ? data.tools.filter((t) => t !== tool) : [...data.tools, tool])}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    {selected && <Check className="h-3.5 w-3.5" />}
+                    {tool}
+                  </span>
+                </Chip>
+              );
+            })}
+          </div>
+        </Field>
 
-      <Field label="Anything else? (optional)">
-        <textarea
-          value={data.notes}
-          onChange={(e) => set('notes', e.target.value)}
-          rows={3}
-          maxLength={1000}
-          placeholder="Shifts, policies, existing systems — anything that helps us set you up…"
-          className="w-full resize-none rounded-xl border border-slate-200/90 bg-white/85 px-3 py-2.5 text-sm text-slate-900 outline-none transition-[border-color,box-shadow] placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-900/5"
-        />
-      </Field>
-    </div>
+        <Field label="Anything else?">
+          <textarea
+            value={data.notes}
+            onChange={(e) => set('notes', e.target.value)}
+            rows={3}
+            maxLength={1000}
+            placeholder="Optional"
+            className="w-full resize-none rounded-xl border border-slate-200/90 bg-white/85 px-3.5 py-2.5 text-base text-slate-900 outline-none transition-[border-color,box-shadow] placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-900/5"
+          />
+        </Field>
+      </div>
+    </>
   );
 }
 
@@ -768,8 +843,7 @@ function SuccessScreen({ reference, email, name }: { reference: string; email: s
             You&rsquo;re on the list, {name}!
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-slate-500">
-            We have everything we need to start shaping your INSYDE instance. A confirmation is
-            headed to <span className="font-semibold text-slate-900">{email}</span>.
+            A confirmation is headed to <span className="font-semibold text-slate-900">{email}</span>.
           </p>
 
           <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white/70 px-4 py-3">
