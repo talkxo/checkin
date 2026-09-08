@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "mimosa-finding-history/v1",
+  "runId": "20260908T143619784Z-13308-8454bbd29aac",
+  "runStatus": "inconclusive",
+  "errors": [
+    "baseline-read:.next-dev/static/webpack/webpack.648fc5cfeb802743.hot-update.js: baseline_snapshot_unreadable: file is missing from task baseline",
+    "baseline-read:.next-dev/static/webpack/app/layout.648fc5cfeb802743.hot-update.js: baseline_snapshot_unreadable: file is missing from task baseline",
+    "baseline-read:.next-dev/static/webpack/app/page.648fc5cfeb802743.hot-update.js: baseline_snapshot_unreadable: file is missing from task baseline",
+    "scan:.next-dev/static/chunks/app/page.js: deterministic_scanner_unavailable: deterministic scanner unavailable",
+    "scan:.next-dev/static/chunks/app/page.js: file_skipped: 文件过大（2519KB），已跳过未扫描"
+  ],
+  "target": ".",
+  "revision": "9a13f75612bee21a7262fe27e82d5ba6a59e73f7",
+  "diffHash": "6f8e682f39868f6cdeb4263a73287b085ce96b4490b311c85139e38c6cbb5143",
+  "rulesVersion": "unavailable",
+  "recordedAt": "2026-09-08T14:36:19.784Z",
+  "timing": {
+    "startedAt": "2026-09-08T14:36:17.619Z",
+    "completedAt": "2026-09-08T14:36:19.784Z",
+    "durationMs": 2165
+  },
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "total": 0,
+    "modelCalls": 0,
+    "measurement": "known-zero"
+  },
+  "findings": {
+    "total": 4,
+    "bySeverity": {
+      "high": 4
+    },
+    "byStatus": {
+      "blocked": 3,
+      "candidate": 1
+    }
+  },
+  "coverage": {
+    "status": "partial",
+    "reasonCounts": {
+      "baseline_snapshot_unreadable": 3,
+      "deterministic_scanner_unavailable": 1,
+      "file_skipped": 1,
+      "project_check_failed": 5
+    }
+  },
+  "evidenceBoundary": "static_only",
+  "immutableReport": ".mimosa/reports/task-review-sess_9fcd690b-c9e1-4f22-87df-aafe369ad4ed-20260908T143619784Z-13308-8454bbd29aac.json"
+}

@@ -1,0 +1,273 @@
+{
+  "schemaVersion": "mimosa-finding-ledger-batch/v1",
+  "batchId": "stop-20260908T143619784Z-13308-8454bbd29aac",
+  "runId": "20260908T143619784Z-13308-8454bbd29aac",
+  "runStatus": "inconclusive",
+  "coverage": {
+    "status": "partial",
+    "reasons": [
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/webpack.648fc5cfeb802743.hot-update.js",
+        "detail": "file is missing from task baseline",
+        "affectsCompletion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/app/layout.648fc5cfeb802743.hot-update.js",
+        "detail": "file is missing from task baseline",
+        "affectsCompletion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/app/page.648fc5cfeb802743.hot-update.js",
+        "detail": "file is missing from task baseline",
+        "affectsCompletion": true
+      },
+      {
+        "code": "deterministic_scanner_unavailable",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/app/page.js",
+        "detail": "deterministic scanner unavailable",
+        "affectsCompletion": true
+      },
+      {
+        "code": "file_skipped",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/app/page.js",
+        "detail": "文件过大（2519KB），已跳过未扫描",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/webpack.648fc5cfeb802743.hot-update.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/app/layout.648fc5cfeb802743.hot-update.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/app/page.648fc5cfeb802743.hot-update.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/app/page.js",
+        "detail": "deterministic_scanner_unavailable: deterministic scanner unavailable",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/app/page.js",
+        "detail": "file_skipped: 文件过大（2519KB），已跳过未扫描",
+        "affectsCompletion": true
+      }
+    ]
+  },
+  "source": {
+    "component": "zcode-hook",
+    "operationId": "Stop"
+  },
+  "revision": "9a13f75612bee21a7262fe27e82d5ba6a59e73f7",
+  "diffHash": "6f8e682f39868f6cdeb4263a73287b085ce96b4490b311c85139e38c6cbb5143",
+  "rulesVersion": "unavailable",
+  "sessionHash": "b49ff5089afd8f16ff31deb5a293b3e1414759aa8f69f170861d20367f4f8058",
+  "reportRef": ".mimosa/reports/task-review-sess_9fcd690b-c9e1-4f22-87df-aafe369ad4ed-20260908T143619784Z-13308-8454bbd29aac.json",
+  "events": [
+    {
+      "eventId": "hook-4023b7525622fb59181612aa4a45ea84",
+      "findingId": "mimosa-a744daa05d3fdbbfb31a6214",
+      "type": "finding_observed",
+      "at": "2026-09-08T14:36:19.784Z",
+      "identity": {
+        "projectRelativeFile": ".next-dev/static/webpack/app/layout.648fc5cfeb802743.hot-update.js",
+        "ruleId": "security",
+        "codeEvidenceHash": "5cc58f8960cde21d27f75cb735af7cd753203de45c61f84beece18eac3318914",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 18,
+      "endLine": 18,
+      "reasonCode": "observe",
+      "reportedToAgent": false,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "5cc58f8960cde21d27f75cb735af7cd753203de45c61f84beece18eac3318914"
+      },
+      "sequence": 0
+    },
+    {
+      "eventId": "hook-cddb0d1b3027100449ac92f263ec8ff4",
+      "findingId": "mimosa-a452a4f75e744f4a443d7630",
+      "type": "finding_observed",
+      "at": "2026-09-08T14:36:19.784Z",
+      "identity": {
+        "projectRelativeFile": ".next-dev/static/webpack/app/page.648fc5cfeb802743.hot-update.js",
+        "ruleId": "security",
+        "codeEvidenceHash": "a646d0981610c5da3283e460e08c769f57471bdc92b8f949610b160adeb70bf0",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 18,
+      "endLine": 18,
+      "reasonCode": "observe",
+      "reportedToAgent": false,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "a646d0981610c5da3283e460e08c769f57471bdc92b8f949610b160adeb70bf0"
+      },
+      "sequence": 1
+    },
+    {
+      "eventId": "hook-d93d8d5110ec044fdb9f35ae370452f6",
+      "findingId": "mimosa-d178fd7a19a108f15d743c52",
+      "type": "finding_observed",
+      "at": "2026-09-08T14:36:19.784Z",
+      "identity": {
+        "projectRelativeFile": ".next-dev/static/chunks/app/layout.js",
+        "ruleId": "security",
+        "codeEvidenceHash": "5cc58f8960cde21d27f75cb735af7cd753203de45c61f84beece18eac3318914",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 38,
+      "endLine": 38,
+      "reasonCode": "observe",
+      "reportedToAgent": false,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "5cc58f8960cde21d27f75cb735af7cd753203de45c61f84beece18eac3318914"
+      },
+      "sequence": 2
+    },
+    {
+      "eventId": "hook-ade4eb36dda488602dd2955fb1872955",
+      "findingId": "mimosa-81cfc384c30adc73a4b8d6f2",
+      "type": "finding_observed",
+      "at": "2026-09-08T14:36:19.784Z",
+      "identity": {
+        "projectRelativeFile": ".next-dev/server/app/page.js",
+        "ruleId": "security",
+        "codeEvidenceHash": "a1c153269abd64227b275fcd4de8077b772046f411f29472915a6b96f9a6f579",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 173,
+      "endLine": 173,
+      "reasonCode": "observe",
+      "reportedToAgent": false,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "a1c153269abd64227b275fcd4de8077b772046f411f29472915a6b96f9a6f579"
+      },
+      "sequence": 3
+    }
+  ],
+  "observedFindingIds": [
+    "mimosa-a744daa05d3fdbbfb31a6214",
+    "mimosa-a452a4f75e744f4a443d7630",
+    "mimosa-28a767f0b116a215ea2a6ba7",
+    "mimosa-a9e6683562b7bb9186cc267a",
+    "mimosa-61f77a286f86d02f30181129",
+    "mimosa-d178fd7a19a108f15d743c52",
+    "mimosa-468bcd0755e588bf97ef4f91",
+    "mimosa-66bebb24b583eb3e5874e02b",
+    "mimosa-8c9a5e52236e010a00dea8ca",
+    "mimosa-aa2d4fb68e7917f04392565f",
+    "mimosa-217f8233bd7b711cc338971d",
+    "mimosa-392d4979a120a1216e0b807c",
+    "mimosa-6b94e25320206a717f5c0c60",
+    "mimosa-bec096aa5bd7dc48c5306799",
+    "mimosa-18843f33f0f333802e2f056b",
+    "mimosa-22d39271be3df70569e3112d",
+    "mimosa-23a49bef394d7cc4f9a80803",
+    "mimosa-a77c92fb22350ad840c20410",
+    "mimosa-2bc7c8bc30c853a4bb753b32",
+    "mimosa-c1473b6d5f5b95dd9b130f23",
+    "mimosa-a11048ce007be571c5782a43",
+    "mimosa-7d2622ee7457c10368b31bef",
+    "mimosa-90dd76ad7b34913a9050e3b1",
+    "mimosa-64d9e484146f6bec32d72a5b",
+    "mimosa-81cfc384c30adc73a4b8d6f2",
+    "mimosa-3c08728acd9157e8f9699b99",
+    "mimosa-4fe2a1edaf10d7f80053b9ed",
+    "mimosa-8c50a5130d7b4183a6f93857",
+    "mimosa-70ee5d4b2c0044ecda4541a6",
+    "mimosa-8d353a68dcef06d090832480",
+    "mimosa-3ef89c9a8f7f2f6f62af5c1c",
+    "mimosa-69d9e876c0fe582451759cfe",
+    "mimosa-818de2e217d9226671dc8092",
+    "mimosa-ac0777149c51e1702d31b9e4",
+    "mimosa-34b49b4e42303ee944e756ba",
+    "mimosa-6454e69b7f1cea3213e79ee4",
+    "mimosa-feea5c5bbe75fa54d7146a0d",
+    "mimosa-f751d19654ffbee064a66e30",
+    "mimosa-9ac1a74fc5989640d4482ff6",
+    "mimosa-a05286d354ec3107295dd5f9"
+  ],
+  "verifiedFiles": [
+    {
+      "file": "components/home/options-menu.tsx",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": ".next-dev/static/webpack/webpack.648fc5cfeb802743.hot-update.js",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": ".next-dev/static/webpack/app/layout.648fc5cfeb802743.hot-update.js",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": ".next-dev/static/webpack/app/page.648fc5cfeb802743.hot-update.js",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": ".next-dev/static/chunks/webpack.js",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": ".next-dev/static/chunks/app/layout.js",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": ".next-dev/server/webpack-runtime.js",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": ".next-dev/server/app/page.js",
+      "direct": "complete",
+      "projectContext": "partial"
+    }
+  ],
+  "recordedAt": "2026-09-08T14:36:20.000Z"
+}
