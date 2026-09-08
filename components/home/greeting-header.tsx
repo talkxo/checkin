@@ -5,6 +5,7 @@ import OptionsMenu from '@/components/home/options-menu';
 interface GreetingHeaderProps {
   slug: string;
   recordName: string;
+  greetingName: string;
   displayName: string;
   onDisplayNameChange: (name: string) => void;
   greetingText: string;
@@ -16,6 +17,7 @@ interface GreetingHeaderProps {
 }
 
 export default function GreetingHeader({
+  greetingName,
   recordName,
   displayName,
   onDisplayNameChange,
@@ -52,7 +54,7 @@ export default function GreetingHeader({
       {/* Greeting Section */}
       <div>
         <h1 className="max-w-[85%] text-[32px] font-bold leading-tight" style={{ fontFamily: 'var(--font-playfair-display), serif' }}>
-          <span className="text-greeting">{greetingText}, {displayName}!</span>{' '}
+          <span className="text-greeting">{greetingText}, {greetingName}!</span>{' '}
           <span>{greetingEmoji}</span>
         </h1>
         <p className="text-sm text-muted-foreground mt-1.5">{dateLine}</p>

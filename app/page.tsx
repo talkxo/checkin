@@ -313,6 +313,7 @@ export default function HomePage() {
             <GreetingHeader
               slug={userSlugState}
               recordName={name}
+              greetingName={firstName}
               displayName={displayName}
               onDisplayNameChange={(n) => {
                 setDisplayName(n);

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "mimosa-hook-status/v1",
+  "recordedAt": "2026-09-08T14:30:49.333Z",
+  "sessionId": "sess_0ff9e449-136d-41d4-a2e7-55bb82463c5a",
+  "event": "PostToolUse",
+  "toolName": "Edit",
+  "file": "lib/beta-signup.ts",
+  "outcome": "clear",
+  "coverage": "complete",
+  "findingCount": 0,
+  "durationMs": 5,
+  "hostState": "hook_complete",
+  "reportHint": ".mimosa/reports/"
+}

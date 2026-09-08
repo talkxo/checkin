@@ -1,0 +1,141 @@
+{
+  "schemaVersion": "mimosa-finding-ledger-batch/v1",
+  "batchId": "stop-20260908T094248014Z-96904-36e27a75ee12",
+  "runId": "20260908T094248014Z-96904-36e27a75ee12",
+  "runStatus": "completed",
+  "coverage": {
+    "status": "complete",
+    "reasons": []
+  },
+  "source": {
+    "component": "zcode-hook",
+    "operationId": "Stop"
+  },
+  "revision": "f923ae69564ef0dcea4da23989d20f7eea502fdb",
+  "diffHash": "eed2f4ceb5507f64fe7e50ec986bb99f4125df49f8e1652892347900c3f49f2d",
+  "rulesVersion": "unavailable",
+  "sessionHash": "bf5b91864c48d3d78a3a35fc41fa21550e225a578d51e3870102a7252cdb754e",
+  "reportRef": ".mimosa/reports/task-review-sess_0ff9e449-136d-41d4-a2e7-55bb82463c5a-20260908T094248014Z-96904-36e27a75ee12.json",
+  "events": [
+    {
+      "eventId": "hook-963b60ec7555c0e868fd59729e2e6a8d",
+      "findingId": "mimosa-da1bccb8df810e64632d4917",
+      "type": "finding_blocked",
+      "at": "2026-09-08T09:36:54.064Z",
+      "identity": {
+        "projectRelativeFile": "app/admin/page.tsx",
+        "ruleId": "security",
+        "codeEvidenceHash": "c541b7b47c285ebeffba7fcb6675b2214300d10ffb4c35688b84d2719d6bb843",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 656,
+      "endLine": 656,
+      "reasonCode": "deny",
+      "reportedToAgent": true,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "c541b7b47c285ebeffba7fcb6675b2214300d10ffb4c35688b84d2719d6bb843"
+      },
+      "sequence": 0
+    },
+    {
+      "eventId": "hook-96c2fc99e172d40d9ceedcfa98fb5d7c",
+      "findingId": "mimosa-2396dd1efeab867f3114118e",
+      "type": "finding_blocked",
+      "at": "2026-09-08T09:36:54.916Z",
+      "identity": {
+        "projectRelativeFile": "app/admin/page.tsx",
+        "ruleId": "security",
+        "codeEvidenceHash": "7fdf62a6afd610f414d028b4de2d09c9da781212e82f13c46fabcd58a4ca1a42",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 670,
+      "endLine": 670,
+      "reasonCode": "deny",
+      "reportedToAgent": true,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "7fdf62a6afd610f414d028b4de2d09c9da781212e82f13c46fabcd58a4ca1a42"
+      },
+      "sequence": 1
+    },
+    {
+      "eventId": "hook-9105459d83e279aadb4dda1b92593aa5",
+      "findingId": "mimosa-da1bccb8df810e64632d4917",
+      "type": "static_fix_verified",
+      "at": "2026-09-08T09:38:04.795Z",
+      "identity": {
+        "projectRelativeFile": "app/admin/page.tsx",
+        "ruleId": "security",
+        "codeEvidenceHash": "c541b7b47c285ebeffba7fcb6675b2214300d10ffb4c35688b84d2719d6bb843",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 656,
+      "endLine": 656,
+      "reasonCode": "static_rescan_passed",
+      "reportedToAgent": false,
+      "evidence": {
+        "kind": "static_scan",
+        "boundary": "observed",
+        "producer": "deterministic",
+        "evidenceHash": "c541b7b47c285ebeffba7fcb6675b2214300d10ffb4c35688b84d2719d6bb843"
+      },
+      "sequence": 2
+    },
+    {
+      "eventId": "hook-ad01e6652951d6004472bf2999b55514",
+      "findingId": "mimosa-2396dd1efeab867f3114118e",
+      "type": "static_fix_verified",
+      "at": "2026-09-08T09:38:04.795Z",
+      "identity": {
+        "projectRelativeFile": "app/admin/page.tsx",
+        "ruleId": "security",
+        "codeEvidenceHash": "7fdf62a6afd610f414d028b4de2d09c9da781212e82f13c46fabcd58a4ca1a42",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 670,
+      "endLine": 670,
+      "reasonCode": "static_rescan_passed",
+      "reportedToAgent": false,
+      "evidence": {
+        "kind": "static_scan",
+        "boundary": "observed",
+        "producer": "deterministic",
+        "evidenceHash": "7fdf62a6afd610f414d028b4de2d09c9da781212e82f13c46fabcd58a4ca1a42"
+      },
+      "sequence": 3
+    }
+  ],
+  "observedFindingIds": [],
+  "verifiedFiles": [
+    {
+      "file": "lib/basecamp.ts",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "app/api/basecamp/create-chatbot/route.ts",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "app/admin/page.tsx",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "components/beta-signup/signup-wizard.tsx",
+      "direct": "complete",
+      "projectContext": "partial"
+    }
+  ],
+  "recordedAt": "2026-09-08T09:42:48.206Z"
+}

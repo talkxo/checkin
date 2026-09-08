@@ -121,11 +121,12 @@ const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export const isValidEmail = (v: string) => EMAIL_RE.test(v.trim());
 
-/** Validate one wizard step (0-indexed). Returns field → error message. */
+/** Validate one wizard step (0-indexed, 3 steps total). Returns field → error message. */
 export function validateStep(step: number, d: BetaSignupData): FieldErrors {
   const errors: FieldErrors = {};
 
   if (step === 0) {
+    // You + organisation
     if (!d.contact_name.trim()) errors.contact_name = 'Please tell us your name.';
     else if (d.contact_name.trim().length > 80) errors.contact_name = 'Keep it under 80 characters.';
     if (!d.contact_email.trim()) errors.contact_email = 'We need a work email to reach you.';
@@ -133,23 +134,20 @@ export function validateStep(step: number, d: BetaSignupData): FieldErrors {
     else if (d.contact_email.trim().length > 120) errors.contact_email = 'Keep it under 120 characters.';
     if (d.contact_phone.trim() && !/^[+\d][\d\s\-()]{5,19}$/.test(d.contact_phone.trim()))
       errors.contact_phone = 'That phone number does not look right.';
-  }
-
-  if (step === 1) {
     if (!d.company_name.trim()) errors.company_name = 'Company name is required.';
     else if (d.company_name.trim().length > 120) errors.company_name = 'Keep it under 120 characters.';
     if (d.website.trim() && !/^(https?:\/\/)?[\w-]+(\.[\w-]+)+([/?#].*)?$/i.test(d.website.trim()))
       errors.website = 'That URL does not look right.';
   }
 
-  if (step === 2) {
+  if (step === 1) {
     if (!WORK_MODELS.some((m) => m.value === d.work_model)) errors.work_model = 'Pick how your team works.';
     if (d.work_days.length === 0) errors.work_days = 'Pick at least one working day.';
     if (!TIME_RE.test(d.work_start_time)) errors.work_start_time = 'Set a start time.';
     if (!TIME_RE.test(d.work_end_time)) errors.work_end_time = 'Set an end time.';
   }
 
-  if (step === 3) {
+  if (step === 2) {
     d.team_members.forEach((m, i) => {
       if (!m.name.trim()) errors[`team_name_${i}`] = 'Name required.';
       else if (m.email.trim() && !isValidEmail(m.email)) errors[`team_email_${i}`] = 'Email does not look right.';
@@ -161,7 +159,7 @@ export function validateStep(step: number, d: BetaSignupData): FieldErrors {
 
 /** Full payload check before submit — mirrors validateStep across all steps. */
 export function validateAll(d: BetaSignupData): FieldErrors {
-  return { ...validateStep(0, d), ...validateStep(1, d), ...validateStep(2, d), ...validateStep(3, d) };
+  return { ...validateStep(0, d), ...validateStep(1, d), ...validateStep(2, d) };
 }
 
 /** Trimmed, size-capped payload ready for the API. */
