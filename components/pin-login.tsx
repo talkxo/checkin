@@ -4,6 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+// Colorful high-contrast workspace/people backdrops for the PIN login —
+// Unsplash CDN (free, fast, no key), daily rotation. A moderate dark overlay
+// keeps the photo visible while the glass card frosts it.
+const BACKDROP_IDS = [
+  "photo-1522071820081-009f0129c71c", // team at laptops
+  "photo-1600880292203-757bb62b4baf", // colleagues reviewing work
+  "photo-1543269865-cbf427effbad",    // group laughing around a table
+  "photo-1521737711867-e3b97375f902", // team heads-down at a screen
+];
+
 interface Employee {
   id: string;
   full_name: string;
@@ -132,8 +142,21 @@ export default function PinLogin({ onLoginSuccess }: PinLoginProps) {
     return () => window.clearTimeout(timeoutId);
   }, [showPinInput]);
 
+  const backdropId = BACKDROP_IDS[Math.floor(Date.now() / 86400000) % BACKDROP_IDS.length];
+
   return (
-    <div className="glass rounded-2xl p-8">
+    <>
+      {/* Photographic backdrop — the glass card needs something colorful to frost */}
+      <div aria-hidden="true" className="fixed inset-0 z-0 bg-[#0e1113]">
+        <img
+          src={`https://images.unsplash.com/${backdropId}?auto=format&fit=crop&w=1080&h=1920&q=80`}
+          alt=""
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/40 to-black/70" />
+      </div>
+
+      <div className="glass-strong relative z-10 rounded-3xl p-8 ring-1 ring-white/25">
       <div className="space-y-6">
         <div className="mb-4 flex items-center justify-center">
           <div className="flex h-8 w-8 items-center justify-center">
@@ -303,6 +326,7 @@ export default function PinLogin({ onLoginSuccess }: PinLoginProps) {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
