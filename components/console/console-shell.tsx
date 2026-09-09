@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { ExternalLink, LogOut, RefreshCw, Search } from "lucide-react";
 import DarkModeToggle from "@/components/dark-mode-toggle";
 import { Button } from "@/components/ui/button";
@@ -101,18 +102,26 @@ export function ConsoleShell({ children, counts }: ConsoleShellProps) {
                   key={mod.id}
                   href={mod.href}
                   className={cn(
-                    "flex shrink-0 items-center gap-2.5 rounded-xl border px-3.5 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                    "relative flex shrink-0 items-center gap-2.5 rounded-xl border px-3.5 py-2 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                     isActive
-                      ? "bg-gradient-brand border-transparent text-white shadow-primary"
+                      ? "border-transparent text-white"
                       : "border-transparent text-muted-foreground glass-hover hover:text-foreground"
                   )}
                 >
-                  <Icon className="h-4 w-4" />
-                  <span>{mod.label}</span>
+                  {isActive ? (
+                    <motion.span
+                      layoutId="console-nav-active"
+                      transition={{ type: "spring", stiffness: 500, damping: 40 }}
+                      className="absolute inset-0 rounded-xl bg-gradient-brand shadow-primary"
+                      aria-hidden
+                    />
+                  ) : null}
+                  <Icon className="relative z-10 h-4 w-4" />
+                  <span className="relative z-10">{mod.label}</span>
                   {typeof count === "number" && count > 0 ? (
                     <span
                       className={cn(
-                        "rounded-full px-2 py-0.5 text-[11px] tabular-nums",
+                        "relative z-10 rounded-full px-2 py-0.5 text-[11px] tabular-nums",
                         isActive ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
                       )}
                     >
