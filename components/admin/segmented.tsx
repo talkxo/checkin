@@ -1,9 +1,10 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 interface SegmentedControlProps {
-  options: Array<{ value: string; label: string }>;
+  options: Array<{ value: string; label: ReactNode }>;
   value: string;
   onChange: (value: string) => void;
   size?: "sm" | "md";

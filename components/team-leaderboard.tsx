@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Flame, Star } from 'lucide-react';
 import { SegmentedControl } from '@/components/admin/segmented';
 
 type Board = 'streak' | 'deepScore';
@@ -36,8 +37,24 @@ export default function TeamLeaderboard() {
           value={board}
           onChange={(v) => setBoard(v as Board)}
           options={[
-            { value: 'streak', label: '🔥 Streaks' },
-            { value: 'deepScore', label: '⭐ Deep Score' },
+            {
+              value: 'streak',
+              label: (
+                <span className="inline-flex items-center gap-1.5">
+                  <Flame className="h-3.5 w-3.5" strokeWidth={2.25} />
+                  Streaks
+                </span>
+              ),
+            },
+            {
+              value: 'deepScore',
+              label: (
+                <span className="inline-flex items-center gap-1.5">
+                  <Star className="h-3.5 w-3.5" strokeWidth={2.25} />
+                  Deep Score
+                </span>
+              ),
+            },
           ]}
         />
       </div>
@@ -67,9 +84,17 @@ export default function TeamLeaderboard() {
               <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
                 {row.name}
               </span>
-              <span className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
-                {board === 'streak' ? `🔥 ${row.streak}d` : `⭐ ${row.score}`}
-              </span>
+              {board === 'streak' ? (
+                <span className="flex shrink-0 items-center gap-1 text-sm font-semibold tabular-nums text-foreground">
+                  <Flame className="h-3.5 w-3.5 text-orange-500" strokeWidth={2.25} />
+                  {row.streak}d
+                </span>
+              ) : (
+                <span className="flex shrink-0 items-center gap-1 text-sm font-semibold tabular-nums text-foreground">
+                  <Star className="h-3.5 w-3.5 text-amber-500" strokeWidth={2.25} />
+                  {row.score}
+                </span>
+              )}
             </li>
           ))}
         </ol>
