@@ -3,17 +3,15 @@ const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
 
 // Primary model + fallback chain, all free. OpenRouter retries down this
 // list server-side on ANY error (rate-limit, downtime, context overflow,
-// moderation) via the `models` array — this replaces a hand-rolled
-// client-side loop across several hardcoded free-model IDs that kept going
-// defunct. `openrouter/free` sits last: it's OpenRouter's own router across
-// ~24 free models and self-updates as models come and go, but its picks are
-// unscoped by role — live testing surfaced it landing on a content-safety
-// classifier model that returned "User Safety: safe" instead of an actual
-// answer. A named general-purpose model sits ahead of it as a real fallback
-// before falling back to that fully random pool.
-const PRIMARY_MODEL = 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free';
-const SECONDARY_MODEL = 'nvidia/nemotron-3.5-lightning:free';
-const FALLBACK_MODEL = 'openrouter/free';
+// moderation) via the `models` array. Owner call (Sep 2026): the
+// `openrouter/free` auto-router LEADS — it self-updates across the free
+// pool, so no single pinned model going defunct can take AI down. Known
+// trade-off from earlier live testing: the router occasionally lands on a
+// content-safety classifier that answers meta instead of the prompt — if
+// that resurfaces, promote the named nemotron models back to the front.
+const PRIMARY_MODEL = 'openrouter/free';
+const SECONDARY_MODEL = 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free';
+const FALLBACK_MODEL = 'nvidia/nemotron-3.5-lightning:free';
 
 interface AIResponse {
   success: boolean;
