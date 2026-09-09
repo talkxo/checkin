@@ -149,8 +149,6 @@ function HolidayManager() {
   const [notice, setNotice] = useState<{ tone: "success" | "danger"; text: string } | null>(null);
   const [showBulk, setShowBulk] = useState(false);
   const [bulkText, setBulkText] = useState("");
-  const [configuredOpen, setConfiguredOpen] = useState(false);
-  const [templatesOpen, setTemplatesOpen] = useState(true);
 
   const all = holidays.data?.holidays ?? [];
   const yearHolidays = useMemo(
@@ -159,6 +157,10 @@ function HolidayManager() {
         .filter((h) => h.date.startsWith(String(viewYear)))
         .sort((a, b) => a.date.localeCompare(b.date)),
     [all, viewYear]
+  );
+  const upcoming = useMemo(
+    () => all.filter((h) => h.date >= new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" })).slice(0, 5),
+    [all]
   );
 
   const reload = async () => {
@@ -224,6 +226,16 @@ function HolidayManager() {
     }
   };
 
+  const remove = async (holiday: Holiday) => {
+    setNotice(null);
+    try {
+      await apiDeleteHoliday(holiday.id);
+      await reload();
+    } catch (err) {
+      setNotice({ tone: "danger", text: err instanceof Error ? err.message : "Could not remove the holiday." });
+    }
+  };
+
   return (
     <div className="mb-5">
       {notice ? (
@@ -242,168 +254,121 @@ function HolidayManager() {
         label="Holidays"
         action={<CalendarPlus className="h-3.5 w-3.5 text-muted-foreground/60" />}
       >
-        {holidays.loading && !holidays.data ? (
-          <div className="h-40 animate-pulse rounded-2xl bg-muted/50" />
-        ) : (
-          <>
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div>
-                <button
-                  onClick={() => setTemplatesOpen((v) => !v)}
-                  className="flex h-7 w-full items-center gap-2 text-left"
-                  aria-expanded={templatesOpen}
-                >
-                  <span className="card-label">Apply a template</span>
-                  <span className="grid h-6 w-6 place-items-center rounded-full bg-muted text-[12px] font-bold tabular-nums text-muted-foreground">
-                    {HOLIDAY_TEMPLATES.length}
-                  </span>
-                  <ChevronDown
-                    className={cn(
-                      "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
-                      templatesOpen && "rotate-180"
-                    )}
-                  />
-                </button>
-                {templatesOpen ? (
-                  <>
-                    <ul className="mt-2 divide-y divide-border/40">
-                      {HOLIDAY_TEMPLATES.map((t) => (
-                        <li key={t.key} className="flex items-center gap-3 py-2.5">
-                          <div className="min-w-0 flex-1">
-                            <p className="flex items-center gap-2 text-sm font-medium text-foreground">
-                              <span className="truncate">{t.label}</span>
-                              {t.preferred ? <Chip tone="warning">Preferred</Chip> : null}
-                            </p>
-                            <p className="text-xs text-muted-foreground">{t.holidays.length} holidays</p>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-9 shrink-0 rounded-lg"
-                            onClick={() => applyTemplate(t)}
-                            disabled={busy}
-                          >
-                            Apply
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                    <p className="mt-3 text-xs text-muted-foreground">
-                      Applying adds only the holidays not already on the calendar.
-                    </p>
-                  </>
-                ) : null}
-              </div>
+        {/* 1 — Add */}
+        <div>
+          <p className="card-label mb-2">Add a holiday</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              type="date"
+              value={date}
+              onChange={(e) => {
+                setDate(e.target.value);
+                setNotice(null);
+              }}
+              aria-label="Holiday date"
+              className="h-9 w-44 rounded-lg border-border/60"
+            />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && add()}
+              placeholder="Holiday name"
+              className="h-9 min-w-40 flex-1 rounded-lg border-border/60"
+            />
+            <Button className="h-9 rounded-lg button-press" onClick={add} disabled={!date || !name.trim() || busy}>
+              {busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Plus className="mr-1.5 h-4 w-4" />}
+              Add
+            </Button>
+            <Button variant="outline" className="h-9 rounded-lg" onClick={() => setShowBulk(true)} disabled={busy}>
+              Paste from Excel…
+            </Button>
+          </div>
+        </div>
 
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Input
-                    type="date"
-                    value={date}
-                    onChange={(e) => {
-                      setDate(e.target.value);
-                      setNotice(null);
-                    }}
-                    aria-label="Holiday date"
-                    className="h-9 w-40 rounded-lg border-border/60"
-                  />
-                  <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && add()}
-                    placeholder="Holiday name"
-                    className="h-9 min-w-36 flex-1 rounded-lg border-border/60"
-                  />
-                  <Button
-                    className="h-9 rounded-lg button-press"
-                    onClick={add}
-                    disabled={!date || !name.trim() || busy}
-                  >
-                    {busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Plus className="mr-1.5 h-4 w-4" />}
-                    Add
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-9 rounded-lg"
-                    onClick={() => setShowBulk(true)}
-                    disabled={busy}
-                  >
-                    Paste from Excel…
-                  </Button>
-                </div>
+        <div className="my-5 border-t border-border/50" />
 
-                <div className="mt-4 border-t border-border/50 pt-3">
-                  <div className="flex h-7 items-center justify-between gap-2">
-                    <button
-                      onClick={() => setConfiguredOpen((v) => !v)}
-                      className="flex flex-1 cursor-pointer items-center gap-2 text-left"
-                      aria-expanded={configuredOpen}
-                    >
-                      <span className="card-label">
-                        Configured · {yearHolidays.length} in {viewYear}
-                      </span>
-                      <span className="grid h-6 w-6 place-items-center rounded-full bg-muted text-[12px] font-bold tabular-nums text-muted-foreground">
-                        {yearHolidays.length}
-                      </span>
-                      <ChevronDown
-                        className={cn(
-                          "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
-                          configuredOpen && "rotate-180"
-                        )}
-                      />
-                    </button>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 rounded-lg p-0"
-                        onClick={() => setViewYear((y) => y - 1)}
-                        aria-label="Previous year"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <span className="min-w-10 text-center text-sm font-semibold tabular-nums text-foreground">
-                        {viewYear}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 rounded-lg p-0"
-                        onClick={() => setViewYear((y) => y + 1)}
-                        aria-label="Next year"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  {configuredOpen ? (
-                    yearHolidays.length === 0 ? (
-                      <p className="py-2 text-sm text-muted-foreground">No holidays configured for {viewYear}.</p>
-                    ) : (
-                      <ul className="max-h-72 divide-y divide-border/40 overflow-y-auto scrollbar-hide">
-                        {yearHolidays.map((holiday) => (
-                          <li key={holiday.id} className="group flex items-center gap-3 py-2.5 text-[15px]">
-                            <span className="w-20 shrink-0 tabular-nums text-muted-foreground">
-                              {new Date(`${holiday.date}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                            </span>
-                            <span className="truncate text-foreground/90">{holiday.name}</span>
-                            <button
-                              onClick={() => removeHoliday(holiday, setNotice, reload)}
-                              className="ml-auto rounded-lg p-1.5 text-muted-foreground/50 transition-colors hover:bg-red-500/10 hover:text-red-600"
-                              aria-label={`Remove ${holiday.name}`}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )
-                  ) : null}
+        {/* 2 — Templates */}
+        <div>
+          <p className="card-label mb-2">Quick start — apply a template</p>
+          <ul className="divide-y divide-border/40">
+            {HOLIDAY_TEMPLATES.map((t) => (
+              <li key={t.key} className="flex items-center gap-3 py-2.5">
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <span className="truncate">{t.label}</span>
+                    {t.preferred ? <Chip tone="warning">Preferred</Chip> : null}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{t.holidays.length} holidays</p>
                 </div>
-              </div>
+                <Button variant="outline" size="sm" className="h-8 shrink-0 rounded-lg" onClick={() => applyTemplate(t)} disabled={busy}>
+                  Apply
+                </Button>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Applying adds only the holidays not already on the calendar — duplicates are skipped.
+          </p>
+        </div>
+
+        <div className="my-5 border-t border-border/50" />
+
+        {/* 3 — Configured */}
+        <div>
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <p className="card-label">Configured · {yearHolidays.length} in {viewYear}</p>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 rounded-lg p-0"
+                onClick={() => setViewYear((y) => y - 1)}
+                aria-label="Previous year"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="min-w-10 text-center text-sm font-semibold tabular-nums text-foreground">{viewYear}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 rounded-lg p-0"
+                onClick={() => setViewYear((y) => y + 1)}
+                aria-label="Next year"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
-          </>
-        )}
+          </div>
+          {yearHolidays.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No holidays configured for {viewYear} yet — add them above.</p>
+          ) : (
+            <ul className="max-h-80 divide-y divide-border/40 overflow-y-auto scrollbar-hide">
+              {yearHolidays.map((holiday) => (
+                <li key={holiday.id} className="group flex items-center gap-3 py-2.5">
+                  <span className="w-24 shrink-0 tabular-nums text-muted-foreground">
+                    {new Date(`${holiday.date}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                  </span>
+                  <span className="truncate text-sm text-foreground/90">{holiday.name}</span>
+                  <button
+                    onClick={() => remove(holiday)}
+                    className="ml-auto rounded-lg p-1.5 text-muted-foreground/50 transition-colors hover:bg-red-500/10 hover:text-red-600"
+                    aria-label={`Remove ${holiday.name}`}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {upcoming.length > 0 ? (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Next up:{" "}
+              {upcoming
+                .map((h) => `${h.name} (${new Date(`${h.date}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" })})`)
+                .join(" · ")}
+            </p>
+          ) : null}
+        </div>
       </SectionCard>
 
       <Dialog open={showBulk} onOpenChange={setShowBulk}>
