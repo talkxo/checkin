@@ -15,8 +15,40 @@
    text-sm 12.6px); with tight paddings the panel reads cramped. Loosen the
    console's shared patterns — unlayered rules win over Tailwind utilities. */
 .console-root .card-label {
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.14em;
+}
+
+/* Type scale — three tiers, enforced scope-wide so every module reads the
+   same. Unlayered rules win over Tailwind's layered utilities. */
+.console-root .text-xs {
+  font-size: 12px;
+  line-height: 1.45;
+}
+.console-root .text-sm {
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.console-root .text-base {
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* Inputs join the same scale — no bigger than body text. */
+.console-root input,
+.console-root textarea,
+.console-root select {
+  font-size: 13.5px !important;
+}
+
+/* Header controls — normalize the shared theme toggle to button scale
+   (its own icon renders 20px, taller than the h-8 header buttons). */
+.console-root button[aria-label="Toggle dark mode"] {
+  padding: 6px;
+}
+.console-root button[aria-label="Toggle dark mode"] svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* Cards size to their own content in multi-card grids — a short card next to
