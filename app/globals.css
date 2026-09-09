@@ -367,6 +367,15 @@
     transform: scale(1.02);
   }
 
+  /* Opaque content card — glass audit spec (docs/glass-audit-main-app.md).
+     Same values as the console: solid card color, hairline border, soft shadow.
+     Glass stays reserved for surfaces that float (nav, modals, over photos). */
+  .card-solid {
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border) / 0.6);
+    box-shadow: 0 2px 12px rgba(23, 23, 23, 0.05);
+  }
+
   /* Hide scrollbar but keep functionality */
   .scrollbar-hide {
     -ms-overflow-style: none;

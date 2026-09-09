@@ -430,7 +430,7 @@ export default function HomePage() {
                     </div>
 
                     {/* Who's in today */}
-                    <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="glass rounded-2xl p-4 space-y-2">
+                    <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="card-solid rounded-2xl p-4 space-y-2">
                       <h3 className="card-label">Who&apos;s in today</h3>
                       <TodayPresenceCard />
                     </motion.div>
@@ -478,7 +478,7 @@ export default function HomePage() {
                     </motion.div>
 
                     {/* Announcements & notifications */}
-                    <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="glass rounded-2xl p-4 space-y-2">
+                    <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="card-solid rounded-2xl p-4 space-y-2">
                       <h3 className="card-label">Announcements &amp; Notifications</h3>
                       <p className="text-sm text-muted-foreground">
                         Nothing yet. Admin broadcasts and updates about your leave will land here.
@@ -509,7 +509,7 @@ export default function HomePage() {
                     </motion.div>
 
                     {/* Leave — balances, requests, history */}
-                    <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="glass overflow-hidden rounded-2xl">
+                    <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="card-solid overflow-hidden rounded-2xl">
                       <button
                         onClick={() => setLeaveOpen((v) => !v)}
                         aria-expanded={leaveOpen}

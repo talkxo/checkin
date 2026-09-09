@@ -7,12 +7,8 @@ import { Input } from "@/components/ui/input";
 // Colorful high-contrast workspace/people backdrops for the PIN login —
 // Unsplash CDN (free, fast, no key), daily rotation. A moderate dark overlay
 // keeps the photo visible while the glass card frosts it.
-const BACKDROP_IDS = [
-  "photo-1522071820081-009f0129c71c", // team at laptops
-  "photo-1600880292203-757bb62b4baf", // colleagues reviewing work
-  "photo-1543269865-cbf427effbad",    // group laughing around a table
-  "photo-1521737711867-e3b97375f902", // team heads-down at a screen
-];
+// Keyword-driven backdrop — "wallpaper" pool, deterministic per day.
+const backdropUrl = `https://loremflickr.com/1080/1920/wallpaper?lock=${Math.floor(Date.now() / 86400000)}`;
 
 interface Employee {
   id: string;
@@ -142,14 +138,12 @@ export default function PinLogin({ onLoginSuccess }: PinLoginProps) {
     return () => window.clearTimeout(timeoutId);
   }, [showPinInput]);
 
-  const backdropId = BACKDROP_IDS[Math.floor(Date.now() / 86400000) % BACKDROP_IDS.length];
-
   return (
     <>
       {/* Photographic backdrop — the glass card needs something colorful to frost */}
       <div aria-hidden="true" className="fixed inset-0 z-0 bg-[#0e1113]">
         <img
-          src={`https://images.unsplash.com/${backdropId}?auto=format&fit=crop&w=1080&h=1920&q=80`}
+          src={backdropUrl}
           alt=""
           className="h-full w-full object-cover"
         />

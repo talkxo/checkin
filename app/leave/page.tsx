@@ -40,7 +40,7 @@ export default function LeavePage() {
     return (
       <div className="min-h-screen bg-background dark:bg-background flex items-center justify-center p-8">
         <div className="w-full max-w-2xl mx-auto">
-          <div className="glass rounded-2xl p-8 slide-up">
+          <div className="card-solid rounded-2xl p-8 slide-up">
             <div className="text-center">
               <div className="w-16 h-16 bg-muted dark:bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg className="w-8 h-8 text-foreground dark:text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
