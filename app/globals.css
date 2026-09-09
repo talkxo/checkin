@@ -103,6 +103,10 @@
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     height: 100%;
+    /* Reserve the scrollbar gutter so scrolling content and fixed elements
+       (bottom nav) compute width against the same viewport — without this,
+       the nav overhangs the content column by the scrollbar's width. */
+    scrollbar-gutter: stable;
     line-height: 1.5;
     -webkit-text-size-adjust: 100%;
     -moz-tab-size: 4;
@@ -275,34 +279,55 @@
     will-change: transform;
   }
 
+  /* Symmetric composition, centered on the content column at any width:
+     a mirrored diagonal pair anchoring opposite corners at equal size and
+     opacity, plus a centered glow behind the column so the glass cards
+     always frost something and the margins are never flat. */
   .ambient-blobs i:nth-child(1) {
-    width: 30rem;
-    height: 30rem;
-    left: -6%;
-    top: 58%;
+    width: 26rem;
+    height: 26rem;
+    left: -8%;
+    top: -12%;
     background: var(--ambient-a);
     opacity: 0.18;
     animation: ambient-drift-a 38s ease-in-out infinite alternate;
   }
 
   .ambient-blobs i:nth-child(2) {
-    width: 24rem;
-    height: 24rem;
+    width: 26rem;
+    height: 26rem;
     right: -8%;
-    top: -8%;
+    bottom: -12%;
     background: var(--ambient-b);
-    opacity: 0.15;
+    opacity: 0.18;
     animation: ambient-drift-b 44s ease-in-out infinite alternate;
   }
 
+  .ambient-blobs i:nth-child(3) {
+    width: 22rem;
+    height: 22rem;
+    left: 50%;
+    top: 16%;
+    background: var(--ambient-c);
+    opacity: 0.12;
+    animation: ambient-drift-c 50s ease-in-out infinite alternate;
+  }
+
+  /* The corner pair drifts as mirror images so the balance never breaks. */
   @keyframes ambient-drift-a {
     from { transform: translate3d(0, 0, 0) scale(1); }
-    to { transform: translate3d(9vw, -9vh, 0) scale(1.08); }
+    to { transform: translate3d(6vw, 7vh, 0) scale(1.08); }
   }
 
   @keyframes ambient-drift-b {
-    from { transform: translate3d(0, 0, 0) scale(1.1); }
-    to { transform: translate3d(-8vw, 9vh, 0) scale(0.95); }
+    from { transform: translate3d(0, 0, 0) scale(1.08); }
+    to { transform: translate3d(-6vw, -7vh, 0) scale(1); }
+  }
+
+  /* The centered glow keeps its -50% x-offset throughout the drift. */
+  @keyframes ambient-drift-c {
+    from { transform: translate3d(-50%, 0, 0) scale(0.95); }
+    to { transform: translate3d(-50%, 6vh, 0) scale(1.1); }
   }
 
   /* CSS animations — used by admin, leave, and login pages */
