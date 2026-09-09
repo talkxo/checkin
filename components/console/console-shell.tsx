@@ -52,7 +52,7 @@ export function ConsoleShell({ children, counts }: ConsoleShellProps) {
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
+      <div className="mx-auto w-full max-w-[100rem] px-4 sm:px-8">
         <header className="flex flex-col gap-4 pt-6 sm:pt-8 lg:flex-row lg:items-end lg:justify-between">
           <button onClick={() => router.push("/console")} className="flex items-center gap-3 text-left">
             <img src={BRAND_ICON} alt="INSYDE" className="h-9 w-9 object-contain" />

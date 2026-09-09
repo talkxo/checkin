@@ -80,3 +80,17 @@
 .console-root .shadow-primary {
   box-shadow: 0 4px 14px rgba(23, 23, 23, 0.12);
 }
+
+/* Ambient blobs — dimmer and softer than the main app (the console is a
+   workspace, not a showcase), with cursor parallax on the field container.
+   --blob-px/py are set from a rAF-throttled mousemove in console layout. */
+.console-root .ambient-blobs i {
+  opacity: 0.1 !important;
+  filter: blur(84px) saturate(0.8);
+}
+
+.console-root .ambient-blobs {
+  transform: translate(var(--blob-px, 0px), var(--blob-py, 0px));
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}

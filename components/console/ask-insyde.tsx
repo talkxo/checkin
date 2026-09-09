@@ -68,7 +68,7 @@ export function AskInsydeWidget({
       <motion.button
         whileTap={{ scale: 0.96 }}
         onClick={() => onOpenChange(!open)}
-        className="fixed bottom-5 right-5 z-40 flex h-12 items-center gap-2 rounded-full bg-gradient-brand px-4 text-sm font-semibold text-white shadow-primary button-press"
+        className="fixed bottom-8 right-8 z-40 flex h-12 items-center gap-2 rounded-full bg-mint px-4 text-sm font-semibold text-[#052e21] shadow-primary button-press hover:brightness-105"
       >
         <MessageCircle className="h-4 w-4" />
         Ask Insyde

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConsoleShell } from "@/components/console/console-shell";
 import { CommandPalette } from "@/components/console/command-palette";
@@ -14,6 +14,28 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [paletteOpen, setPaletteOpen] = useState(false);
+
+  // Ambient blob parallax — the field leans gently away from the cursor.
+  const blobFieldRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let raf = 0;
+    const onMove = (e: MouseEvent) => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const el = blobFieldRef.current;
+        if (!el) return;
+        const dx = e.clientX / window.innerWidth - 0.5;
+        const dy = e.clientY / window.innerHeight - 0.5;
+        el.style.setProperty("--blob-px", `${(dx * -22).toFixed(1)}px`);
+        el.style.setProperty("--blob-py", `${(dy * -16).toFixed(1)}px`);
+      });
+    };
+    window.addEventListener("mousemove", onMove);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -47,7 +69,7 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
 
   return (
     <div className="main-typography console-root relative min-h-screen">
-      <div className="ambient-blobs" aria-hidden="true">
+      <div ref={blobFieldRef} className="ambient-blobs" aria-hidden="true">
         <i />
         <i />
         <i />
