@@ -1,0 +1,21 @@
+/* Console-scoped styles. Kept out of globals.css so the main app's
+   mobile-first rules stay untouched — this panel is desktop-first. */
+
+/* globals.css forces a 16px floor on form controls to stop iOS auto-zoom on
+   phones. That floor makes inputs visually oversized against the console's
+   14.4px body text on desktop. Scoped re-tighten; higher specificity than the
+   layer-base rule, so this wins without touching the global fix. */
+.console-root input,
+.console-root textarea,
+.console-root select {
+  font-size: 14px !important;
+}
+
+/* Density pass. The app-wide 90% root makes console text small (body 14.4px,
+   text-sm 12.6px); with tight paddings the panel reads cramped. Loosen the
+   console's shared patterns — unlayered rules win over Tailwind utilities. */
+.console-root .card-label {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+}
+
