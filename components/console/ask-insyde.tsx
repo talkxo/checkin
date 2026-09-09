@@ -3,9 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { Loader2, Send, Sparkles, X } from "lucide-react";
+import {
+  ArrowUp,
+  Check,
+  Copy,
+  Loader2,
+  RotateCcw,
+  ThumbsDown,
+  ThumbsUp,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { apiAdminChat } from "./data";
 
@@ -114,6 +122,17 @@ function AskInsydePanelBody({
   chat: AskInsideChat;
 }) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const composerRef = useRef<HTMLTextAreaElement | null>(null);
+  const [feedback, setFeedback] = useState<Record<number, "up" | "down">>({});
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+
+  // Auto-grow the composer with content, up to the max height.
+  useEffect(() => {
+    const el = composerRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
+  }, [chat.chatInput]);
 
   // Escape closes the panel
   useEffect(() => {
@@ -137,14 +156,10 @@ function AskInsydePanelBody({
       transition={{ duration: 0.25, ease: "easeOut" }}
       role="dialog"
       aria-label="Ask Insyde"
-      className="fixed inset-y-0 right-0 z-50 flex w-[26rem] max-w-full flex-col rounded-l-3xl border-l border-border/60 bg-white shadow-2xl dark:bg-card"
+      className="fixed inset-y-0 right-0 z-50 flex w-[30rem] max-w-full flex-col rounded-l-3xl border-l border-border/60 bg-white shadow-2xl dark:bg-card"
     >
-      <div className="flex items-center gap-3 border-b border-border/50 px-5 py-4">
-        <img src={BRAND_ICON} alt="" className="h-7 w-7 object-contain" />
-        <div className="min-w-0 flex-1">
-          <h2 className="font-cal-sans text-base leading-tight text-foreground">Ask Insyde</h2>
-          <p className="text-xs text-muted-foreground">Answers from live attendance data</p>
-        </div>
+      <div className="flex items-center justify-between px-5 py-4">
+        <h2 className="font-cal-sans text-base text-foreground">Ask Insyde</h2>
         <button
           onClick={() => onOpenChange(false)}
           className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-black/5 hover:text-foreground dark:hover:bg-white/10"
@@ -154,100 +169,167 @@ function AskInsydePanelBody({
         </button>
       </div>
 
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-4 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto px-5 pb-6 scrollbar-hide">
         {chat.messages.length === 0 && !chat.chatLoading ? (
-          <div className="pt-4">
-            <div className="mb-5 flex items-start gap-2.5">
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-brand text-white">
-                <Sparkles className="h-4 w-4" />
-              </span>
-              <p className="pt-1 text-[15px] leading-snug text-foreground/80">
-                Hi — ask me anything about your team's attendance, mood, or check-ins.
-              </p>
-            </div>
-            <p className="card-label mb-2">Try asking</p>
-            <div className="flex flex-col items-start gap-2">
+          <div className="flex h-full flex-col items-center justify-center gap-8 pb-10 text-center">
+            <p className="font-cal-sans text-xl text-foreground">
+              What do you want to know about the team?
+            </p>
+            <div className="flex w-full flex-col items-stretch gap-2.5">
               {STARTERS.map((starter) => (
                 <button
                   key={starter}
                   onClick={() => chat.sendChat(starter)}
-                  className="rounded-2xl rounded-bl-md border border-border/50 bg-muted/40 px-3.5 py-2 text-left text-sm text-foreground/80 transition-colors hover:border-border hover:bg-muted/70"
+                  className="rounded-full border border-border/70 px-4 py-2.5 text-sm text-foreground/85 transition-colors hover:border-foreground/30 hover:bg-muted/50"
                 >
                   {starter}
                 </button>
               ))}
             </div>
           </div>
-        ) : null}
-
-        {chat.messages.map((msg, i) => (
-          <div
-            key={i}
-            className={msg.role === "user" ? "flex flex-col items-end" : "flex items-start gap-2.5"}
-          >
-            {msg.role === "assistant" ? (
-              <span className="mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gradient-brand text-white">
-                <Sparkles className="h-3.5 w-3.5" />
-              </span>
-            ) : null}
-            <div className="min-w-0 max-w-[85%]">
-              {msg.role === "user" ? (
-                <div className="rounded-2xl rounded-br-md bg-gradient-brand px-3.5 py-2.5 text-[15px] text-white">
-                  {msg.text}
+        ) : (
+          <div className="flex flex-col gap-7">
+            {chat.messages.map((msg, i) =>
+              msg.role === "user" ? (
+                <div key={i} className="flex justify-end">
+                  <div className="max-w-[85%] rounded-3xl rounded-br-lg bg-muted px-4 py-3 text-[15px] leading-relaxed text-foreground">
+                    {msg.text}
+                  </div>
                 </div>
               ) : (
-                <div className="prose prose-sm dark:prose-invert text-[15px] text-foreground/90">
-                  <ReactMarkdown>{msg.text}</ReactMarkdown>
+                <div>
+                  <div className="prose prose-sm dark:prose-invert max-w-none text-[15px] leading-relaxed text-foreground/90">
+                    <ReactMarkdown>{msg.text}</ReactMarkdown>
+                  </div>
+                  <div className="mt-2 flex items-center gap-0.5 text-muted-foreground/50">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard?.writeText(msg.text).catch(() => {});
+                        setCopiedId(i);
+                        setTimeout(() => setCopiedId(null), 1500);
+                      }}
+                      className="rounded-lg p-1.5 transition-colors hover:bg-muted hover:text-foreground"
+                      aria-label="Copy reply"
+                    >
+                      {copiedId === i ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    </button>
+                    <button
+                      onClick={() =>
+                        setFeedback((f) => {
+                          const g = { ...f };
+                          if (g[i] === "up") delete g[i];
+                          else g[i] = "up";
+                          return g;
+                        })
+                      }
+                      className={cn(
+                        "rounded-lg p-1.5 transition-colors hover:bg-muted hover:text-foreground",
+                        feedback[i] === "up" && "text-emerald-600 dark:text-emerald-400"
+                      )}
+                      aria-label="Good reply"
+                    >
+                      <ThumbsUp className={cn("h-3.5 w-3.5", feedback[i] === "up" && "fill-current")} />
+                    </button>
+                    <button
+                      onClick={() =>
+                        setFeedback((f) => {
+                          const g = { ...f };
+                          if (g[i] === "down") delete g[i];
+                          else g[i] = "down";
+                          return g;
+                        })
+                      }
+                      className={cn(
+                        "rounded-lg p-1.5 transition-colors hover:bg-muted hover:text-foreground",
+                        feedback[i] === "down" && "text-red-500"
+                      )}
+                      aria-label="Bad reply"
+                    >
+                      <ThumbsDown className={cn("h-3.5 w-3.5", feedback[i] === "down" && "fill-current")} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        for (let j = i - 1; j >= 0; j--) {
+                          if (chat.messages[j].role === "user") {
+                            chat.sendChat(chat.messages[j].text);
+                            return;
+                          }
+                        }
+                      }}
+                      className="rounded-lg p-1.5 transition-colors hover:bg-muted hover:text-foreground"
+                      aria-label="Regenerate reply"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
-              )}
-              <p
-                className={cn(
-                  "mt-1 text-[10px] tabular-nums text-muted-foreground/70",
-                  msg.role === "user" && "text-right"
-                )}
-              >
-                {msg.time}
+              )
+            )}
+
+            {chat.chatLoading ? (
+              <div className="flex items-center gap-1.5 py-1">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground/70"
+                    style={{ animationDelay: `${i * 180}ms` }}
+                  />
+                ))}
+              </div>
+            ) : null}
+
+            {chat.chatError ? (
+              <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400">
+                {chat.chatError}
               </p>
-            </div>
+            ) : null}
           </div>
-        ))}
-
-        {chat.chatLoading ? (
-          <div className="flex items-start gap-2.5">
-            <span className="mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gradient-brand text-white">
-              <Sparkles className="h-3.5 w-3.5" />
-            </span>
-            <div className="flex items-center gap-2 rounded-2xl rounded-bl-md border border-border/50 bg-muted/40 px-3.5 py-2.5 text-sm text-muted-foreground">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking…
-            </div>
-          </div>
-        ) : null}
-
-        {chat.chatError ? <p className="text-sm text-red-600 dark:text-red-400">{chat.chatError}</p> : null}
-
+        )}
         <div ref={bottomRef} />
       </div>
 
       <form
-        className="flex items-center gap-2 border-t border-border/50 px-4 py-3.5"
+        className="px-4 pb-3"
         onSubmit={(e) => {
           e.preventDefault();
           chat.sendChat();
         }}
       >
-        <Input
-          value={chat.chatInput}
-          onChange={(e) => chat.setChatInput(e.target.value)}
-          placeholder="Ask about attendance, mood, streaks…"
-          className="h-10 rounded-xl border-border/60"
-        />
-        <Button
-          type="submit"
-          className="h-10 w-10 shrink-0 rounded-xl button-press"
-          disabled={!chat.chatInput.trim() || chat.chatLoading}
-        >
-          <Send className="h-4 w-4" />
-        </Button>
+        <div className="rounded-3xl border border-border/70 bg-white p-3 shadow-sm transition-colors focus-within:border-foreground/25 dark:bg-card">
+          <textarea
+            ref={composerRef}
+            value={chat.chatInput}
+            onChange={(e) => {
+              chat.setChatInput(e.target.value);
+              e.target.style.height = "auto";
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 140)}px`;
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                chat.sendChat();
+              }
+            }}
+            rows={1}
+            placeholder="Ask anything"
+            className="max-h-35 w-full resize-none bg-transparent px-1 text-[15px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/60"
+          />
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <span className="text-[10px] leading-tight text-muted-foreground/70">
+              Answers from live check-ins, history &amp; mood data
+            </span>
+            <Button
+              type="submit"
+              className="h-9 w-9 shrink-0 rounded-full bg-foreground text-background hover:bg-foreground/90 button-press"
+              disabled={!chat.chatInput.trim() || chat.chatLoading}
+            >
+              {chat.chatLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
+            </Button>
+          </div>
+        </div>
+        <p className="pt-1.5 text-center text-[10px] text-muted-foreground/60">
+          Ask Insyde can make mistakes. Check important info.
+        </p>
       </form>
     </motion.aside>
   );
