@@ -46,29 +46,50 @@ export default function TodayPresenceCard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/admin/today')
-      .then(r => r.json())
-      .then(data => {
-        const rows: Row[] = (data.attendance || []).map((r: any) => {
-          if (r.onLeave) return { id: r.id, name: r.name, state: 'leave' as const, time: null, sortKey: null };
-          if (r.status === 'Not Started') return { id: r.id, name: r.name, state: 'pending' as const, time: null, sortKey: null };
-          return {
-            id: r.id,
-            name: r.name,
-            state: (r.mode === 'remote' ? 'remote' : 'office') as Row['state'],
-            time: r.firstIn && r.firstIn !== 'N/A' ? to12h(r.firstIn) : null,
-            sortKey: r.firstIn && r.firstIn !== 'N/A' ? r.firstIn : null,
-          };
+    let initial = true;
+    const load = () => {
+      fetch('/api/admin/today')
+        .then(r => r.json())
+        .then(data => {
+          const rows: Row[] = (data.attendance || []).map((r: any) => {
+            if (r.onLeave) return { id: r.id, name: r.name, state: 'leave' as const, time: null, sortKey: null };
+            if (r.status === 'Not Started') return { id: r.id, name: r.name, state: 'pending' as const, time: null, sortKey: null };
+            return {
+              id: r.id,
+              name: r.name,
+              state: (r.mode === 'remote' ? 'remote' : 'office') as Row['state'],
+              time: r.firstIn && r.firstIn !== 'N/A' ? to12h(r.firstIn) : null,
+              sortKey: r.firstIn && r.firstIn !== 'N/A' ? r.firstIn : null,
+            };
+          });
+          rows.sort((a, b) =>
+            STATE_ORDER[a.state] - STATE_ORDER[b.state] ||
+            (a.sortKey && b.sortKey ? a.sortKey.localeCompare(b.sortKey) : 0) ||
+            a.name.localeCompare(b.name)
+          );
+          setRows(rows);
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (initial) {
+            initial = false;
+            setLoading(false);
+          }
         });
-        rows.sort((a, b) =>
-          STATE_ORDER[a.state] - STATE_ORDER[b.state] ||
-          (a.sortKey && b.sortKey ? a.sortKey.localeCompare(b.sortKey) : 0) ||
-          a.name.localeCompare(b.name)
-        );
-        setRows(rows);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    };
+
+    // A left-open tab would otherwise freeze on the day it was opened —
+    // refresh periodically and whenever the tab regains focus.
+    load();
+    const interval = setInterval(load, 60_000);
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') load();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, []);
 
   if (loading) return <div className="h-12 bg-muted/40 rounded-xl animate-pulse" />;
