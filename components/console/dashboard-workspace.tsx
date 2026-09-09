@@ -4,7 +4,11 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Cake,
+  CalendarDays,
+  CalendarHeart,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Flame,
   Loader2,
   ShieldAlert,
@@ -22,11 +26,13 @@ import {
   apiAdminChat,
   useAttendanceReport,
   useBirthdays,
+  useHolidays,
   useLeaveRequests,
   useLeaderboard,
   useStats,
   useToday,
 } from "./data";
+import { MonthGrid, MonthGridLegend } from "./ui/month-grid";
 import { leaveRequestPerson } from "./types";
 import type { LeaderboardRow } from "./types";
 
@@ -51,6 +57,7 @@ export function DashboardWorkspace() {
   const pendingLeave = useLeaveRequests("pending");
   const birthdays = useBirthdays();
   const leaderboard = useLeaderboard();
+  const holidays = useHolidays();
 
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -73,6 +80,7 @@ export function DashboardWorkspace() {
         pendingLeave.refresh(),
         birthdays.refresh(),
         leaderboard.refresh(),
+        holidays.refresh(),
       ]);
       setLastUpdated(new Date());
     } finally {
@@ -261,7 +269,7 @@ export function DashboardWorkspace() {
 
         {/* Alerts + team pulse + birthdays */}
         <div className="grid gap-5 lg:grid-cols-3">
-          <SectionCard label="Alerts" action={<ShieldAlert className="h-3.5 w-3.5 text-muted-foreground/60" />}>
+          <SectionCard label="Alerts" className="min-h-[16rem]" action={<ShieldAlert className="h-3.5 w-3.5 text-muted-foreground/60" />}>
             {alertGroups.length === 0 ? (
               <AllClear />
             ) : (
@@ -283,7 +291,7 @@ export function DashboardWorkspace() {
 
           <TeamPulseCard leaderboard={leaderboard} />
 
-          <SectionCard label="Birthdays" action={<Cake className="h-3.5 w-3.5 text-muted-foreground/60" />}>
+          <SectionCard label="Birthdays" className="min-h-[8rem]" action={<Cake className="h-3.5 w-3.5 text-muted-foreground/60" />}>
             {birthdays.loading && !birthdays.data ? (
               <RowListSkeleton rows={3} />
             ) : (birthdays.data?.birthdays.length ?? 0) === 0 ? (
@@ -302,6 +310,12 @@ export function DashboardWorkspace() {
               </ul>
             )}
           </SectionCard>
+        </div>
+
+        {/* Holiday calendar — read-only view; adds, templates and deletes live in Settings */}
+        <div className="grid gap-5 lg:grid-cols-2">
+          <HolidaysCard holidays={holidays} />
+          <UpcomingHolidaysCard holidays={holidays} />
         </div>
 
       </motion.div>
@@ -412,7 +426,7 @@ function TeamPulseCard({ leaderboard }: { leaderboard: ReturnType<typeof useLead
   const scores = leaderboard.data?.topByDeepScore ?? [];
 
   return (
-    <SectionCard label="Team pulse" action={<Flame className="h-3.5 w-3.5 text-amber-500" />}>
+    <SectionCard label="Team pulse" className="min-h-[8rem]" action={<Flame className="h-3.5 w-3.5 text-amber-500" />}>
       {leaderboard.error ? (
         <EmptyList text={`Couldn't load — ${leaderboard.error}`} />
       ) : leaderboard.loading && !leaderboard.data ? (
@@ -456,5 +470,125 @@ function PulseRow({ row, value }: { row: LeaderboardRow; value: string }) {
       <span className="truncate text-foreground/90">{row.name}</span>
       <span className="ml-auto shrink-0 font-semibold tabular-nums text-foreground">{value}</span>
     </li>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Holidays — read-only calendar + upcoming list; edits live in Settings
+// ---------------------------------------------------------------------------
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** Month calendar of configured holidays. No click targets — Settings mutates. */
+function HolidaysCard({ holidays }: { holidays: ReturnType<typeof useHolidays> }) {
+  const [cursor, setCursor] = useState(() => {
+    const n = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+    return { year: n.getFullYear(), month: n.getMonth() + 1 };
+  });
+
+  const byDate = useMemo(
+    () => new Map((holidays.data?.holidays ?? []).map((h) => [h.date, h])),
+    [holidays.data]
+  );
+  const monthCount = (holidays.data?.holidays ?? []).filter(
+    (h) => h.date.startsWith(`${cursor.year}-${pad2(cursor.month)}`)
+  ).length;
+
+  const monthLabel = new Date(Date.UTC(cursor.year, cursor.month - 1, 1)).toLocaleDateString("en-IN", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const shiftMonth = (delta: number) => {
+    setCursor((prev) => {
+      const d = new Date(Date.UTC(prev.year, prev.month - 1 + delta, 1));
+      return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 };
+    });
+  };
+
+  const dayState = (key: string) => {
+    const holiday = byDate.get(key);
+    return holiday
+      ? { className: "bg-violet-500/10 text-foreground/80", dot: "holiday" as const, title: holiday.name }
+      : undefined;
+  };
+
+  return (
+    <SectionCard label="Holidays" action={<CalendarHeart className="h-3.5 w-3.5 text-muted-foreground/60" />}>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 w-8 rounded-lg p-0"
+          onClick={() => shiftMonth(-1)}
+          aria-label="Previous month"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <span className="min-w-32 text-center text-sm font-semibold text-foreground">{monthLabel}</span>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 w-8 rounded-lg p-0"
+          onClick={() => shiftMonth(1)}
+          aria-label="Next month"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+        <span className="ml-auto text-xs text-muted-foreground">{monthCount} this month</span>
+      </div>
+
+      {holidays.loading && !holidays.data ? (
+        <div className="h-48 animate-pulse rounded-2xl bg-muted/50" />
+      ) : (
+        <>
+          <MonthGrid year={cursor.year} month={cursor.month} dayState={dayState} />
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <MonthGridLegend items={[{ dot: "holiday", label: "Holiday" }]} />
+            <span className="text-xs text-muted-foreground">Read-only — manage in Settings.</span>
+          </div>
+        </>
+      )}
+    </SectionCard>
+  );
+}
+
+/** Next four configured holidays from today (IST) onward, birthday-row styling. */
+function UpcomingHolidaysCard({ holidays }: { holidays: ReturnType<typeof useHolidays> }) {
+  const upcoming = useMemo(() => {
+    const todayKey = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+    const todayMs = new Date(`${todayKey}T00:00:00`).getTime();
+    return (holidays.data?.holidays ?? [])
+      .filter((h) => h.date >= todayKey)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(0, 4)
+      .map((h) => ({
+        ...h,
+        inDays: Math.round((new Date(`${h.date}T00:00:00`).getTime() - todayMs) / 86400000),
+      }));
+  }, [holidays.data]);
+
+  return (
+    <SectionCard label="Upcoming" action={<CalendarDays className="h-3.5 w-3.5 text-muted-foreground/60" />}>
+      {holidays.loading && !holidays.data ? (
+        <RowListSkeleton rows={4} />
+      ) : upcoming.length === 0 ? (
+        <EmptyList text="No upcoming holidays on the calendar." />
+      ) : (
+        <ul className="divide-y divide-border/40">
+          {upcoming.map((h) => (
+            <li key={h.id} className="flex items-center gap-2.5 py-2.5 text-[15px]">
+              <span className="truncate font-medium text-foreground">{h.name}</span>
+              <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                {new Date(`${h.date}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+              </span>
+              <Chip tone={h.inDays === 0 ? "success" : "neutral"}>
+                {h.inDays === 0 ? "Today" : h.inDays === 1 ? "Tomorrow" : `in ${h.inDays}d`}
+              </Chip>
+            </li>
+          ))}
+        </ul>
+      )}
+    </SectionCard>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  CalendarHeart,
+  CalendarPlus,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -19,16 +19,6 @@ import { SectionCard, Chip } from "./ui/bento";
 import { Switch } from "./ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { apiAddHoliday, apiAddHolidays, apiDeleteHoliday, useHolidays } from "./data";
-import { HOLIDAY_TEMPLATES, type HolidayTemplate } from "./holiday-templates";
-import { MonthGrid } from "./ui/month-grid";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "./ui/dropdown";
 import {
   Dialog,
   DialogContent,
@@ -37,11 +27,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown";
+import { apiAddHoliday, apiAddHolidays, apiDeleteHoliday, useHolidays } from "./data";
+import { HOLIDAY_TEMPLATES, type HolidayTemplate } from "./holiday-templates";
 import { isExperimentalEnabled, setExperimentalEnabled } from "./experimental";
+import { cn } from "@/lib/utils";
 import type { Holiday } from "./types";
 
 /**
- * Module 10 — Settings. Holiday calendar is live (new /api/admin/holidays);
+ * Module 10 — Settings. Holiday management is live (new /api/admin/holidays);
  * teams/designations and the roles matrix stay out until there's a real
  * permissions model — the access card says so honestly.
  */
@@ -52,8 +52,8 @@ export function SettingsWorkspace() {
       <div className="mb-5">
         <ExperimentalCard />
       </div>
-      <div className="grid gap-5 lg:grid-cols-2">
-        <HolidayCalendarCard />
+      <HolidayManager />
+      <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <IntegrationsCard />
         <TeamsCard />
         <AccessCard />
@@ -95,57 +95,92 @@ function ExperimentalCard() {
   );
 }
 
-function HolidayCalendarCard() {
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+function toISODate(value: string): string | null {
+  const t = value.trim();
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t);
+  if (m) return `${m[1]}-${pad2(Number(m[2]))}-${pad2(Number(m[3]))}`;
+  m = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/.exec(t);
+  if (m) return `${m[3]}-${pad2(Number(m[2]))}-${pad2(Number(m[1]))}`;
+  return null;
+}
+
+/** Excel paste: rows with a date cell (ISO or DD/MM/YYYY) and a name cell, any order. */
+function parseBulkHolidays(text: string): Array<{ name: string; date: string }> {
+  const out: Array<{ name: string; date: string }> = [];
+  for (const line of text.split("\n")) {
+    const cells = line.split(/\t|,/).map((c) => c.trim()).filter(Boolean);
+    if (!cells.length) continue;
+    let date: string | null = null;
+    let name: string | null = null;
+    for (const cell of cells) {
+      const iso = toISODate(cell);
+      if (iso && !date) {
+        date = iso;
+        continue;
+      }
+      if (!name) name = cell;
+    }
+    if (date && name) out.push({ name, date });
+  }
+  return out;
+}
+
+async function removeHoliday(
+  holiday: Holiday,
+  setNotice: (n: { tone: "success" | "danger"; text: string } | null) => void,
+  reload: () => Promise<void>
+) {
+  setNotice(null);
+  try {
+    await apiDeleteHoliday(holiday.id);
+    await reload();
+  } catch (err) {
+    setNotice({ tone: "danger", text: err instanceof Error ? err.message : "Could not remove the holiday." });
+  }
+}
+
+/**
+ * All holiday management in one card — templates, add options, and the
+ * configured list. Splitting them across separate cards hid the connection:
+ * applying a template updates the list in the other box.
+ */
+function HolidayManager() {
   const holidays = useHolidays();
-  const [cursor, setCursor] = useState(() => {
+  const [viewYear, setViewYear] = useState(() => {
     const n = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-    return { year: n.getFullYear(), month: n.getMonth() + 1 };
+    return n.getFullYear();
   });
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [date, setDate] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ tone: "success" | "danger"; text: string } | null>(null);
   const [showBulk, setShowBulk] = useState(false);
   const [bulkText, setBulkText] = useState("");
+  const [configuredOpen, setConfiguredOpen] = useState(false);
 
   const all = holidays.data?.holidays ?? [];
-  const byDate = useMemo(() => new Map(all.map((h) => [h.date, h])), [all]);
-  const prefix = `${cursor.year}-${pad2(cursor.month)}`;
-  const monthHolidays = all.filter((h) => h.date.startsWith(prefix));
-  const yearCount = all.filter((h) => h.date.startsWith(String(cursor.year))).length;
-
-  const monthLabel = new Date(Date.UTC(cursor.year, cursor.month - 1, 1)).toLocaleDateString("en-IN", {
-    month: "long",
-    year: "numeric",
-  });
-
-  const shiftMonth = (delta: number) => {
-    setCursor((prev) => {
-      const d = new Date(Date.UTC(prev.year, prev.month - 1 + delta, 1));
-      return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 };
-    });
-    setSelectedDay(null);
-  };
-
-  const dayState = (key: string) => {
-    const holiday = byDate.get(key);
-    return holiday
-      ? { className: "bg-violet-500/10 text-foreground/80", dot: "holiday" as const, title: holiday.name }
-      : undefined;
-  };
+  const yearHolidays = useMemo(
+    () =>
+      all
+        .filter((h) => h.date.startsWith(String(viewYear)))
+        .sort((a, b) => a.date.localeCompare(b.date)),
+    [all, viewYear]
+  );
 
   const reload = async () => {
     await holidays.refresh();
   };
 
   const add = async () => {
-    if (!selectedDay) return;
+    if (!date) return;
     setBusy(true);
     setNotice(null);
     try {
-      await apiAddHoliday({ name: name.trim(), date: selectedDay });
+      await apiAddHoliday({ name: name.trim(), date });
       setName("");
-      setSelectedDay(null);
+      setDate("");
       setNotice({ tone: "success", text: "Holiday added — it now tints the team calendars." });
       await reload();
     } catch (err) {
@@ -198,10 +233,7 @@ function HolidayCalendarCard() {
   };
 
   return (
-    <SectionCard
-      label="Holiday calendar"
-      action={<CalendarHeart className="h-3.5 w-3.5 text-muted-foreground/60" />}
-    >
+    <div className="mb-5">
       {notice ? (
         <p
           className={
@@ -214,122 +246,155 @@ function HolidayCalendarCard() {
         </p>
       ) : null}
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 w-8 rounded-lg p-0"
-          onClick={() => shiftMonth(-1)}
-          aria-label="Previous month"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <span className="min-w-32 text-center text-sm font-semibold text-foreground">{monthLabel}</span>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 w-8 rounded-lg p-0"
-          onClick={() => shiftMonth(1)}
-          aria-label="Next month"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-        <span className="ml-auto text-xs text-muted-foreground">
-          {monthHolidays.length} this month · {yearCount} in {cursor.year}
-        </span>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="rounded-lg" disabled={busy}>
-              Templates
-              <ChevronDown className="ml-1 h-3.5 w-3.5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {HOLIDAY_TEMPLATES.map((t) => (
-              <DropdownMenuItem key={t.key} onSelect={() => applyTemplate(t)}>
-                {t.label}
-                <span className="ml-auto text-xs text-muted-foreground">{t.holidays.length}</span>
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => setShowBulk(true)}>
-              Paste from Excel…
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      <SectionCard
+        label="Holidays"
+        action={<CalendarPlus className="h-3.5 w-3.5 text-muted-foreground/60" />}
+      >
+        {holidays.loading && !holidays.data ? (
+          <div className="h-40 animate-pulse rounded-2xl bg-muted/50" />
+        ) : (
+          <>
+            <div>
+              <p className="card-label mb-1">Templates</p>
+              <ul className="divide-y divide-border/40">
+                {HOLIDAY_TEMPLATES.map((t) => (
+                  <li key={t.key} className="flex items-center gap-3 py-2.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+                        <span className="truncate">{t.label}</span>
+                        {t.preferred ? <Chip tone="warning">Preferred</Chip> : null}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{t.holidays.length} holidays</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 shrink-0 rounded-lg"
+                      onClick={() => applyTemplate(t)}
+                      disabled={busy}
+                    >
+                      Apply
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Applying adds only the holidays not already on the calendar.
+              </p>
+            </div>
 
-      {holidays.loading && !holidays.data ? (
-        <div className="h-48 animate-pulse rounded-2xl bg-muted/50" />
-      ) : (
-        <>
-          <MonthGrid
-            year={cursor.year}
-            month={cursor.month}
-            dayState={dayState}
-            selected={selectedDay}
-            onDayClick={(key) => {
-              setSelectedDay(key === selectedDay ? null : key);
-              setNotice(null);
-            }}
-          />
-          <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-violet-400" /> holiday
-            </span>
-          </div>
-
-          {/* Constant-height slot — swapping hint for the form must not resize the card */}
-          <div className="mt-3 flex min-h-[3.5rem] items-center">
-            {selectedDay ? (
-              <div className="flex w-full flex-wrap items-center gap-2 border-t border-border/50 pt-3">
-                <span className="text-sm font-semibold tabular-nums text-foreground">
-                  {new Date(`${selectedDay}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                </span>
+            <div className="mt-4 border-t border-border/50 pt-3">
+              <p className="card-label mb-2">Add</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Input
+                  type="date"
+                  value={date}
+                  onChange={(e) => {
+                    setDate(e.target.value);
+                    setNotice(null);
+                  }}
+                  aria-label="Holiday date"
+                  className="h-9 w-40 rounded-lg border-border/60"
+                />
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && add()}
                   placeholder="Holiday name"
                   className="h-9 min-w-36 flex-1 rounded-lg border-border/60"
-                  autoFocus
                 />
-                <Button size="sm" className="h-8 rounded-lg button-press" onClick={add} disabled={!name.trim() || busy}>
+                <Button
+                  size="sm"
+                  className="h-8 rounded-lg button-press"
+                  onClick={add}
+                  disabled={!date || !name.trim() || busy}
+                >
                   {busy ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Plus className="mr-1.5 h-3.5 w-3.5" />}
                   Add
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 rounded-lg"
+                  onClick={() => setShowBulk(true)}
+                  disabled={busy}
+                >
+                  Paste from Excel…
+                </Button>
               </div>
-            ) : (
-              <span className="text-xs text-muted-foreground">Click a day to add a holiday.</span>
-            )}
-          </div>
+            </div>
 
-          <div className="mt-4 border-t border-border/50 pt-3">
-            <p className="card-label mb-2">This month</p>
-            {monthHolidays.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No holidays in {monthLabel}.</p>
-            ) : (
-              <ul className="divide-y divide-border/40">
-                {monthHolidays.map((holiday) => (
-                  <li key={holiday.id} className="group flex items-center gap-3 py-2.5 text-[15px]">
-                    <span className="w-20 shrink-0 tabular-nums text-muted-foreground">
-                      {new Date(`${holiday.date}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                    </span>
-                    <span className="truncate text-foreground/90">{holiday.name}</span>
-                    <button
-                      onClick={() => removeHoliday(holiday, setNotice, reload)}
-                      className="ml-auto rounded-lg p-1.5 text-muted-foreground/50 transition-colors hover:bg-red-500/10 hover:text-red-600"
-                      aria-label={`Remove ${holiday.name}`}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </>
-      )}
+            <div className="mt-4 border-t border-border/50 pt-3">
+              <div className="flex h-7 items-center justify-between gap-2">
+                <button
+                  onClick={() => setConfiguredOpen((v) => !v)}
+                  className="flex flex-1 cursor-pointer items-center gap-2 text-left"
+                  aria-expanded={configuredOpen}
+                >
+                  <span className="card-label">
+                    Configured · {yearHolidays.length} in {viewYear}
+                  </span>
+                  <span className="grid h-6 w-6 place-items-center rounded-full bg-muted text-[12px] font-bold tabular-nums text-muted-foreground">
+                    {yearHolidays.length}
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
+                      configuredOpen && "rotate-180"
+                    )}
+                  />
+                </button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 rounded-lg p-0"
+                    onClick={() => setViewYear((y) => y - 1)}
+                    aria-label="Previous year"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="min-w-10 text-center text-sm font-semibold tabular-nums text-foreground">
+                    {viewYear}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 rounded-lg p-0"
+                    onClick={() => setViewYear((y) => y + 1)}
+                    aria-label="Next year"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              {configuredOpen ? (
+                yearHolidays.length === 0 ? (
+                  <p className="py-2 text-sm text-muted-foreground">No holidays configured for {viewYear}.</p>
+                ) : (
+                  <ul className="max-h-72 divide-y divide-border/40 overflow-y-auto scrollbar-hide">
+                    {yearHolidays.map((holiday) => (
+                      <li key={holiday.id} className="group flex items-center gap-3 py-2.5 text-[15px]">
+                        <span className="w-20 shrink-0 tabular-nums text-muted-foreground">
+                          {new Date(`${holiday.date}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                        </span>
+                        <span className="truncate text-foreground/90">{holiday.name}</span>
+                        <button
+                          onClick={() => removeHoliday(holiday, setNotice, reload)}
+                          className="ml-auto rounded-lg p-1.5 text-muted-foreground/50 transition-colors hover:bg-red-500/10 hover:text-red-600"
+                          aria-label={`Remove ${holiday.name}`}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )
+              ) : null}
+            </div>
+          </>
+        )}
+      </SectionCard>
 
       <Dialog open={showBulk} onOpenChange={setShowBulk}>
         <DialogContent className="rounded-3xl sm:max-w-lg">
@@ -358,54 +423,8 @@ function HolidayCalendarCard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </SectionCard>
+    </div>
   );
-}
-
-async function removeHoliday(
-  holiday: Holiday,
-  setNotice: (n: { tone: "success" | "danger"; text: string } | null) => void,
-  reload: () => Promise<void>
-) {
-  setNotice(null);
-  try {
-    await apiDeleteHoliday(holiday.id);
-    await reload();
-  } catch (err) {
-    setNotice({ tone: "danger", text: err instanceof Error ? err.message : "Could not remove the holiday." });
-  }
-}
-
-const pad2 = (n: number) => String(n).padStart(2, "0");
-
-function toISODate(value: string): string | null {
-  const t = value.trim();
-  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t);
-  if (m) return `${m[1]}-${pad2(Number(m[2]))}-${pad2(Number(m[3]))}`;
-  m = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/.exec(t);
-  if (m) return `${m[3]}-${pad2(Number(m[2]))}-${pad2(Number(m[1]))}`;
-  return null;
-}
-
-/** Excel paste: rows with a date cell (ISO or DD/MM/YYYY) and a name cell, any order. */
-function parseBulkHolidays(text: string): Array<{ name: string; date: string }> {
-  const out: Array<{ name: string; date: string }> = [];
-  for (const line of text.split("\n")) {
-    const cells = line.split(/\t|,/).map((c) => c.trim()).filter(Boolean);
-    if (!cells.length) continue;
-    let date: string | null = null;
-    let name: string | null = null;
-    for (const cell of cells) {
-      const iso = toISODate(cell);
-      if (iso && !date) {
-        date = iso;
-        continue;
-      }
-      if (!name) name = cell;
-    }
-    if (date && name) out.push({ name, date });
-  }
-  return out;
 }
 
 function TeamsCard() {

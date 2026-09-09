@@ -6,7 +6,26 @@ export interface HolidayTemplate {
   key: string;
   label: string;
   holidays: Array<{ name: string; date: string }>;
+  /** The team's legacy set — badged as "Preferred" in Settings. */
+  preferred?: boolean;
 }
+
+// The co-working set the team has run on for years — the default we point at.
+const COWORKING: Array<{ name: string; date: string }> = [
+  { name: 'Republic Day', date: '2026-01-26' },
+  { name: 'Holi', date: '2026-03-04' },
+  { name: 'Id-Ul-Fitr', date: '2026-03-21' },
+  { name: 'Ram Navmi', date: '2026-03-26' },
+  { name: 'Independence Day', date: '2026-08-15' },
+  { name: 'Raksha Bandhan', date: '2026-08-28' },
+  { name: 'Janmashtami', date: '2026-09-04' },
+  { name: 'Mahatma Gandhi Jayanti', date: '2026-10-02' },
+  { name: 'Dussehra', date: '2026-10-20' },
+  { name: 'Diwali (Deepavali)', date: '2026-11-08' },
+  { name: 'Goverdhan Puja', date: '2026-11-09' },
+  { name: 'Guru Nanak Dev Jayanti', date: '2026-11-24' },
+  { name: 'Christmas Day', date: '2026-12-25' },
+];
 
 const NATIONAL: Array<{ name: string; date: string }> = [
   { name: 'Republic Day', date: '2026-01-26' },
@@ -27,6 +46,7 @@ const NATIONAL: Array<{ name: string; date: string }> = [
 ];
 
 export const HOLIDAY_TEMPLATES: HolidayTemplate[] = [
+  { key: 'coworking', label: 'Co-working (preferred)', holidays: COWORKING, preferred: true },
   { key: 'all-india', label: 'All-India (common)', holidays: NATIONAL },
   {
     key: 'delhi-ncr',
