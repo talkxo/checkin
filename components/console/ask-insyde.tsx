@@ -295,7 +295,7 @@ function AskInsydePanelBody({
           chat.sendChat();
         }}
       >
-        <div className="rounded-[1.75rem] border border-border bg-white p-4 pb-2.5 shadow-sm transition-colors focus-within:border-foreground/30 dark:bg-card">
+        <div className="flex items-end gap-2 rounded-[1.75rem] border border-border bg-white p-2 shadow-sm transition-colors focus-within:border-foreground/30 dark:bg-card">
           <textarea
             ref={composerRef}
             value={chat.chatInput}
@@ -310,19 +310,17 @@ function AskInsydePanelBody({
                 chat.sendChat();
               }
             }}
-            rows={2}
+            rows={1}
             placeholder="Ask anything"
-            className="w-full resize-none bg-transparent text-[15px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/50"
+            className="max-h-40 min-h-9 flex-1 resize-none self-center bg-transparent px-3 py-2 text-[15px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/50"
           />
-          <div className="flex items-center pt-2">
-            <Button
-              type="submit"
-              className="ml-auto h-9 w-9 shrink-0 rounded-full bg-foreground text-background hover:bg-foreground/90 button-press"
-              disabled={!chat.chatInput.trim() || chat.chatLoading}
-            >
-              {chat.chatLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            className="h-9 w-9 shrink-0 rounded-full bg-foreground text-background hover:bg-foreground/90 button-press"
+            disabled={!chat.chatInput.trim() || chat.chatLoading}
+          >
+            {chat.chatLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
+          </Button>
         </div>
         <p className="pt-2 text-center text-[10px] text-muted-foreground/60">
           Live check-ins · history · mood — Ask Insyde can make mistakes.
