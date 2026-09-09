@@ -125,6 +125,7 @@ function AskInsydePanelBody({
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
   const [feedback, setFeedback] = useState<Record<number, "up" | "down">>({});
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [toolsOpen, setToolsOpen] = useState(false);
 
   // Auto-grow the composer with content, up to the max height.
   useEffect(() => {
@@ -295,6 +296,23 @@ function AskInsydePanelBody({
           chat.sendChat();
         }}
       >
+        {toolsOpen ? (
+          <div className="mb-2.5 flex flex-wrap items-center gap-2">
+            {STARTERS.map((starter) => (
+              <button
+                key={starter}
+                type="button"
+                onClick={() => {
+                  setToolsOpen(false);
+                  chat.sendChat(starter);
+                }}
+                className="rounded-full border border-border/70 bg-muted/40 px-3.5 py-2 text-left text-sm text-foreground/85 transition-colors hover:border-foreground/25 hover:bg-muted/70"
+              >
+                {starter}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <div className="flex items-end gap-2 rounded-[1.75rem] border border-border bg-white p-2 shadow-sm transition-colors focus-within:border-foreground/30 dark:bg-card">
           <textarea
             ref={composerRef}
@@ -312,11 +330,23 @@ function AskInsydePanelBody({
             }}
             rows={1}
             placeholder="Ask anything"
-            className="max-h-40 min-h-9 flex-1 resize-none self-center bg-transparent px-3 py-2 text-[15px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/50"
+            className="max-h-40 min-h-9 flex-1 resize-none self-center border-0 bg-transparent px-3 py-2 text-[15px] leading-relaxed text-foreground shadow-none outline-none ring-0 focus:border-0 focus:ring-0 placeholder:text-muted-foreground/50"
           />
+          <button
+            type="button"
+            onClick={() => setToolsOpen((v) => !v)}
+            aria-expanded={toolsOpen}
+            className={cn(
+              "flex h-9 shrink-0 items-center gap-1.5 self-center rounded-full px-3 text-sm transition-colors",
+              toolsOpen ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            <Plus className="h-4 w-4" />
+            Tools
+          </button>
           <Button
             type="submit"
-            className="h-9 w-9 shrink-0 rounded-full bg-foreground text-background hover:bg-foreground/90 button-press"
+            className="ml-auto h-9 w-9 shrink-0 rounded-full bg-foreground text-background hover:bg-foreground/90 button-press"
             disabled={!chat.chatInput.trim() || chat.chatLoading}
           >
             {chat.chatLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
