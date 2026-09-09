@@ -95,7 +95,7 @@ export function AskInsydePanel({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
               onClick={() => onOpenChange(false)}
-              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
               aria-hidden
             />
             <AskInsydePanelBody key="ask-insyde-panel" onOpenChange={onOpenChange} chat={chat} />
@@ -137,7 +137,7 @@ function AskInsydePanelBody({
       transition={{ duration: 0.25, ease: "easeOut" }}
       role="dialog"
       aria-label="Ask Insyde"
-      className="glass-strong fixed inset-y-0 right-0 z-50 flex w-[26rem] max-w-full flex-col rounded-l-3xl"
+      className="fixed inset-y-0 right-0 z-50 flex w-[26rem] max-w-full flex-col rounded-l-3xl border-l border-border/60 bg-white shadow-2xl dark:bg-card"
     >
       <div className="flex items-center gap-3 border-b border-border/50 px-5 py-4">
         <img src={BRAND_ICON} alt="" className="h-7 w-7 object-contain" />
