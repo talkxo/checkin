@@ -19,3 +19,10 @@
   letter-spacing: 0.14em;
 }
 
+/* Cards size to their own content in multi-card grids — a short card next to
+   a tall one keeps its natural height instead of stretch-filling with dead
+   space (also keeps accordion expansion from inflating sibling cards). */
+.console-root section.glass {
+  align-self: start;
+}
+
