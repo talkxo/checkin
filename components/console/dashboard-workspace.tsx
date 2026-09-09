@@ -517,7 +517,7 @@ function HolidaysCard({ holidays }: { holidays: ReturnType<typeof useHolidays> }
     <SectionCard label="Holidays" action={<CalendarHeart className="h-3.5 w-3.5 text-muted-foreground/60" />}>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           className="h-8 w-8 rounded-lg p-0"
           onClick={() => shiftMonth(-1)}
@@ -527,7 +527,7 @@ function HolidaysCard({ holidays }: { holidays: ReturnType<typeof useHolidays> }
         </Button>
         <span className="min-w-32 text-center text-sm font-semibold text-foreground">{monthLabel}</span>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           className="h-8 w-8 rounded-lg p-0"
           onClick={() => shiftMonth(1)}
