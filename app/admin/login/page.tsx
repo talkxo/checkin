@@ -7,6 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 
+// Dark photographic backdrops for the login — deterministic daily rotation
+// from the free Picsum CDN (no key, fast, safe). A heavy dark overlay keeps
+// text readable in both themes, and the page falls back to a near-black
+// gradient if the image ever fails to load.
+const BACKDROP_IDS = ['1018', '1036', '1019'];
+
 function AdminLoginContent() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -48,26 +54,17 @@ function AdminLoginContent() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background px-4 py-8 text-foreground sm:px-6 sm:py-10">
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        <motion.div
-          className="absolute -left-24 -top-20 h-[20rem] w-[20rem] rounded-full bg-[radial-gradient(circle_at_center,_var(--ambient-c)_0%,_transparent_72%)] opacity-45 blur-2xl"
-          animate={{ x: [0, 180, 80], y: [0, 120, 220] }}
-          transition={{ duration: 12, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }}
+    <div className="relative min-h-screen overflow-hidden bg-[#0b0e0c] px-4 py-8 text-foreground sm:px-6 sm:py-10">
+      {/* Photographic backdrop — the glass card needs something real to frost */}
+      <div aria-hidden="true" className="fixed inset-0 z-0 bg-[#0b0e0c]">
+        <img
+          src={`https://picsum.photos/id/${BACKDROP_IDS[Math.floor(Date.now() / 86400000) % BACKDROP_IDS.length]}/1920/1080?grayscale`}
+          alt=""
+          className="h-full w-full object-cover opacity-90"
         />
-        <motion.div
-          className="absolute -right-28 -top-24 h-[30rem] w-[30rem] rounded-full bg-[radial-gradient(circle_at_center,_var(--ambient-b)_0%,_transparent_72%)] opacity-45 blur-2xl"
-          animate={{ x: [0, -170, -40], y: [0, 140, 240] }}
-          transition={{ duration: 13, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="absolute left-1/3 -bottom-44 h-[38rem] w-[38rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,_var(--ambient-a)_0%,_transparent_72%)] opacity-40 blur-2xl"
-          animate={{ x: [0, 120, -120], y: [0, -180, -40] }}
-          transition={{ duration: 14, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }}
-        />
-      </div>
-      <div className="relative z-10 mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-lg items-center justify-center">
-        <div className="relative w-full glass-strong rounded-[24px] p-7 sm:p-8">
+        <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/55 to-black/85" />
+      </div>      <div className="relative z-10 mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-lg items-center justify-center">
+        <div className="relative w-full glass-strong rounded-[24px] p-7 ring-1 ring-white/25 sm:p-8">
           <div className="mb-6 flex items-center">
             <img
               src="https://pqkph3lzaffmetri.public.blob.vercel-storage.com/1764957051530-Inside-Icon.png"
