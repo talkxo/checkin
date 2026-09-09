@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { Loader2, MessageCircle, Send, Sparkles, X } from "lucide-react";
+import { Loader2, Send, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { apiAdminChat } from "./data";
 
 export interface AskInsideMessage {
   role: "user" | "assistant";
@@ -32,11 +33,48 @@ const STARTERS = [
   "Any attendance patterns I should know?",
 ];
 
+
+// Chat state + panel visibility — lives at the shell level so the nav-bar
+// launcher works from any module and history survives page switches.
+export function useAskInsyde() {
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [messages, setMessages] = useState<AskInsideMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
+
+  const sendChat = async (override?: string) => {
+    const message = (override ?? chatInput).trim();
+    if (!message || chatLoading) return;
+    setChatInput("");
+    setChatError(null);
+    const time = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+    setMessages((prev) => [...prev, { role: "user", text: message, time }]);
+    setChatLoading(true);
+    try {
+      const data = await apiAdminChat(message);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text: data.response,
+          time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+    } catch (err) {
+      setChatError(err instanceof Error ? err.message : "Ask Insyde is unavailable right now.");
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  return { panelOpen, setPanelOpen, messages, chatInput, chatLoading, chatError, setChatInput, sendChat };
+}
+
 /**
- * Ask Insyde — floating launcher plus the full-height chat panel.
- * Chat state lives in the workspace so history survives closing the panel.
+ * The full-height chat panel — opened from the nav-bar pill.
  */
-export function AskInsydeWidget({
+export function AskInsydePanel({
   open,
   onOpenChange,
   chat,
@@ -60,24 +98,15 @@ export function AskInsydeWidget({
               className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
               aria-hidden
             />
-            <AskInsydePanel key="ask-insyde-panel" onOpenChange={onOpenChange} chat={chat} />
+            <AskInsydePanelBody key="ask-insyde-panel" onOpenChange={onOpenChange} chat={chat} />
           </>
         ) : null}
       </AnimatePresence>
-
-      <motion.button
-        whileTap={{ scale: 0.96 }}
-        onClick={() => onOpenChange(!open)}
-        className="fixed bottom-8 right-8 z-40 flex h-12 items-center gap-2 rounded-full bg-mint px-4 text-sm font-semibold text-[#052e21] shadow-primary button-press hover:brightness-105"
-      >
-        <MessageCircle className="h-4 w-4" />
-        Ask Insyde
-      </motion.button>
     </>
   );
 }
 
-function AskInsydePanel({
+function AskInsydePanelBody({
   onOpenChange,
   chat,
 }: {

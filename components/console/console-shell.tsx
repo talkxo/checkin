@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ExternalLink, LogOut, RefreshCw, Search } from "lucide-react";
+import { ExternalLink, LogOut, MessageCircle, RefreshCw, Search } from "lucide-react";
 import DarkModeToggle from "@/components/dark-mode-toggle";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CONSOLE_MODULES, moduleByHref } from "./nav";
 import type { ConsoleModule, ModuleId } from "./nav";
 import { isExperimentalEnabled, onExperimentalChange } from "./experimental";
+import { AskInsydePanel, useAskInsyde } from "./ask-insyde";
 
 export interface ConsoleShellProps {
   children: React.ReactNode;
@@ -33,6 +34,7 @@ export function ConsoleShell({ children, counts }: ConsoleShellProps) {
   // Planned modules (Payroll, Recruitment, …) only appear in experimental mode.
   const [experimental, setExperimental] = useState(false);
   const [paletteHint, setPaletteHint] = useState(false);
+  const askInsyde = useAskInsyde();
 
   useEffect(() => {
     setExperimental(isExperimentalEnabled());
@@ -131,10 +133,31 @@ export function ConsoleShell({ children, counts }: ConsoleShellProps) {
                 </Link>
               );
             })}
+
+            {/* Ask Insyde — pinned to the right end of the menu bar */}
+            <div className="ml-auto flex shrink-0 items-center pl-2.5">
+              <button
+                onClick={() => askInsyde.setPanelOpen(!askInsyde.panelOpen)}
+                aria-expanded={askInsyde.panelOpen}
+                className={cn(
+                  "flex shrink-0 items-center gap-2 rounded-xl border border-transparent px-3.5 py-2 text-sm font-semibold text-white shadow-primary transition-all",
+                  askInsyde.panelOpen ? "bg-[#052e21]" : "bg-mint hover:brightness-105"
+                )}
+              >
+                <MessageCircle className="h-4 w-4" />
+                Ask Insyde
+              </button>
+            </div>
           </div>
         </nav>
 
         <main className="pb-16 pt-5">{children}</main>
+
+        <AskInsydePanel
+          open={askInsyde.panelOpen}
+          onOpenChange={askInsyde.setPanelOpen}
+          chat={askInsyde}
+        />
       </div>
     </div>
   );

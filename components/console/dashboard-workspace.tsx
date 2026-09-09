@@ -21,9 +21,7 @@ import { HeroTile, StatTile, SectionCard, StateDot, Chip, bentoStagger, bentoRis
 import { cn } from "@/lib/utils";
 import { RowListSkeleton, TileSkeleton } from "./ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { AskInsydeWidget, type AskInsideChat, type AskInsideMessage } from "./ask-insyde";
 import {
-  apiAdminChat,
   useAttendanceReport,
   useBirthdays,
   useHolidays,
@@ -61,13 +59,6 @@ export function DashboardWorkspace() {
 
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [askOpen, setAskOpen] = useState(false);
-
-  // Ask Insyde chat state — lifted so history survives closing the panel
-  const [messages, setMessages] = useState<AskInsideMessage[]>([]);
-  const [chatInput, setChatInput] = useState("");
-  const [chatLoading, setChatLoading] = useState(false);
-  const [chatError, setChatError] = useState<string | null>(null);
 
   const attendanceRows = today.data?.attendance ?? [];
 
@@ -154,30 +145,6 @@ export function DashboardWorkspace() {
       return next;
     });
 
-  const sendChat = async (override?: string) => {
-    const message = (override ?? chatInput).trim();
-    if (!message || chatLoading) return;
-    setChatInput("");
-    setChatError(null);
-    const time = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
-    setMessages((prev) => [...prev, { role: "user", text: message, time }]);
-    setChatLoading(true);
-    try {
-      const data = await apiAdminChat(message);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          text: data.response,
-          time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
-        },
-      ]);
-    } catch (err) {
-      setChatError(err instanceof Error ? err.message : "Ask Insyde is unavailable right now.");
-    } finally {
-      setChatLoading(false);
-    }
-  };
 
   const lastUpdatedLabel = lastUpdated
     ? lastUpdated.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
@@ -320,12 +287,6 @@ export function DashboardWorkspace() {
 
       </motion.div>
 
-      {/* Ask Insyde — the one floating widget */}
-      <AskInsydeWidget
-        open={askOpen}
-        onOpenChange={setAskOpen}
-        chat={{ messages, chatInput, chatLoading, chatError, setChatInput, sendChat }}
-      />
     </>
   );
 }
