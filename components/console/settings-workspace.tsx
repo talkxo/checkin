@@ -51,11 +51,16 @@ export function SettingsWorkspace() {
       <PageHeader title="Settings" />
       <div className="space-y-5">
         <HolidayManager />
+        {/* Two independent columns — natural card heights, no grid-stretch holes. */}
         <div className="grid gap-5 lg:grid-cols-2">
-          <ExperimentalCard />
-          <IntegrationsCard />
-          <TeamsCard />
-          <AccessCard />
+          <div className="flex flex-col gap-5">
+            <ExperimentalCard />
+            <AccessCard />
+          </div>
+          <div className="flex flex-col gap-5">
+            <IntegrationsCard />
+            <TeamsCard />
+          </div>
         </div>
       </div>
     </>
