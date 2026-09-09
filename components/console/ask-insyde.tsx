@@ -289,20 +289,20 @@ function AskInsydePanelBody({
       </div>
 
       <form
-        className="px-4 pb-3"
+        className="px-4 pb-3.5"
         onSubmit={(e) => {
           e.preventDefault();
           chat.sendChat();
         }}
       >
-        <div className="rounded-3xl border border-border/70 bg-white p-3 shadow-sm transition-colors focus-within:border-foreground/25 dark:bg-card">
+        <div className="rounded-[1.75rem] border border-border bg-white p-4 pb-2.5 shadow-sm transition-colors focus-within:border-foreground/30 dark:bg-card">
           <textarea
             ref={composerRef}
             value={chat.chatInput}
             onChange={(e) => {
               chat.setChatInput(e.target.value);
               e.target.style.height = "auto";
-              e.target.style.height = `${Math.min(e.target.scrollHeight, 140)}px`;
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -310,25 +310,22 @@ function AskInsydePanelBody({
                 chat.sendChat();
               }
             }}
-            rows={1}
+            rows={2}
             placeholder="Ask anything"
-            className="w-full resize-none bg-transparent px-1 text-[15px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/60"
+            className="w-full resize-none bg-transparent text-[15px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/50"
           />
-          <div className="flex items-center justify-between gap-2 pt-1">
-            <span className="text-[10px] leading-tight text-muted-foreground/70">
-              Answers from live check-ins, history &amp; mood data
-            </span>
+          <div className="flex items-center pt-2">
             <Button
               type="submit"
-              className="h-9 w-9 shrink-0 rounded-full bg-foreground text-background hover:bg-foreground/90 button-press"
+              className="ml-auto h-9 w-9 shrink-0 rounded-full bg-foreground text-background hover:bg-foreground/90 button-press"
               disabled={!chat.chatInput.trim() || chat.chatLoading}
             >
               {chat.chatLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
             </Button>
           </div>
         </div>
-        <p className="pt-1.5 text-center text-[10px] text-muted-foreground/60">
-          Ask Insyde can make mistakes. Check important info.
+        <p className="pt-2 text-center text-[10px] text-muted-foreground/60">
+          Live check-ins · history · mood — Ask Insyde can make mistakes.
         </p>
       </form>
     </motion.aside>
