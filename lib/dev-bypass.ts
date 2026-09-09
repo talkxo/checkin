@@ -169,7 +169,60 @@ const world = {
   leaveRequests: LEAVE_REQUESTS.map((r) => ({ ...r })),
   openSession: null as MockSession | null,
   wfhDays: ['Wed'] as string[],
+  // Document links live here so admin add/delete survive a profile refetch —
+  // before this, POST faked success and GET kept returning the same two docs.
+  documentsByEmp: new Map<string, Array<{ id: string; label: string; url: string; created_at: string }>>(),
+  holidays: [
+    { id: 'hol-1', name: 'Republic Day', date: '2026-01-26' },
+    { id: 'hol-2', name: 'Independence Day', date: '2026-08-15' },
+    { id: 'hol-3', name: 'Diwali (Deepavali)', date: '2026-11-08' },
+  ] as Array<{ id: string; name: string; date: string }>,
 };
+
+function documentsFor(empId: string): Array<{ id: string; label: string; url: string; created_at: string }> {
+  if (!world.documentsByEmp.has(empId)) {
+    world.documentsByEmp.set(empId, [
+      { id: 'doc-1', label: 'ID card', url: 'https://drive.google.com/drive/folders/demo-id', created_at: new Date().toISOString() },
+      { id: 'doc-2', label: 'Payslip — Aug 2026', url: 'https://drive.google.com/drive/folders/demo-payslip', created_at: new Date().toISOString() },
+    ]);
+  }
+  return world.documentsByEmp.get(empId)!;
+}
+
+function leaderboardData() {
+  // Streak walk over the seeded sessions (IST calendar days), matching the
+  // shape of the real /api/admin/leaderboard response.
+  const streaks = world.roster.map((e) => {
+    const keys = new Set(
+      world.sessions
+        .filter((s) => s.employee_id === e.id)
+        .map((s) => new Date(s.checkin_ts).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }))
+    );
+    let streak = 0;
+    const day = new Date();
+    for (let guard = 0; guard < 400; guard++) {
+      const key = day.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+      if (!keys.has(key)) break;
+      streak++;
+      day.setDate(day.getDate() - 1);
+    }
+    return { name: e.full_name, slug: e.slug, streak };
+  });
+  const topByStreak = [...streaks]
+    .sort((a, b) => b.streak - a.streak)
+    .slice(0, 5)
+    .map((r, i) => ({ rank: i + 1, ...r }));
+  const topByDeepScore = world.roster
+    .map((e, i) => ({
+      name: e.full_name,
+      slug: e.slug,
+      score: Math.round((55 + ((e.full_name.length * 7 + i * 13) % 45)) * 10) / 10,
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5)
+    .map((r, i) => ({ rank: i + 1, ...r }));
+  return { topByStreak, topByDeepScore };
+}
 
 function meSessions(): MockSession[] {
   return world.sessions.filter((s) => s.employee_id === ME.id);
@@ -674,17 +727,52 @@ const ROUTES: Array<{ method: string; match: RegExp; handle: Handler }> = [
       const emp = world.roster.find((e) => e.id === empId) ?? ME;
       return {
         employee: { ...publicEmployee(emp), active: true, date_of_birth: '1996-04-18', phone: '+91 98110 12345', emergency_contact: 'Rohan (brother) · +91 98110 67890', created_at: '2026-01-01T00:00:00Z' },
-        documents: [
-          { id: 'doc-1', label: 'ID card', url: 'https://drive.google.com/drive/folders/demo-id', created_at: new Date().toISOString() },
-          { id: 'doc-2', label: 'Payslip — Aug 2026', url: 'https://drive.google.com/drive/folders/demo-payslip', created_at: new Date().toISOString() },
-        ],
+        documents: documentsFor(empId),
       };
   } },
   { method: 'PATCH', match: /^\/api\/admin\/employees\/[^/]+$/, handle: ({ body }) => ({ employee: body ?? {} }) },
-  { method: 'POST', match: /^\/api\/admin\/employees\/[^/]+$/, handle: ({ body, url }) => ({
-      document: { id: `doc-${Date.now()}`, label: body?.label ?? 'Document', url: body?.url ?? '#', created_at: new Date().toISOString() },
-  }) },
-  { method: 'DELETE', match: /^\/api\/admin\/employees\/[^/]+$/, handle: () => ({ success: true }) },
+  { method: 'POST', match: /^\/api\/admin\/employees\/[^/]+$/, handle: ({ body, url }) => {
+      const empId = url.pathname.split('/').pop()!;
+      const document = {
+        id: `doc-${Date.now()}`,
+        label: String(body?.label ?? 'Document'),
+        url: String(body?.url ?? '#'),
+        created_at: new Date().toISOString(),
+      };
+      documentsFor(empId).unshift(document);
+      return { document, reachable: true };
+  } },
+  { method: 'DELETE', match: /^\/api\/admin\/employees\/[^/]+$/, handle: ({ url }) => {
+      const empId = url.pathname.split('/').pop()!;
+      const documentId = url.searchParams.get('documentId');
+      const list = documentsFor(empId);
+      const idx = list.findIndex((d) => d.id === documentId);
+      if (idx >= 0) list.splice(idx, 1);
+      return { success: true };
+  } },
+  { method: 'GET', match: /^\/api\/admin\/holidays$/, handle: ({ url }) => {
+      const year = url.searchParams.get('year');
+      const rows = year ? world.holidays.filter((h) => h.date.startsWith(year)) : world.holidays;
+      return { holidays: rows };
+  } },
+  { method: 'POST', match: /^\/api\/admin\/holidays$/, handle: ({ body }) => {
+      const items = Array.isArray(body?.items) ? body.items : [body];
+      const added: Array<{ id: string; name: string; date: string }> = [];
+      for (const it of items) {
+        if (!it?.name || !it?.date) continue;
+        if (world.holidays.some((h) => h.date === it.date && h.name === it.name)) continue;
+        const holiday = { id: `hol-${Date.now()}-${added.length}`, name: String(it.name), date: String(it.date) };
+        world.holidays.push(holiday);
+        added.push(holiday);
+      }
+      if (Array.isArray(body?.items)) return { holidays: added, added: added.length, submitted: items.length };
+      return { holiday: added[0] ?? null };
+  } },
+  { method: 'DELETE', match: /^\/api\/admin\/holidays$/, handle: ({ url }) => {
+      const id = url.searchParams.get('id');
+      world.holidays = world.holidays.filter((h) => h.id !== id);
+      return { success: true };
+  } },
   { method: 'GET', match: /^\/api\/admin\/birthdays$/, handle: () => ({
       birthdays: [{ name: 'Rahul Test', date: '12 Sep', inDays: 4 }],
   }) },
@@ -719,6 +807,7 @@ const ROUTES: Array<{ method: string; match: RegExp; handle: Handler }> = [
         };
       }),
   }) },
+  { method: 'GET', match: /^\/api\/admin\/leaderboard$/, handle: () => leaderboardData() },
   { method: 'GET', match: /^\/api\/admin\/historical-data/, handle: () => ({ attendanceData: [] }) },
   { method: 'POST', match: /^\/api\/admin\/basecamp-announcement$/, handle: ({ body }) => ({
       ok: true,
