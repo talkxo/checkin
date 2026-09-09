@@ -361,7 +361,7 @@ function HolidayManager() {
                     </button>
                     <div className="flex items-center gap-1">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         className="h-8 w-8 rounded-lg p-0"
                         onClick={() => setViewYear((y) => y - 1)}
@@ -373,7 +373,7 @@ function HolidayManager() {
                         {viewYear}
                       </span>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         className="h-8 w-8 rounded-lg p-0"
                         onClick={() => setViewYear((y) => y + 1)}
