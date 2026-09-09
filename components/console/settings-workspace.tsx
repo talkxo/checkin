@@ -49,14 +49,14 @@ export function SettingsWorkspace() {
   return (
     <>
       <PageHeader title="Settings" />
-      <div className="mb-5">
-        <ExperimentalCard />
-      </div>
-      <HolidayManager />
-      <div className="mt-5 grid gap-5 lg:grid-cols-2">
-        <IntegrationsCard />
-        <TeamsCard />
-        <AccessCard />
+      <div className="space-y-5">
+        <HolidayManager />
+        <div className="grid gap-5 lg:grid-cols-2">
+          <ExperimentalCard />
+          <IntegrationsCard />
+          <TeamsCard />
+          <AccessCard />
+        </div>
       </div>
     </>
   );
@@ -76,20 +76,13 @@ function ExperimentalCard() {
 
   return (
     <SectionCard label="Experimental features" action={<FlaskConical className="h-3.5 w-3.5 text-muted-foreground/60" />}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="max-w-xl">
-          <p className="text-sm font-medium text-foreground">See what&apos;s coming</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Turns on Payroll, Recruitment, Onboarding, and Performance in the menu — modules still
-            being designed. A lot in them won&apos;t work yet, but you get an early look at the
-            direction, and your feedback shapes what ships. Off by default: the console stays
-            focused on workspace management.
-          </p>
-        </div>
-        <div className="flex shrink-0 flex-col items-center gap-1.5">
-          <Switch checked={on} onCheckedChange={toggle} aria-label="Experimental features" />
-          <Chip tone={on ? "warning" : "neutral"}>{on ? "On" : "Off"}</Chip>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">See what&apos;s coming.</span>{" "}
+          Turns on the not-yet-built modules — Payroll, Recruitment, Onboarding, Performance. A lot
+          won&apos;t work yet; feedback shapes what ships.
+        </p>
+        <Switch checked={on} onCheckedChange={toggle} aria-label="Experimental features" />
       </div>
     </SectionCard>
   );
