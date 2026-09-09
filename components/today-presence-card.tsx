@@ -84,14 +84,13 @@ export default function TodayPresenceCard() {
       {rows.map(row => {
         const { dot, label } = STATE_STYLES[row.state];
         return (
-          <div key={row.id} className="flex items-center justify-between gap-3 py-2.5">
-            <div className="flex items-center gap-2.5 min-w-0">
+          <div key={row.id} className="flex items-center gap-3 py-2.5">
+            <div className="flex min-w-0 flex-1 items-center gap-2.5">
               <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} />
-              <span className="text-sm font-medium text-foreground truncate">{names.get(row.id)}</span>
+              <span className="truncate text-sm font-medium text-foreground">{names.get(row.id)}</span>
             </div>
-            <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
-              {label}
-              {row.time && <span aria-hidden> &middot; </span>}
+            <span className="w-16 shrink-0 text-xs text-muted-foreground">{label}</span>
+            <span className="w-[3.75rem] shrink-0 text-right text-xs tabular-nums text-muted-foreground">
               {row.time}
             </span>
           </div>
