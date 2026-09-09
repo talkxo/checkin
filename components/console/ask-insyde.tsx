@@ -191,15 +191,15 @@ function AskInsydePanelBody({
               </span>
             ) : null}
             <div className="min-w-0 max-w-[85%]">
-              <div
-                className={
-                  msg.role === "user"
-                    ? "rounded-2xl rounded-br-md bg-gradient-brand px-3.5 py-2.5 text-[15px] text-white"
-                    : "prose prose-sm dark:prose-invert rounded-2xl rounded-bl-md border border-border/50 bg-muted/40 px-3.5 py-2.5 text-[15px]"
-                }
-              >
-                {msg.role === "assistant" ? <ReactMarkdown>{msg.text}</ReactMarkdown> : msg.text}
-              </div>
+              {msg.role === "user" ? (
+                <div className="rounded-2xl rounded-br-md bg-gradient-brand px-3.5 py-2.5 text-[15px] text-white">
+                  {msg.text}
+                </div>
+              ) : (
+                <div className="prose prose-sm dark:prose-invert text-[15px] text-foreground/90">
+                  <ReactMarkdown>{msg.text}</ReactMarkdown>
+                </div>
+              )}
               <p
                 className={cn(
                   "mt-1 text-[10px] tabular-nums text-muted-foreground/70",

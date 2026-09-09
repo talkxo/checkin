@@ -108,12 +108,16 @@ export async function POST(req: NextRequest) {
     };
 
     // Fetch whatever data is relevant to the question, in parallel.
-    const wantsHistorical = messageLower.includes('pattern') || messageLower.includes('trend') || messageLower.includes('unusual');
-    const wantsMood = messageLower.includes('mood') || messageLower.includes('engagement') || messageLower.includes('wellbeing');
+    // Anything temporal beyond "today" (week, late, trends…) pulls historical
+    // data — without this, "who was late this week?" got answered from a
+    // today-only snapshot.
+    const wantsHistorical = /week|month|yesterday|late|trend|pattern|unusual|compare|past/.test(messageLower);
+    const wantsMood = /mood|engagement|wellbeing|feeling|feels/.test(messageLower);
+    const historicalRange = messageLower.includes('month') ? 'month' : 'week';
 
     const [chatbot, historical, mood] = await Promise.all([
       fetchWithTimeout(`${req.nextUrl.origin}/api/admin/chatbot-data`),
-      wantsHistorical ? fetchWithTimeout(`${req.nextUrl.origin}/api/admin/historical-data`) : Promise.resolve(null),
+      wantsHistorical ? fetchWithTimeout(`${req.nextUrl.origin}/api/admin/historical-data?range=${historicalRange}`) : Promise.resolve(null),
       wantsMood ? fetchWithTimeout(`${req.nextUrl.origin}/api/admin/mood-data`) : Promise.resolve(null),
     ]);
 
