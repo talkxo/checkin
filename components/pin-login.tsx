@@ -7,8 +7,16 @@ import { Input } from "@/components/ui/input";
 // Colorful high-contrast workspace/people backdrops for the PIN login —
 // Unsplash CDN (free, fast, no key), daily rotation. A moderate dark overlay
 // keeps the photo visible while the glass card frosts it.
-// Keyword-driven backdrop — "wallpaper" pool, deterministic per day.
-const backdropUrl = `https://loremflickr.com/1080/1920/wallpaper?lock=${Math.floor(Date.now() / 86400000)}`;
+// 4K-grade wallpaper classics (Unsplash) — exact crop to the screen, so the
+// photo always fills with zero letterboxing. Deterministic daily rotation.
+const BACKDROPS = [
+  "photo-1506905925346-21bda4d32df4", // mountain peak at dusk
+  "photo-1557682250-33bd709cbe85", // purple gradient wave
+  "photo-1470071459604-3b5ec3a7fe05", // foggy mountain layers
+  "photo-1550684376-efcbd6e3f031", // abstract blue paint wave
+  "photo-1444703686981-a3abbc4d4fe3", // milky way
+];
+const backdropUrl = `https://images.unsplash.com/${BACKDROPS[Math.floor(Date.now() / 86400000) % BACKDROPS.length]}?auto=format&fit=crop&w=1170&h=2532&q=90`;
 
 interface Employee {
   id: string;
@@ -145,7 +153,7 @@ export default function PinLogin({ onLoginSuccess }: PinLoginProps) {
         <img
           src={backdropUrl}
           alt=""
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover object-center"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/40 to-black/70" />
       </div>
