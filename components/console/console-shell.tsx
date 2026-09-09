@@ -140,7 +140,7 @@ export function ConsoleShell({ children, counts }: ConsoleShellProps) {
                 onClick={() => askInsyde.setPanelOpen(!askInsyde.panelOpen)}
                 aria-expanded={askInsyde.panelOpen}
                 className={cn(
-                  "flex shrink-0 items-center gap-2 rounded-xl border border-transparent px-3.5 py-2 text-sm font-semibold text-white shadow-primary transition-all",
+                  "flex shrink-0 items-center gap-2.5 rounded-xl border border-transparent px-3.5 py-2 text-sm font-medium text-white transition-colors duration-200",
                   askInsyde.panelOpen ? "bg-[#052e21]" : "bg-mint hover:brightness-105"
                 )}
               >
