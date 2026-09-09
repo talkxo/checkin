@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminAuthenticated, getUserSession } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
-import { nowIST, formatISTDateKey } from '@/lib/time';
+import { nowIST, formatISTDateKey, istDayWindow } from '@/lib/time';
 
 export async function GET(req: NextRequest) {
   if (!isAdminAuthenticated() && !getUserSession()) {
@@ -9,10 +9,10 @@ export async function GET(req: NextRequest) {
   }
   try {
     const now = nowIST();
-    const start = new Date(now);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(now);
-    end.setHours(23, 59, 59, 999);
+    // IST calendar-day window. Hand-rolling this with setHours() would use the
+    // machine's local timezone (UTC on Vercel), leaking yesterday's sessions
+    // into "today" between IST midnight and 05:29.
+    const { start, end } = istDayWindow(now);
 
     // Get active employees only (exclude disabled/inactive users)
     const { data: employees, error: empError } = await supabaseAdmin
