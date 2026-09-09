@@ -9,9 +9,9 @@ const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
 // trade-off from earlier live testing: the router occasionally lands on a
 // content-safety classifier that answers meta instead of the prompt — if
 // that resurfaces, promote the named nemotron models back to the front.
-const PRIMARY_MODEL = 'openrouter/free';
-const SECONDARY_MODEL = 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free';
-const FALLBACK_MODEL = 'nvidia/nemotron-3.5-lightning:free';
+const PRIMARY_MODEL = 'nvidia/nemotron-3.5-lightning:free';
+const SECONDARY_MODEL = 'openrouter/free';
+const FALLBACK_MODEL = 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free';
 
 interface AIResponse {
   success: boolean;
