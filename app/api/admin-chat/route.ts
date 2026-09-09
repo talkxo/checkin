@@ -87,11 +87,17 @@ export async function POST(req: NextRequest) {
 
     const messageLower = message.toLowerCase();
 
-    const fetchWithTimeout = async (url: string, timeoutMs: number = 5000) => {
+    const fetchWithTimeout = async (url: string, timeoutMs: number = 8000) => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
       try {
-        const response = await fetch(url, { signal: controller.signal });
+        // Forward the admin cookie — the data routes are auth-gated, and a
+        // server-side self-fetch carries no cookies by default. Without this
+        // every lookup 401s and the chat always falls back to its canned reply.
+        const response = await fetch(url, {
+          headers: { cookie: req.headers.get('cookie') ?? '' },
+          signal: controller.signal,
+        });
         clearTimeout(timeoutId);
         return response.ok ? await response.json() : null;
       } catch (error) {
