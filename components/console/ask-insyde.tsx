@@ -8,6 +8,7 @@ import {
   Check,
   Copy,
   Loader2,
+  Plus,
   RotateCcw,
   ThumbsDown,
   ThumbsUp,
