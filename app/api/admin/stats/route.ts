@@ -17,10 +17,11 @@ export async function GET(request: Request) {
     const end = new Date(now);
     end.setHours(23, 59, 59, 999);
 
-    // Get total employees
+    // Get total ACTIVE employees — deactivated people are off the roster
     const { count: totalEmployees } = await supabaseAdmin
       .from('employees')
-      .select('*', { count: 'exact', head: true });
+      .select('*', { count: 'exact', head: true })
+      .eq('active', true);
 
     // Get today's sessions
     const { data: todaySessions } = await supabaseAdmin
