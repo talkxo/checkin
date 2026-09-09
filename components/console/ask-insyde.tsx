@@ -312,7 +312,7 @@ function AskInsydePanelBody({
             }}
             rows={1}
             placeholder="Ask anything"
-            className="max-h-35 w-full resize-none bg-transparent px-1 text-[15px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/60"
+            className="w-full resize-none bg-transparent px-1 text-[15px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/60"
           />
           <div className="flex items-center justify-between gap-2 pt-1">
             <span className="text-[10px] leading-tight text-muted-foreground/70">
