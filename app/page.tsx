@@ -545,16 +545,15 @@ export default function HomePage() {
               </AnimatePresence>
             </div>
 
-            {/* Bottom padding for floating nav */}
-            <div className="pb-28" />
+            {/* Breathing room above the sticky nav */}
+            <div className="pb-4" />
           </div>
         )}
-      </div>
 
-      {/* Floating Bottom Navigation */}
-      {isLoggedIn && (
-        <BottomNav activeTab={activeTab} onChange={setActiveTab} />
-      )}
+        {/* Sticky Bottom Navigation — lives inside the column so it centers
+            with the cards at every width; floats at the viewport bottom. */}
+        {isLoggedIn && <BottomNav activeTab={activeTab} onChange={setActiveTab} />}
+      </div>
 
       {/* PIN Change Modal */}
       {showPinChange && pendingEmployee && (
