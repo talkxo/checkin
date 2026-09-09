@@ -1,0 +1,1212 @@
+{
+  "schema_version": "mimosa-task-review/v2",
+  "run_id": "20260908T144448830Z-14585-64f80ed7e08b",
+  "run_status": "inconclusive",
+  "errors": [
+    {
+      "stage": "candidate-select",
+      "target": ".next-dev/static/chunks/polyfills.js",
+      "reason": "candidate_limit_exceeded: 19 changed reviewable file(s) were not scanned because the limit is 20"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/package.json",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/types/package.json",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/types/app/layout.ts",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/types/app/page.ts",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/static/webpack/webpack.6c4495cffc6ee941.hot-update.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/static/webpack/app/layout.6c4495cffc6ee941.hot-update.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/static/development/_buildManifest.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/static/development/_ssgManifest.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/static/chunks/_app-pages-browser_components_attendance-history_tsx.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/static/chunks/_app-pages-browser_components_leave-management_tsx.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/static/chunks/_app-pages-browser_components_pin-change-modal_tsx.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/static/chunks/_app-pages-browser_components_pin-login_tsx.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/static/chunks/_app-pages-browser_components_recent-activity_tsx.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/static/chunks/_app-pages-browser_components_score-breakdown-modal_tsx.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/static/chunks/_app-pages-browser_components_today-presence-card_tsx.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/static/chunks/_app-pages-browser_components_wfh-planner-tab_tsx.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/static/chunks/app-pages-internals.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/static/chunks/main-app.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "scan",
+      "target": "components/home/bottom-nav.tsx",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": "components/beta-signup/signup-wizard.tsx",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/types/app/layout.ts",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/types/app/page.ts",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/webpack/webpack.6c4495cffc6ee941.hot-update.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/webpack/app/layout.6c4495cffc6ee941.hot-update.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/development/_buildManifest.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/development/_ssgManifest.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/chunks/_app-pages-browser_components_attendance-history_tsx.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/chunks/_app-pages-browser_components_leave-management_tsx.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/chunks/_app-pages-browser_components_pin-change-modal_tsx.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/chunks/_app-pages-browser_components_pin-login_tsx.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/chunks/_app-pages-browser_components_recent-activity_tsx.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/chunks/_app-pages-browser_components_score-breakdown-modal_tsx.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/chunks/_app-pages-browser_components_today-presence-card_tsx.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/chunks/_app-pages-browser_components_wfh-planner-tab_tsx.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/chunks/app-pages-internals.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/chunks/main-app.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "supply-chain-check",
+      "target": ".",
+      "reason": "stop_budget_exhausted: focused supply-chain check was not run before the gate budget"
+    }
+  ],
+  "coverage": {
+    "schema_version": "mimosa-hook-coverage/v1",
+    "status": "partial",
+    "scope": "hook_observed_diff",
+    "baseline": {
+      "complete": true,
+      "captured_files": 156,
+      "candidate_limit": 5000,
+      "truncated": false,
+      "enumeration_error_count": 0,
+      "snapshot_error_count": 0,
+      "compensated_target_count": 2
+    },
+    "change_tracking": {
+      "touched_observed": 0,
+      "touched_retained": 0,
+      "truncated": false,
+      "bash_mutation": true,
+      "bash_discovered": 39,
+      "bash_discovery_limit": 80,
+      "bash_discovery_truncated": false
+    },
+    "candidates": {
+      "eligible_files": 39,
+      "selected_files": 20,
+      "limit": 20,
+      "truncated": true
+    },
+    "scanning": {
+      "required_files": 18,
+      "scanned_files": 0,
+      "skipped_files": 0,
+      "failed_files": 18,
+      "project_checks_required": 1,
+      "project_checks_completed": 0
+    },
+    "notification": {
+      "eligible_findings": 0,
+      "detailed_findings": 0,
+      "detail_limit": 3,
+      "truncated": false
+    },
+    "reason_counts": {
+      "candidate_limit_exceeded": 1,
+      "baseline_snapshot_unreadable": 18,
+      "scanner_failed": 18,
+      "stop_budget_exhausted": 1,
+      "project_check_failed": 38
+    },
+    "reasons": [
+      {
+        "code": "candidate_limit_exceeded",
+        "stage": "candidate-select",
+        "target": ".next-dev/static/chunks/polyfills.js",
+        "detail": "19 changed reviewable file(s) were not scanned because the limit is 20",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/package.json",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/types/package.json",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/types/app/layout.ts",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/types/app/page.ts",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/webpack.6c4495cffc6ee941.hot-update.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/app/layout.6c4495cffc6ee941.hot-update.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/development/_buildManifest.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/development/_ssgManifest.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_attendance-history_tsx.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_leave-management_tsx.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_pin-change-modal_tsx.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_pin-login_tsx.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_recent-activity_tsx.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_score-breakdown-modal_tsx.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_today-presence-card_tsx.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_wfh-planner-tab_tsx.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/app-pages-internals.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/main-app.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": "components/home/bottom-nav.tsx",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": "components/beta-signup/signup-wizard.tsx",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/types/app/layout.ts",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/types/app/page.ts",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/webpack/webpack.6c4495cffc6ee941.hot-update.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/webpack/app/layout.6c4495cffc6ee941.hot-update.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/development/_buildManifest.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/development/_ssgManifest.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_attendance-history_tsx.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_leave-management_tsx.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_pin-change-modal_tsx.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_pin-login_tsx.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_recent-activity_tsx.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_score-breakdown-modal_tsx.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_today-presence-card_tsx.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_wfh-planner-tab_tsx.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/app-pages-internals.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/main-app.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "stop_budget_exhausted",
+        "stage": "supply-chain-check",
+        "target": ".",
+        "detail": "focused supply-chain check was not run before the gate budget",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "candidate-select",
+        "target": ".next-dev/static/chunks/polyfills.js",
+        "detail": "candidate_limit_exceeded: 19 changed reviewable file(s) were not scanned because the limit is 20",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/package.json",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/types/package.json",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/types/app/layout.ts",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/types/app/page.ts",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/webpack.6c4495cffc6ee941.hot-update.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/app/layout.6c4495cffc6ee941.hot-update.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/development/_buildManifest.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/development/_ssgManifest.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_attendance-history_tsx.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_leave-management_tsx.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_pin-change-modal_tsx.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_pin-login_tsx.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_recent-activity_tsx.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_score-breakdown-modal_tsx.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_today-presence-card_tsx.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/_app-pages-browser_components_wfh-planner-tab_tsx.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/app-pages-internals.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/main-app.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": "components/home/bottom-nav.tsx",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": "components/beta-signup/signup-wizard.tsx",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/types/app/layout.ts",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/types/app/page.ts",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/webpack/webpack.6c4495cffc6ee941.hot-update.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/webpack/app/layout.6c4495cffc6ee941.hot-update.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/development/_buildManifest.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      }
+    ],
+    "reasons_truncated": true
+  },
+  "generated_at": "2026-09-08T14:44:48.830Z",
+  "session_id": "sess_9fcd690b-c9e1-4f22-87df-aafe369ad4ed",
+  "target": ".",
+  "revision": "8461435e1e54bfb653857674886d0ad81f437366",
+  "rules_version": "unavailable",
+  "diff_hash": "56f5553940e8659338969cdc00530471442b844c8fa906747fdfb1fcb52292e3",
+  "diff": {
+    "algorithm": "sha256",
+    "changed_file_count": 20,
+    "changed_files": [
+      {
+        "file": ".next-dev/package.json",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 1
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "091a04fa67c7907b98e106fcff8b964e13129754fce72d24f3025b97c4887fa3"
+      },
+      {
+        "file": ".next-dev/static/chunks/_app-pages-browser_components_attendance-history_tsx.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 22
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "54be96ff88e34b846223da963d70fcd237d6ee0b24ac862a9ac7ff12529d1c9b"
+      },
+      {
+        "file": ".next-dev/static/chunks/_app-pages-browser_components_leave-management_tsx.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 692
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "e7bddddb64b25fc192673dd07464c1c11ceb3c4d99c7a8c2193831a07a6df677"
+      },
+      {
+        "file": ".next-dev/static/chunks/_app-pages-browser_components_pin-change-modal_tsx.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 102
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "eff97b272ed4f9f8a2b3e4293b6f13b0069b64fa9c0ec4e3a1333c1ea352b94f"
+      },
+      {
+        "file": ".next-dev/static/chunks/_app-pages-browser_components_pin-login_tsx.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 102
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "2a44d01590fb4c7a79baf8ee89707b47d6f932c3f93382f9a43feba31c76f768"
+      },
+      {
+        "file": ".next-dev/static/chunks/_app-pages-browser_components_recent-activity_tsx.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 32
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "f91f41ab6d6f9fec0bdf3bb26b22620e499ac2b0c8a243d8d2fc11847fe2159f"
+      },
+      {
+        "file": ".next-dev/static/chunks/_app-pages-browser_components_score-breakdown-modal_tsx.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 542
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "f86cb1b6cb590222657f6e6bccbd31e76312bc459e343c3a72953d5c868fd67c"
+      },
+      {
+        "file": ".next-dev/static/chunks/_app-pages-browser_components_today-presence-card_tsx.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 22
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "90188d553cc17d452a0e020794401658175bfc81ae409c0d2dc34063ee90e0be"
+      },
+      {
+        "file": ".next-dev/static/chunks/_app-pages-browser_components_wfh-planner-tab_tsx.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 42
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "35093619bf59a29d522ebd02c759470e4f97399225d8d01a3b7a4a02560245fa"
+      },
+      {
+        "file": ".next-dev/static/chunks/app-pages-internals.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 138
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "2a561c27bd578ca1ef5392f4d44bb4312eb74dc14b002eb535a4bdaeb5724578"
+      },
+      {
+        "file": ".next-dev/static/chunks/main-app.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 2011
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "60d74c5e9e230acee1b2273a0cd786a2429396ae1b43da19e6a03e6b96375708"
+      },
+      {
+        "file": ".next-dev/static/development/_buildManifest.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 1
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "9c05ecbfaf653091d5f36905378355f5d8d62139a5d49ec49c0ddccc2276b78b"
+      },
+      {
+        "file": ".next-dev/static/development/_ssgManifest.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 1
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "653f3e53e89b4f8548ff86c19e92bb3c6b84b6be7485a320b1e00893ed877479"
+      },
+      {
+        "file": ".next-dev/static/webpack/app/layout.6c4495cffc6ee941.hot-update.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 22
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "f2872650a057181b66f855acf0bee5bb522c1b23b3dcd89fd974571856704c5d"
+      },
+      {
+        "file": ".next-dev/static/webpack/webpack.6c4495cffc6ee941.hot-update.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 18
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "d3a48eb77c753010bb0ad61b74ff3966e2f686aaf8131f6ca122102e2a7bc0e8"
+      },
+      {
+        "file": ".next-dev/types/app/layout.ts",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 79
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "39ba74238f2473173b919ae93f00bf19bae7a55192560957a40aea1fb6c9f9a1"
+      },
+      {
+        "file": ".next-dev/types/app/page.ts",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 79
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "cf981d0c9bf7e61ccd1baa6f68954caca7557abb3c7b7145303106fb9b84f45e"
+      },
+      {
+        "file": ".next-dev/types/package.json",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 1
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "e3d5a4a2d8551aa52c5a01d2a0efb2e06a2d9711b4f5c5f1d20de6e21807e2cd"
+      },
+      {
+        "file": "components/beta-signup/signup-wizard.tsx",
+        "ranges": [
+          {
+            "start": 6,
+            "end": 6
+          },
+          {
+            "start": 29,
+            "end": 29
+          },
+          {
+            "start": 31,
+            "end": 31
+          },
+          {
+            "start": 71,
+            "end": 71
+          },
+          {
+            "start": 75,
+            "end": 75
+          },
+          {
+            "start": 137,
+            "end": 137
+          },
+          {
+            "start": 175,
+            "end": 175
+          },
+          {
+            "start": 178,
+            "end": 188
+          },
+          {
+            "start": 197,
+            "end": 198
+          },
+          {
+            "start": 202,
+            "end": 203
+          },
+          {
+            "start": 210,
+            "end": 210
+          },
+          {
+            "start": 212,
+            "end": 212
+          },
+          {
+            "start": 218,
+            "end": 218
+          },
+          {
+            "start": 227,
+            "end": 227
+          },
+          {
+            "start": 231,
+            "end": 232
+          },
+          {
+            "start": 238,
+            "end": 238
+          },
+          {
+            "start": 241,
+            "end": 241
+          },
+          {
+            "start": 244,
+            "end": 246
+          },
+          {
+            "start": 269,
+            "end": 269
+          },
+          {
+            "start": 280,
+            "end": 280
+          },
+          {
+            "start": 285,
+            "end": 285
+          },
+          {
+            "start": 289,
+            "end": 289
+          },
+          {
+            "start": 303,
+            "end": 309
+          },
+          {
+            "start": 314,
+            "end": 314
+          },
+          {
+            "start": 339,
+            "end": 339
+          },
+          {
+            "start": 349,
+            "end": 349
+          },
+          {
+            "start": 388,
+            "end": 389
+          },
+          {
+            "start": 398,
+            "end": 399
+          },
+          {
+            "start": 402,
+            "end": 402
+          },
+          {
+            "start": 404,
+            "end": 404
+          },
+          {
+            "start": 414,
+            "end": 454
+          },
+          {
+            "start": 456,
+            "end": 500
+          },
+          {
+            "start": 502,
+            "end": 502
+          },
+          {
+            "start": 507,
+            "end": 507
+          },
+          {
+            "start": 536,
+            "end": 537
+          },
+          {
+            "start": 570,
+            "end": 570
+          },
+          {
+            "start": 578,
+            "end": 578
+          },
+          {
+            "start": 587,
+            "end": 587
+          },
+          {
+            "start": 591,
+            "end": 591
+          },
+          {
+            "start": 600,
+            "end": 600
+          },
+          {
+            "start": 620,
+            "end": 626
+          },
+          {
+            "start": 636,
+            "end": 636
+          },
+          {
+            "start": 642,
+            "end": 642
+          },
+          {
+            "start": 653,
+            "end": 653
+          },
+          {
+            "start": 662,
+            "end": 662
+          },
+          {
+            "start": 672,
+            "end": 672
+          },
+          {
+            "start": 685,
+            "end": 685
+          },
+          {
+            "start": 719,
+            "end": 719
+          },
+          {
+            "start": 730,
+            "end": 730
+          },
+          {
+            "start": 737,
+            "end": 737
+          },
+          {
+            "start": 742,
+            "end": 742
+          },
+          {
+            "start": 747,
+            "end": 747
+          },
+          {
+            "start": 750,
+            "end": 750
+          },
+          {
+            "start": 752,
+            "end": 752
+          },
+          {
+            "start": 755,
+            "end": 757
+          },
+          {
+            "start": 766,
+            "end": 767
+          },
+          {
+            "start": 775,
+            "end": 775
+          },
+          {
+            "start": 780,
+            "end": 780
+          }
+        ],
+        "before_hash": "1202cfe4c4f74567f1f8a65ebd8d5a0cd4564ce992dbcc8b91b2fc4a80fde6b2",
+        "after_hash": "1409de03c04af1a8fa2334ae93e095b78a188907ccd6f7ed3874536c33f07f9b"
+      },
+      {
+        "file": "components/home/bottom-nav.tsx",
+        "ranges": [
+          {
+            "start": 25,
+            "end": 25
+          },
+          {
+            "start": 57,
+            "end": 57
+          }
+        ],
+        "before_hash": "8a9441a9ec9e1e8fa5ceef78ed5d7ccd025e3f6ad0cdf35b731a5f0b9955ea0e",
+        "after_hash": "8eb6b4a13a3e6982944e0606f6e2bf4da477dcfdcb56c9c9c9f0eb02f6aaa27e"
+      }
+    ]
+  },
+  "timing": {
+    "started_at": "2026-09-08T14:44:46.576Z",
+    "completed_at": "2026-09-08T14:44:48.830Z",
+    "duration_ms": 2254,
+    "measurement": "hook_wall_clock"
+  },
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "total": 0,
+    "model_calls": 0,
+    "measurement": "known-zero"
+  },
+  "telemetry": {
+    "schemaVersion": "mimosa-gate-telemetry/v1",
+    "profile": "gate",
+    "operation": "Stop",
+    "outcome": "partial/INCONCLUSIVE",
+    "latencyMs": 2254,
+    "peakMemoryBytes": 163741696,
+    "memoryMeasurement": "max-observed-process-rss",
+    "scannedFiles": 0,
+    "cache": {
+      "hits": 0,
+      "misses": 0,
+      "measurement": "not-applicable"
+    },
+    "denyCount": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "total": 0,
+      "modelCalls": 0,
+      "measurement": "known-zero"
+    }
+  },
+  "finding_count": 0,
+  "rewake_finding_count": 0,
+  "evidence_boundary": {
+    "scan": "candidate",
+    "static_fix_verification": "observed_static_only",
+    "runtime_verification": "not_performed"
+  },
+  "finding_events": [],
+  "findings": [],
+  "artifacts": {
+    "immutable_report": ".mimosa/reports/task-review-sess_9fcd690b-c9e1-4f22-87df-aafe369ad4ed-20260908T144448830Z-14585-64f80ed7e08b.json",
+    "latest_report": ".mimosa/reports/task-review-sess_9fcd690b-c9e1-4f22-87df-aafe369ad4ed.json",
+    "history_summary": ".mimosa/history/run-20260908T144448830Z-14585-64f80ed7e08b.json"
+  }
+}

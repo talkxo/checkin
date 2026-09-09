@@ -1,0 +1,363 @@
+{
+  "schemaVersion": "mimosa-finding-ledger-batch/v1",
+  "batchId": "stop-20260908T152556896Z-18541-7cf0aa1a216b",
+  "runId": "20260908T152556896Z-18541-7cf0aa1a216b",
+  "runStatus": "inconclusive",
+  "coverage": {
+    "status": "partial",
+    "reasons": [
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/webpack.d36d1760be858b96.hot-update.js",
+        "detail": "file is missing from task baseline",
+        "affectsCompletion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/app/layout.d36d1760be858b96.hot-update.js",
+        "detail": "file is missing from task baseline",
+        "affectsCompletion": true
+      },
+      {
+        "code": "deterministic_scanner_unavailable",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/app/insyde/signup/page.js",
+        "detail": "deterministic scanner unavailable",
+        "affectsCompletion": true
+      },
+      {
+        "code": "file_skipped",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/app/insyde/signup/page.js",
+        "detail": "文件过大（2481KB），已跳过未扫描",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/webpack.d36d1760be858b96.hot-update.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/app/layout.d36d1760be858b96.hot-update.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/app/insyde/signup/page.js",
+        "detail": "deterministic_scanner_unavailable: deterministic scanner unavailable",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/app/insyde/signup/page.js",
+        "detail": "file_skipped: 文件过大（2481KB），已跳过未扫描",
+        "affectsCompletion": true
+      }
+    ]
+  },
+  "source": {
+    "component": "zcode-hook",
+    "operationId": "Stop"
+  },
+  "revision": "243109617626909d5fcfe9622d0cd85e0b21bf3e",
+  "diffHash": "1c4ce1e75646ea4548fc5fdd9d08e15e7e8ff12091363d879ba9f8cf71b56bdb",
+  "rulesVersion": "unavailable",
+  "sessionHash": "bf5b91864c48d3d78a3a35fc41fa21550e225a578d51e3870102a7252cdb754e",
+  "reportRef": ".mimosa/reports/task-review-sess_0ff9e449-136d-41d4-a2e7-55bb82463c5a-20260908T152556896Z-18541-7cf0aa1a216b.json",
+  "events": [
+    {
+      "eventId": "hook-277ec1fd398a0582689c5047d72c61a0",
+      "findingId": "mimosa-45a34a84cb3aba08e95f1bf2",
+      "type": "finding_observed",
+      "at": "2026-09-08T15:25:56.896Z",
+      "identity": {
+        "projectRelativeFile": ".next-dev/static/webpack/app/layout.d36d1760be858b96.hot-update.js",
+        "ruleId": "security",
+        "codeEvidenceHash": "4232dec9b3d28a64169847b896e7358e5520b65d57c8afb2b611262a1a03633c",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 18,
+      "endLine": 18,
+      "reasonCode": "observe",
+      "reportedToAgent": false,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "4232dec9b3d28a64169847b896e7358e5520b65d57c8afb2b611262a1a03633c"
+      },
+      "sequence": 0
+    },
+    {
+      "eventId": "hook-57f8a68040266784c0a1a82bdcde48d2",
+      "findingId": "mimosa-d54014c6850eae18f2e45c07",
+      "type": "finding_observed",
+      "at": "2026-09-08T15:25:56.896Z",
+      "identity": {
+        "projectRelativeFile": ".next-dev/static/chunks/app/layout.js",
+        "ruleId": "security",
+        "codeEvidenceHash": "4232dec9b3d28a64169847b896e7358e5520b65d57c8afb2b611262a1a03633c",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 38,
+      "endLine": 38,
+      "reasonCode": "observe",
+      "reportedToAgent": false,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "4232dec9b3d28a64169847b896e7358e5520b65d57c8afb2b611262a1a03633c"
+      },
+      "sequence": 1
+    },
+    {
+      "eventId": "hook-76bdcbce2acdc982e2882bfe2c1e2e5c",
+      "findingId": "mimosa-b31d9b3b3afe08d38abec7e5",
+      "type": "finding_observed",
+      "at": "2026-09-08T15:25:56.896Z",
+      "identity": {
+        "projectRelativeFile": ".next-dev/server/vendor-chunks/lucide-react.js",
+        "ruleId": "security",
+        "codeEvidenceHash": "9b1d684ac556ee0a5f0ce18f8335bc2784c70475c7da98990bd0aea454b9f622",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 70,
+      "endLine": 70,
+      "reasonCode": "observe",
+      "reportedToAgent": false,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "9b1d684ac556ee0a5f0ce18f8335bc2784c70475c7da98990bd0aea454b9f622"
+      },
+      "sequence": 2
+    },
+    {
+      "eventId": "hook-0a5bc6587c365b9ee49275d0a3bdde07",
+      "findingId": "mimosa-9c6a4c01047146f7420677bf",
+      "type": "finding_observed",
+      "at": "2026-09-08T15:25:56.896Z",
+      "identity": {
+        "projectRelativeFile": ".next-dev/server/vendor-chunks/lucide-react.js",
+        "ruleId": "security",
+        "codeEvidenceHash": "f77b812b5f4644f7a69ef9d8fbfc90c169aec938987c203df124a38e633940ca",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 90,
+      "endLine": 90,
+      "reasonCode": "observe",
+      "reportedToAgent": false,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "f77b812b5f4644f7a69ef9d8fbfc90c169aec938987c203df124a38e633940ca"
+      },
+      "sequence": 3
+    },
+    {
+      "eventId": "hook-918b7ece1770a650ba3b064d3fe8551c",
+      "findingId": "mimosa-e9da5776c7378fc70c5bb058",
+      "type": "finding_observed",
+      "at": "2026-09-08T15:25:56.896Z",
+      "identity": {
+        "projectRelativeFile": ".next-dev/server/vendor-chunks/lucide-react.js",
+        "ruleId": "security",
+        "codeEvidenceHash": "f11efbfccd1da00521c7450188bd6f2a7d03656c8a2200e7521baa2148dc7b27",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 110,
+      "endLine": 110,
+      "reasonCode": "observe",
+      "reportedToAgent": false,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "f11efbfccd1da00521c7450188bd6f2a7d03656c8a2200e7521baa2148dc7b27"
+      },
+      "sequence": 4
+    },
+    {
+      "eventId": "hook-9c8404a1b8a7e363a504112eb3d3b6e5",
+      "findingId": "mimosa-d665a0d25cc2d139aded7c5e",
+      "type": "finding_observed",
+      "at": "2026-09-08T15:25:56.896Z",
+      "identity": {
+        "projectRelativeFile": ".next-dev/server/vendor-chunks/lucide-react.js",
+        "ruleId": "security",
+        "codeEvidenceHash": "7d2ed12c41873097f9de0ad9e03bb75b3b7ea8945054026030248c3c0041b261",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 120,
+      "endLine": 120,
+      "reasonCode": "observe",
+      "reportedToAgent": false,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "7d2ed12c41873097f9de0ad9e03bb75b3b7ea8945054026030248c3c0041b261"
+      },
+      "sequence": 5
+    },
+    {
+      "eventId": "hook-2024033c9b6b706f7f9cafba2b03886a",
+      "findingId": "mimosa-52f8cd180128a5d5baf13e3a",
+      "type": "finding_observed",
+      "at": "2026-09-08T15:25:56.896Z",
+      "identity": {
+        "projectRelativeFile": ".next-dev/server/app/insyde/signup/page.js",
+        "ruleId": "security",
+        "codeEvidenceHash": "8f601b72ca0f97457ebf301ac41199996cbdcebc0e2711742bd53fafe7e1c481",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 118,
+      "endLine": 118,
+      "reasonCode": "observe",
+      "reportedToAgent": false,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "8f601b72ca0f97457ebf301ac41199996cbdcebc0e2711742bd53fafe7e1c481"
+      },
+      "sequence": 6
+    },
+    {
+      "eventId": "hook-fa40657d3b6b3f32fe9ec291e0202565",
+      "findingId": "mimosa-2d2cabba7003aa872b5d0c34",
+      "type": "finding_observed",
+      "at": "2026-09-08T15:25:56.896Z",
+      "identity": {
+        "projectRelativeFile": ".next-dev/server/app/insyde/signup/page.js",
+        "ruleId": "security",
+        "codeEvidenceHash": "6b5aa43ae90924b4e8155ea8ac91cc0d2051dc344adcd2ba62438426a7102701",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 140,
+      "endLine": 140,
+      "reasonCode": "observe",
+      "reportedToAgent": false,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "6b5aa43ae90924b4e8155ea8ac91cc0d2051dc344adcd2ba62438426a7102701"
+      },
+      "sequence": 7
+    }
+  ],
+  "observedFindingIds": [
+    "mimosa-45a34a84cb3aba08e95f1bf2",
+    "mimosa-28a767f0b116a215ea2a6ba7",
+    "mimosa-a9e6683562b7bb9186cc267a",
+    "mimosa-61f77a286f86d02f30181129",
+    "mimosa-d54014c6850eae18f2e45c07",
+    "mimosa-468bcd0755e588bf97ef4f91",
+    "mimosa-66bebb24b583eb3e5874e02b",
+    "mimosa-8c9a5e52236e010a00dea8ca",
+    "mimosa-37eb17a26df3314ab5942ff2",
+    "mimosa-27817c76138e34ae6b144a13",
+    "mimosa-392d4979a120a1216e0b807c",
+    "mimosa-6b94e25320206a717f5c0c60",
+    "mimosa-bec096aa5bd7dc48c5306799",
+    "mimosa-077c50feaade3ff97104be1d",
+    "mimosa-1c7c0bdd369f605f906843de",
+    "mimosa-9c5563943499983cbcd79084",
+    "mimosa-ca95c2991e8c098b4cec6c16",
+    "mimosa-c0fb339f806f336c2952d0e6",
+    "mimosa-b31d9b3b3afe08d38abec7e5",
+    "mimosa-5c48272c2b88262a3578f1ae",
+    "mimosa-9c6a4c01047146f7420677bf",
+    "mimosa-22c158943f52407fb7c976b0",
+    "mimosa-e9da5776c7378fc70c5bb058",
+    "mimosa-d665a0d25cc2d139aded7c5e",
+    "mimosa-cad7f55db14ca0a991467e1b",
+    "mimosa-89252bb63bf34cf282f1e90b",
+    "mimosa-5b9023a8682eab0af32baff1",
+    "mimosa-2ee200c2738605930eafcf5a",
+    "mimosa-10b9267df6c1b121b1b9a504",
+    "mimosa-5b74d8cc2a50b979c617c0b5",
+    "mimosa-52f8cd180128a5d5baf13e3a",
+    "mimosa-e71266a7ce5c2fce65b01aab",
+    "mimosa-2d2cabba7003aa872b5d0c34",
+    "mimosa-6b26e42643e86c006dd6a00f",
+    "mimosa-2987312fc1c3c488b2e73b5e",
+    "mimosa-986553e64c50753921f78c83",
+    "mimosa-65340339635711380e691d6a",
+    "mimosa-8b1e86d50753f33647be9bfa"
+  ],
+  "verifiedFiles": [
+    {
+      "file": "lib/beta-signup.ts",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "app/api/beta-signup/route.ts",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "components/beta-signup/signup-wizard.tsx",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": ".next-dev/static/webpack/webpack.d36d1760be858b96.hot-update.js",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": ".next-dev/static/webpack/app/layout.d36d1760be858b96.hot-update.js",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": ".next-dev/static/chunks/webpack.js",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": ".next-dev/static/chunks/app/layout.js",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": ".next-dev/server/webpack-runtime.js",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": ".next-dev/server/vendor-chunks/lucide-react.js",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": ".next-dev/server/app/insyde/signup/page.js",
+      "direct": "complete",
+      "projectContext": "partial"
+    }
+  ],
+  "recordedAt": "2026-09-08T15:25:57.099Z"
+}

@@ -1,0 +1,178 @@
+{
+  "schemaVersion": "mimosa-finding-ledger-batch/v1",
+  "batchId": "stop-20260908T151321476Z-17349-81067eca5818",
+  "runId": "20260908T151321476Z-17349-81067eca5818",
+  "runStatus": "inconclusive",
+  "coverage": {
+    "status": "partial",
+    "reasons": [
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/webpack.b8328fc164e31016.hot-update.js",
+        "detail": "file is missing from task baseline",
+        "affectsCompletion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/app/layout.b8328fc164e31016.hot-update.js",
+        "detail": "file is missing from task baseline",
+        "affectsCompletion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": "components/beta-signup/signup-wizard.tsx",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affectsCompletion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/webpack/webpack.b8328fc164e31016.hot-update.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affectsCompletion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/webpack/app/layout.b8328fc164e31016.hot-update.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affectsCompletion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/webpack.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affectsCompletion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/app/layout.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affectsCompletion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/app/insyde/signup/page.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affectsCompletion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/webpack-runtime.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affectsCompletion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/vendor-chunks/framer-motion.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affectsCompletion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/app/insyde/signup/page.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/webpack.b8328fc164e31016.hot-update.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/app/layout.b8328fc164e31016.hot-update.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": "components/beta-signup/signup-wizard.tsx",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/webpack/webpack.b8328fc164e31016.hot-update.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/webpack/app/layout.b8328fc164e31016.hot-update.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/webpack.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/app/layout.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/app/insyde/signup/page.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/webpack-runtime.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/vendor-chunks/framer-motion.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/app/insyde/signup/page.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affectsCompletion": true
+      }
+    ]
+  },
+  "source": {
+    "component": "zcode-hook",
+    "operationId": "Stop"
+  },
+  "revision": "0884ba1b53ccb134f11dff87c827026cef3656b1",
+  "diffHash": "3ebb18d011b1e6d1cff2a242022da7e3d9254d2584cc954be89e7c35983da59c",
+  "rulesVersion": "unavailable",
+  "sessionHash": "bf5b91864c48d3d78a3a35fc41fa21550e225a578d51e3870102a7252cdb754e",
+  "reportRef": ".mimosa/reports/task-review-sess_0ff9e449-136d-41d4-a2e7-55bb82463c5a-20260908T151321476Z-17349-81067eca5818.json",
+  "events": [],
+  "observedFindingIds": [],
+  "verifiedFiles": [],
+  "recordedAt": "2026-09-08T15:13:21.684Z"
+}

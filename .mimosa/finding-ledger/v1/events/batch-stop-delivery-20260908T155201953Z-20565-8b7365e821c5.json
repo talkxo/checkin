@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "mimosa-finding-ledger-batch/v1",
+  "batchId": "stop-delivery-20260908T155201953Z-20565-8b7365e821c5",
+  "runId": "20260908T155201953Z-20565-8b7365e821c5",
+  "runStatus": "completed",
+  "coverage": {
+    "status": "complete",
+    "reasons": []
+  },
+  "source": {
+    "component": "zcode-hook",
+    "operationId": "StopDelivery"
+  },
+  "revision": "dfd7477c43e5d7ff09c7f9bdbbcb1a273a533693",
+  "diffHash": "fb8a7a2309cfd46ec997ffdb39090f5dd031caa037fe4662ef481eca02ab29ec",
+  "rulesVersion": "unavailable",
+  "sessionHash": "bf5b91864c48d3d78a3a35fc41fa21550e225a578d51e3870102a7252cdb754e",
+  "reportRef": ".mimosa/reports/task-review-sess_0ff9e449-136d-41d4-a2e7-55bb82463c5a-20260908T155201953Z-20565-8b7365e821c5.json",
+  "events": [
+    {
+      "eventId": "hook-58303cc150500ca1ff13176239abad39",
+      "findingId": "mimosa-572ca3c4886563e39e1f55c0",
+      "type": "finding_blocked",
+      "at": "2026-09-08T15:52:02.183Z",
+      "identity": {
+        "projectRelativeFile": ".next-dev/static/webpack/app/layout.69c9a13b6b2cf6e2.hot-update.js",
+        "ruleId": "security",
+        "codeEvidenceHash": "63fbe0932b07e885035e08f683b77ee45a3232af76edba5509c0f81a73fb6ce1",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 18,
+      "endLine": 18,
+      "reasonCode": "stop_rewake",
+      "reportedToAgent": true,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "63fbe0932b07e885035e08f683b77ee45a3232af76edba5509c0f81a73fb6ce1"
+      },
+      "sequence": 0
+    },
+    {
+      "eventId": "hook-d7b8915807380a1b306256f393e4646b",
+      "findingId": "mimosa-461934bcf162a261ff6aca0b",
+      "type": "finding_blocked",
+      "at": "2026-09-08T15:52:02.183Z",
+      "identity": {
+        "projectRelativeFile": ".next-dev/static/webpack/app/insyde/signup/page.f603837eb0eb3486.hot-update.js",
+        "ruleId": "security",
+        "codeEvidenceHash": "5c2b0fc9eca08f9e71acfb6eeeed2c8bf02b754bf37c44d238a158a4197d7f99",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 18,
+      "endLine": 18,
+      "reasonCode": "stop_rewake",
+      "reportedToAgent": true,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "5c2b0fc9eca08f9e71acfb6eeeed2c8bf02b754bf37c44d238a158a4197d7f99"
+      },
+      "sequence": 1
+    },
+    {
+      "eventId": "hook-bc24186833647b4c3c866636de110a75",
+      "findingId": "mimosa-f21d7fbc8b077d186e7ba032",
+      "type": "finding_blocked",
+      "at": "2026-09-08T15:52:02.183Z",
+      "identity": {
+        "projectRelativeFile": ".next-dev/static/chunks/app/layout.js",
+        "ruleId": "security",
+        "codeEvidenceHash": "63fbe0932b07e885035e08f683b77ee45a3232af76edba5509c0f81a73fb6ce1",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 38,
+      "endLine": 38,
+      "reasonCode": "stop_rewake",
+      "reportedToAgent": true,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "63fbe0932b07e885035e08f683b77ee45a3232af76edba5509c0f81a73fb6ce1"
+      },
+      "sequence": 2
+    }
+  ],
+  "observedFindingIds": [],
+  "verifiedFiles": [],
+  "recordedAt": "2026-09-08T15:52:02.384Z"
+}

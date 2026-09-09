@@ -6,11 +6,11 @@ import dynamic from 'next/dynamic';
 
 const PinLogin = dynamic(() => import('@/components/pin-login'), { ssr: false });
 const PinChangeModal = dynamic(() => import('@/components/pin-change-modal'), { ssr: false });
-const RecentActivity = dynamic(() => import('@/components/recent-activity'), { ssr: false });
 const AttendanceHistory = dynamic(() => import('@/components/attendance-history'), { ssr: false });
 const WFHPlannerTab = dynamic(() => import('@/components/wfh-planner-tab'), { ssr: false });
 const LeaveManagement = dynamic(() => import('@/components/leave-management'), { ssr: false });
 const TodayPresenceCard = dynamic(() => import('@/components/today-presence-card'), { ssr: false });
+const TeamLeaderboard = dynamic(() => import('@/components/team-leaderboard'), { ssr: false });
 const ScoreBreakdownModal = dynamic(() => import('@/components/score-breakdown-modal'), { ssr: false });
 
 import MoodCheck from '@/components/home/mood-check';
@@ -485,10 +485,9 @@ export default function HomePage() {
                       </p>
                     </motion.div>
 
-                    {/* Team activity — everyone's recent sessions */}
-                    <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="glass rounded-2xl p-4 space-y-2">
-                      <h3 className="card-label">Team activity</h3>
-                      <RecentActivity hideHeading />
+                    {/* Team leaderboard — streaks & deep scores */}
+                    <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
+                      <TeamLeaderboard />
                     </motion.div>
                   </motion.div>
                 ) : (

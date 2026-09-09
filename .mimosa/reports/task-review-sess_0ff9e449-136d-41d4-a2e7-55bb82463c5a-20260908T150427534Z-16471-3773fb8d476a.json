@@ -1,0 +1,988 @@
+{
+  "schema_version": "mimosa-task-review/v2",
+  "run_id": "20260908T150427534Z-16471-3773fb8d476a",
+  "run_status": "inconclusive",
+  "errors": [
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/types/app/insyde/signup/page.ts",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/static/webpack/webpack.a03040f948374285.hot-update.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/static/webpack/app/layout.a03040f948374285.hot-update.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/static/chunks/app/insyde/signup/page.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/server/vendor-chunks/clsx.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/server/vendor-chunks/tailwind-merge.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/server/app/insyde/signup/page.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "baseline-read",
+      "target": ".next-dev/server/app/insyde/signup/page_client-reference-manifest.js",
+      "reason": "baseline_snapshot_unreadable: file is missing from task baseline"
+    },
+    {
+      "stage": "scan",
+      "target": "components/beta-signup/signup-wizard.tsx",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/types/app/insyde/signup/page.ts",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/webpack/webpack.a03040f948374285.hot-update.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/webpack/app/layout.a03040f948374285.hot-update.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/chunks/webpack.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/chunks/app/layout.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/static/chunks/app/insyde/signup/page.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/server/middleware-react-loadable-manifest.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/server/webpack-runtime.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/server/vendor-chunks/clsx.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/server/vendor-chunks/framer-motion.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/server/vendor-chunks/lucide-react.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/server/vendor-chunks/next.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/server/vendor-chunks/tailwind-merge.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/server/app/insyde/signup/page.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    },
+    {
+      "stage": "scan",
+      "target": ".next-dev/server/app/insyde/signup/page_client-reference-manifest.js",
+      "reason": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+    }
+  ],
+  "coverage": {
+    "schema_version": "mimosa-hook-coverage/v1",
+    "status": "partial",
+    "scope": "hook_observed_diff",
+    "baseline": {
+      "complete": true,
+      "captured_files": 209,
+      "candidate_limit": 5000,
+      "truncated": false,
+      "enumeration_error_count": 0,
+      "snapshot_error_count": 0,
+      "compensated_target_count": 8
+    },
+    "change_tracking": {
+      "touched_observed": 1,
+      "touched_retained": 1,
+      "truncated": false,
+      "bash_mutation": true,
+      "bash_discovered": 16,
+      "bash_discovery_limit": 80,
+      "bash_discovery_truncated": false
+    },
+    "candidates": {
+      "eligible_files": 16,
+      "selected_files": 16,
+      "limit": 20,
+      "truncated": false
+    },
+    "scanning": {
+      "required_files": 16,
+      "scanned_files": 0,
+      "skipped_files": 0,
+      "failed_files": 16,
+      "project_checks_required": 0,
+      "project_checks_completed": 0
+    },
+    "notification": {
+      "eligible_findings": 0,
+      "detailed_findings": 0,
+      "detail_limit": 3,
+      "truncated": false
+    },
+    "reason_counts": {
+      "baseline_snapshot_unreadable": 8,
+      "scanner_failed": 16,
+      "project_check_failed": 24
+    },
+    "reasons": [
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/types/app/insyde/signup/page.ts",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/webpack.a03040f948374285.hot-update.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/app/layout.a03040f948374285.hot-update.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/app/insyde/signup/page.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/server/vendor-chunks/clsx.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/server/vendor-chunks/tailwind-merge.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/server/app/insyde/signup/page.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "baseline_snapshot_unreadable",
+        "stage": "baseline-read",
+        "target": ".next-dev/server/app/insyde/signup/page_client-reference-manifest.js",
+        "detail": "file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": "components/beta-signup/signup-wizard.tsx",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/types/app/insyde/signup/page.ts",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/webpack/webpack.a03040f948374285.hot-update.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/webpack/app/layout.a03040f948374285.hot-update.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/webpack.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/app/layout.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/app/insyde/signup/page.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/middleware-react-loadable-manifest.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/webpack-runtime.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/vendor-chunks/clsx.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/vendor-chunks/framer-motion.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/vendor-chunks/lucide-react.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/vendor-chunks/next.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/vendor-chunks/tailwind-merge.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/app/insyde/signup/page.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "scanner_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/app/insyde/signup/page_client-reference-manifest.js",
+        "detail": "spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/types/app/insyde/signup/page.ts",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/webpack.a03040f948374285.hot-update.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/webpack/app/layout.a03040f948374285.hot-update.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/static/chunks/app/insyde/signup/page.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/server/vendor-chunks/clsx.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/server/vendor-chunks/tailwind-merge.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/server/app/insyde/signup/page.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline-read",
+        "target": ".next-dev/server/app/insyde/signup/page_client-reference-manifest.js",
+        "detail": "baseline_snapshot_unreadable: file is missing from task baseline",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": "components/beta-signup/signup-wizard.tsx",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/types/app/insyde/signup/page.ts",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/webpack/webpack.a03040f948374285.hot-update.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/webpack/app/layout.a03040f948374285.hot-update.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/webpack.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/app/layout.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/static/chunks/app/insyde/signup/page.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/middleware-react-loadable-manifest.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/webpack-runtime.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/vendor-chunks/clsx.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/vendor-chunks/framer-motion.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/vendor-chunks/lucide-react.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/vendor-chunks/next.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/vendor-chunks/tailwind-merge.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/app/insyde/signup/page.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "scan",
+        "target": ".next-dev/server/app/insyde/signup/page_client-reference-manifest.js",
+        "detail": "scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+        "affects_completion": true
+      }
+    ],
+    "reasons_truncated": false
+  },
+  "generated_at": "2026-09-08T15:04:27.534Z",
+  "session_id": "sess_0ff9e449-136d-41d4-a2e7-55bb82463c5a",
+  "target": ".",
+  "revision": "cc9c52da2c44537dee1fda5ccd1e7e7119779f1d",
+  "rules_version": "unavailable",
+  "diff_hash": "e8c79be9120174e4df9baff09b9376994644a213446b3160c8f1783cf6fce9a0",
+  "diff": {
+    "algorithm": "sha256",
+    "changed_file_count": 16,
+    "changed_files": [
+      {
+        "file": ".next-dev/server/app/insyde/signup/page_client-reference-manifest.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 1
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "5c8a2e9da1477021117fc0c3b47e67efa169ca0575d672467dfe266940e8681a"
+      },
+      {
+        "file": ".next-dev/server/app/insyde/signup/page.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 246
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "78c4ae771e4830942e64ea6323d6cf4d96c96d623adafb698b8e35197fb70d31"
+      },
+      {
+        "file": ".next-dev/server/middleware-react-loadable-manifest.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 1
+          }
+        ],
+        "before_hash": "50cea57888e1e874932cf9f69f7841b3c2ca0662652ce0159eea560fc4f096e3",
+        "after_hash": "f08020a220d120faf586bb941281cbfdf28793a9d1f87d2e6035faf0a6155d78"
+      },
+      {
+        "file": ".next-dev/server/vendor-chunks/clsx.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 25
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "9aa2d3399a5c4596aff7d32f376b58091f67bc0099f1bb5c5948c53194cd9eff"
+      },
+      {
+        "file": ".next-dev/server/vendor-chunks/framer-motion.js",
+        "ranges": [
+          {
+            "start": 14,
+            "end": 548
+          }
+        ],
+        "before_hash": "75ddab3d3b58be5ad144bb7ab9dd7ee4069bda8bc4c9b0c17e7df8a61c06d6ae",
+        "after_hash": "50891a610b929817a72171d154286ca0fe3d8637b6dfc311c0062f7eb2616f14"
+      },
+      {
+        "file": ".next-dev/server/vendor-chunks/lucide-react.js",
+        "ranges": [
+          {
+            "start": 44,
+            "end": 47
+          },
+          {
+            "start": 50,
+            "end": 50
+          },
+          {
+            "start": 64,
+            "end": 64
+          },
+          {
+            "start": 66,
+            "end": 66
+          },
+          {
+            "start": 70,
+            "end": 70
+          },
+          {
+            "start": 74,
+            "end": 74
+          },
+          {
+            "start": 76,
+            "end": 76
+          },
+          {
+            "start": 80,
+            "end": 80
+          },
+          {
+            "start": 84,
+            "end": 87
+          },
+          {
+            "start": 90,
+            "end": 90
+          },
+          {
+            "start": 94,
+            "end": 97
+          },
+          {
+            "start": 100,
+            "end": 100
+          }
+        ],
+        "before_hash": "9b951fc7c49b72f4095b2560cfaa3c8a8c65bf755550d4bd06cad2efe6b23dfc",
+        "after_hash": "558d911d37344403cf11e83e43f8b20b028718d1ac7dfe9b5bc815bcbedf930a"
+      },
+      {
+        "file": ".next-dev/server/vendor-chunks/next.js",
+        "ranges": [
+          {
+            "start": 33,
+            "end": 1642
+          }
+        ],
+        "before_hash": "b133b4892cb14ef805cb7c8d4d02d664b071e208cfc6da56f04fe7ea19dae856",
+        "after_hash": "adfdec04111f5be838d5b1c5b594a55916684a52f582fa6fe0d7387f0f2784df"
+      },
+      {
+        "file": ".next-dev/server/vendor-chunks/tailwind-merge.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 25
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "849d74bca01abecd31440af1325c32a1bcaa19aecd168ba12134f917c7af916a"
+      },
+      {
+        "file": ".next-dev/server/webpack-runtime.js",
+        "ranges": [
+          {
+            "start": 128,
+            "end": 128
+          }
+        ],
+        "before_hash": "bc7ae01510ead631993d7505ba7a81d8458342a0949cda0f808e64c4629dfa29",
+        "after_hash": "7eb165a18b279fb665c7b263c5c13155f9bbd9af54894877f1d365c6a8798fc9"
+      },
+      {
+        "file": ".next-dev/static/chunks/app/insyde/signup/page.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 3126
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "6b1edec476bb5b40b23c564cf603655abfcdef2c32c7b79ff8ffe2f70db2c53c"
+      },
+      {
+        "file": ".next-dev/static/chunks/app/layout.js",
+        "ranges": [
+          {
+            "start": 38,
+            "end": 38
+          }
+        ],
+        "before_hash": "91e05a1148f1daa753427cd40186c316271094ea56c7c05bdab7f9f38e84ada1",
+        "after_hash": "8bb8b013d2b38602c5f6d031bb94f5663431090fe8a70e0e60c5464c233a28d7"
+      },
+      {
+        "file": ".next-dev/static/chunks/webpack.js",
+        "ranges": [
+          {
+            "start": 166,
+            "end": 166
+          },
+          {
+            "start": 195,
+            "end": 195
+          }
+        ],
+        "before_hash": "4dcfdff94cef01664feb158674c68d9e1f99196d21c728291dbdf74689bb0f7f",
+        "after_hash": "cde374f1e0374edbd6b28ecb59b8659dceb9315493485d0da9d1adabc2c081f3"
+      },
+      {
+        "file": ".next-dev/static/webpack/app/layout.a03040f948374285.hot-update.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 22
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "ddf9d5aec1e7b4dd654a940def0b0ea13f2b0e79a4500ba413b678ffe7e16ac6"
+      },
+      {
+        "file": ".next-dev/static/webpack/webpack.a03040f948374285.hot-update.js",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 18
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "bd12434298cc561aaebfa5bbf676a05ec63eba212f7014e0855bb84fe1cf86dd"
+      },
+      {
+        "file": ".next-dev/types/app/insyde/signup/page.ts",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 79
+          }
+        ],
+        "before_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "after_hash": "2baccae482b43c5cc8b7ee4cb4b5bea187f56934eea43d940c241eff0468a1d2"
+      },
+      {
+        "file": "components/beta-signup/signup-wizard.tsx",
+        "ranges": [
+          {
+            "start": 6,
+            "end": 6
+          },
+          {
+            "start": 28,
+            "end": 30
+          },
+          {
+            "start": 38,
+            "end": 45
+          },
+          {
+            "start": 186,
+            "end": 186
+          },
+          {
+            "start": 188,
+            "end": 194
+          },
+          {
+            "start": 196,
+            "end": 196
+          },
+          {
+            "start": 214,
+            "end": 214
+          },
+          {
+            "start": 216,
+            "end": 217
+          },
+          {
+            "start": 229,
+            "end": 229
+          },
+          {
+            "start": 231,
+            "end": 234
+          },
+          {
+            "start": 260,
+            "end": 260
+          },
+          {
+            "start": 264,
+            "end": 264
+          },
+          {
+            "start": 269,
+            "end": 269
+          },
+          {
+            "start": 274,
+            "end": 294
+          },
+          {
+            "start": 323,
+            "end": 323
+          },
+          {
+            "start": 345,
+            "end": 345
+          },
+          {
+            "start": 351,
+            "end": 382
+          },
+          {
+            "start": 403,
+            "end": 403
+          },
+          {
+            "start": 412,
+            "end": 412
+          },
+          {
+            "start": 424,
+            "end": 463
+          },
+          {
+            "start": 466,
+            "end": 499
+          },
+          {
+            "start": 501,
+            "end": 508
+          },
+          {
+            "start": 511,
+            "end": 515
+          },
+          {
+            "start": 517,
+            "end": 517
+          },
+          {
+            "start": 538,
+            "end": 538
+          },
+          {
+            "start": 548,
+            "end": 548
+          },
+          {
+            "start": 551,
+            "end": 551
+          },
+          {
+            "start": 554,
+            "end": 554
+          },
+          {
+            "start": 584,
+            "end": 584
+          },
+          {
+            "start": 592,
+            "end": 592
+          },
+          {
+            "start": 598,
+            "end": 611
+          },
+          {
+            "start": 635,
+            "end": 635
+          },
+          {
+            "start": 637,
+            "end": 640
+          },
+          {
+            "start": 642,
+            "end": 644
+          },
+          {
+            "start": 653,
+            "end": 653
+          },
+          {
+            "start": 670,
+            "end": 670
+          },
+          {
+            "start": 677,
+            "end": 677
+          },
+          {
+            "start": 679,
+            "end": 679
+          },
+          {
+            "start": 689,
+            "end": 689
+          },
+          {
+            "start": 702,
+            "end": 702
+          },
+          {
+            "start": 729,
+            "end": 729
+          },
+          {
+            "start": 736,
+            "end": 736
+          },
+          {
+            "start": 747,
+            "end": 750
+          },
+          {
+            "start": 757,
+            "end": 757
+          },
+          {
+            "start": 762,
+            "end": 762
+          },
+          {
+            "start": 775,
+            "end": 775
+          },
+          {
+            "start": 787,
+            "end": 787
+          },
+          {
+            "start": 795,
+            "end": 795
+          }
+        ],
+        "before_hash": "6c9a5d3a30d7d2e995177f8c872064ad188114320cae757d5ee79241f7dc74a9",
+        "after_hash": "fce14f3e4e26de0096680e935ec5e1cab43291843cf42e99276baf90dfbd6695"
+      }
+    ]
+  },
+  "timing": {
+    "started_at": "2026-09-08T15:04:25.291Z",
+    "completed_at": "2026-09-08T15:04:27.534Z",
+    "duration_ms": 2243,
+    "measurement": "hook_wall_clock"
+  },
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "total": 0,
+    "model_calls": 0,
+    "measurement": "known-zero"
+  },
+  "telemetry": {
+    "schemaVersion": "mimosa-gate-telemetry/v1",
+    "profile": "gate",
+    "operation": "Stop",
+    "outcome": "partial/INCONCLUSIVE",
+    "latencyMs": 2243,
+    "peakMemoryBytes": 149913600,
+    "memoryMeasurement": "max-observed-process-rss",
+    "scannedFiles": 0,
+    "cache": {
+      "hits": 0,
+      "misses": 0,
+      "measurement": "not-applicable"
+    },
+    "denyCount": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "total": 0,
+      "modelCalls": 0,
+      "measurement": "known-zero"
+    }
+  },
+  "finding_count": 0,
+  "rewake_finding_count": 0,
+  "evidence_boundary": {
+    "scan": "candidate",
+    "static_fix_verification": "observed_static_only",
+    "runtime_verification": "not_performed"
+  },
+  "finding_events": [],
+  "findings": [],
+  "artifacts": {
+    "immutable_report": ".mimosa/reports/task-review-sess_0ff9e449-136d-41d4-a2e7-55bb82463c5a-20260908T150427534Z-16471-3773fb8d476a.json",
+    "latest_report": ".mimosa/reports/task-review-sess_0ff9e449-136d-41d4-a2e7-55bb82463c5a.json",
+    "history_summary": ".mimosa/history/run-20260908T150427534Z-16471-3773fb8d476a.json"
+  }
+}

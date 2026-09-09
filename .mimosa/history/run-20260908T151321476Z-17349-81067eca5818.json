@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "mimosa-finding-history/v1",
+  "runId": "20260908T151321476Z-17349-81067eca5818",
+  "runStatus": "inconclusive",
+  "errors": [
+    "baseline-read:.next-dev/static/webpack/webpack.b8328fc164e31016.hot-update.js: baseline_snapshot_unreadable: file is missing from task baseline",
+    "baseline-read:.next-dev/static/webpack/app/layout.b8328fc164e31016.hot-update.js: baseline_snapshot_unreadable: file is missing from task baseline",
+    "scan:components/beta-signup/signup-wizard.tsx: scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+    "scan:.next-dev/static/webpack/webpack.b8328fc164e31016.hot-update.js: scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+    "scan:.next-dev/static/webpack/app/layout.b8328fc164e31016.hot-update.js: scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+    "scan:.next-dev/static/chunks/webpack.js: scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+    "scan:.next-dev/static/chunks/app/layout.js: scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+    "scan:.next-dev/static/chunks/app/insyde/signup/page.js: scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+    "scan:.next-dev/server/webpack-runtime.js: scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+    "scan:.next-dev/server/vendor-chunks/framer-motion.js: scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT",
+    "scan:.next-dev/server/app/insyde/signup/page.js: scanner_failed: spawnSync /Users/rishiraj/.nvm/versions/node/v22.23.2/bin/node ETIMEDOUT"
+  ],
+  "target": ".",
+  "revision": "0884ba1b53ccb134f11dff87c827026cef3656b1",
+  "diffHash": "3ebb18d011b1e6d1cff2a242022da7e3d9254d2584cc954be89e7c35983da59c",
+  "rulesVersion": "unavailable",
+  "recordedAt": "2026-09-08T15:13:21.476Z",
+  "timing": {
+    "startedAt": "2026-09-08T15:13:19.251Z",
+    "completedAt": "2026-09-08T15:13:21.476Z",
+    "durationMs": 2225
+  },
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "total": 0,
+    "modelCalls": 0,
+    "measurement": "known-zero"
+  },
+  "findings": {
+    "total": 0,
+    "bySeverity": {},
+    "byStatus": {}
+  },
+  "coverage": {
+    "status": "partial",
+    "reasonCounts": {
+      "baseline_snapshot_unreadable": 2,
+      "scanner_failed": 9,
+      "project_check_failed": 11
+    }
+  },
+  "evidenceBoundary": "static_only",
+  "immutableReport": ".mimosa/reports/task-review-sess_0ff9e449-136d-41d4-a2e7-55bb82463c5a-20260908T151321476Z-17349-81067eca5818.json"
+}

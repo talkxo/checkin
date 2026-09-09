@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "mimosa-finding-history/v1",
+  "runId": "20260908T155201953Z-20565-8b7365e821c5",
+  "runStatus": "inconclusive",
+  "errors": [
+    "baseline-read:.next-dev/static/webpack/webpack.69c9a13b6b2cf6e2.hot-update.js: baseline_snapshot_unreadable: file is missing from task baseline",
+    "baseline-read:.next-dev/static/webpack/webpack.f603837eb0eb3486.hot-update.js: baseline_snapshot_unreadable: file is missing from task baseline",
+    "baseline-read:.next-dev/static/webpack/app/layout.69c9a13b6b2cf6e2.hot-update.js: baseline_snapshot_unreadable: file is missing from task baseline",
+    "baseline-read:.next-dev/static/webpack/app/insyde/signup/page.f603837eb0eb3486.hot-update.js: baseline_snapshot_unreadable: file is missing from task baseline",
+    "scan:.next-dev/static/chunks/app/insyde/signup/page.js: deterministic_scanner_unavailable: deterministic scanner unavailable",
+    "scan:.next-dev/static/chunks/app/insyde/signup/page.js: file_skipped: 文件过大（2481KB），已跳过未扫描"
+  ],
+  "target": ".",
+  "revision": "dfd7477c43e5d7ff09c7f9bdbbcb1a273a533693",
+  "diffHash": "fb8a7a2309cfd46ec997ffdb39090f5dd031caa037fe4662ef481eca02ab29ec",
+  "rulesVersion": "unavailable",
+  "recordedAt": "2026-09-08T15:52:01.953Z",
+  "timing": {
+    "startedAt": "2026-09-08T15:51:59.844Z",
+    "completedAt": "2026-09-08T15:52:01.953Z",
+    "durationMs": 2109
+  },
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "total": 0,
+    "modelCalls": 0,
+    "measurement": "known-zero"
+  },
+  "findings": {
+    "total": 5,
+    "bySeverity": {
+      "high": 5
+    },
+    "byStatus": {
+      "blocked": 3,
+      "candidate": 2
+    }
+  },
+  "coverage": {
+    "status": "partial",
+    "reasonCounts": {
+      "baseline_snapshot_unreadable": 4,
+      "deterministic_scanner_unavailable": 1,
+      "file_skipped": 1,
+      "project_check_failed": 6
+    }
+  },
+  "evidenceBoundary": "static_only",
+  "immutableReport": ".mimosa/reports/task-review-sess_0ff9e449-136d-41d4-a2e7-55bb82463c5a-20260908T155201953Z-20565-8b7365e821c5.json"
+}
