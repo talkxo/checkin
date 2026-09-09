@@ -612,8 +612,9 @@ function PolicyTab() {
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <SectionCard label="Leave types">
+    <SectionCard label="Policy" action={<CalendarRange className="h-3.5 w-3.5 text-muted-foreground/60" />}>
+      <div>
+        <p className="mb-2 text-xs font-medium text-foreground/80">Leave types</p>
         {types.loading && !types.data ? (
           <div className="h-24 animate-pulse rounded-2xl bg-muted/50" />
         ) : (
@@ -630,18 +631,19 @@ function PolicyTab() {
           </ul>
         )}
         <p className="mt-3 text-xs text-muted-foreground">Carry-forward rules come with the accrual engine.</p>
-      </SectionCard>
+      </div>
 
-      <SectionCard label="Accrual & carry-forward" action={<CalendarRange className="h-3.5 w-3.5 text-muted-foreground/60" />}>
-        <p className="text-sm text-muted-foreground">
+      <div className="mt-5 border-t border-border/50 pt-4">
+        <p className="text-xs font-medium text-foreground/80">Accrual &amp; carry-forward</p>
+        <p className="mt-1 text-sm text-muted-foreground">
           Run the monthly bonus-leave accrual — extra office days convert into Bonus Leave.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
-            <SelectTrigger className="h-9 w-36 rounded-xl border-border/60 text-sm">
+            <SelectTrigger className="h-9 w-36 rounded-lg border-border/60 text-sm">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="rounded-xl">
+            <SelectContent className="rounded-lg">
               {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                 <SelectItem key={m} value={String(m)}>
                   {new Date(Date.UTC(2000, m - 1, 1)).toLocaleDateString("en-IN", { month: "long" })}
@@ -649,14 +651,14 @@ function PolicyTab() {
               ))}
             </SelectContent>
           </Select>
-          <Button size="sm" className="rounded-xl button-press" onClick={runAccrual} disabled={running}>
+          <Button size="sm" className="rounded-lg button-press" onClick={runAccrual} disabled={running}>
             {running ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}
             Run accrual
           </Button>
         </div>
         {result ? <p className="mt-3 text-sm text-emerald-600 dark:text-emerald-400">{result}</p> : null}
         {error ? <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-      </SectionCard>
-    </div>
+      </div>
+    </SectionCard>
   );
 }
