@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAdminAuthenticated, getUserSession } from '@/lib/auth';
 import { callOpenRouter } from '@/lib/ai';
 
+export const maxDuration = 90;
+
 export const dynamic = 'force-dynamic';
 
 // Simple in-memory rate limiting (for demo purposes)
@@ -13,6 +15,7 @@ interface FetchedData {
   chatbot?: any;
   historical?: any;
   mood?: any;
+  leaves?: any;
 }
 
 // Builds a clean, human-readable fallback directly from the structured data
@@ -113,15 +116,17 @@ export async function POST(req: NextRequest) {
     // today-only snapshot.
     const wantsHistorical = /week|month|yesterday|late|trend|pattern|unusual|compare|past/.test(messageLower);
     const wantsMood = /mood|engagement|wellbeing|feeling|feels/.test(messageLower);
+    const wantsLeaves = /leave|vacation|time off|absen|holiday|pto|sick/.test(messageLower);
     const historicalRange = messageLower.includes('month') ? 'month' : 'week';
 
-    const [chatbot, historical, mood] = await Promise.all([
+    const [chatbot, historical, mood, leaves] = await Promise.all([
       fetchWithTimeout(`${req.nextUrl.origin}/api/admin/chatbot-data`),
       wantsHistorical ? fetchWithTimeout(`${req.nextUrl.origin}/api/admin/historical-data?range=${historicalRange}`) : Promise.resolve(null),
       wantsMood ? fetchWithTimeout(`${req.nextUrl.origin}/api/admin/mood-data`) : Promise.resolve(null),
+      wantsLeaves ? fetchWithTimeout(`${req.nextUrl.origin}/api/admin/leave-requests?status=all`) : Promise.resolve(null),
     ]);
 
-    const fetchedData: FetchedData = { chatbot, historical, mood };
+    const fetchedData: FetchedData = { chatbot, historical, mood, leaves };
     const hasData = Boolean(chatbot || historical || mood);
 
     // Build the context block for the AI prompt from the same structured data.
@@ -131,6 +136,27 @@ export async function POST(req: NextRequest) {
     if (chatbot?.todayStats) contextData += `Today's Distribution: ${JSON.stringify(chatbot.todayStats)}\n`;
     if (historical) contextData += `Historical Patterns: ${JSON.stringify(historical)}\n`;
     if (mood) contextData += `Mood/Engagement Data: ${JSON.stringify(mood)}\n`;
+
+    if (leaves?.leaveRequests?.length) {
+      const cutoff = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
+      const inWindow = leaves.leaveRequests.filter((r: any) => (r.end_date ?? r.start_date) >= cutoff);
+      const totals: Record<string, number> = {};
+      for (const r of inWindow) {
+        if (r.status !== 'approved') continue;
+        const name = Array.isArray(r.employees) ? r.employees[0]?.full_name : r.employees?.full_name;
+        if (name) totals[name] = (totals[name] ?? 0) + (r.total_days ?? 0);
+      }
+      const ranked = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+      if (ranked.length) {
+        contextData += `Leave Totals (approved days, last 90 days): ${JSON.stringify(ranked.map(([name, days]) => ({ name, days })))}\n`;
+      }
+      const recentRows = inWindow.slice(0, 15).map((r: any) => {
+        const name = Array.isArray(r.employees) ? r.employees[0]?.full_name : r.employees?.full_name;
+        const type = Array.isArray(r.leave_types) ? r.leave_types[0]?.name : r.leave_types?.name;
+        return { name, type, days: r.total_days, from: r.start_date, to: r.end_date, status: r.status };
+      });
+      if (recentRows.length) contextData += `Recent Leave Requests: ${JSON.stringify(recentRows)}\n`;
+    }
 
     if (!hasData) {
       return NextResponse.json({

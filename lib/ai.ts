@@ -56,7 +56,7 @@ export async function callOpenRouter(
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  const timeoutId = setTimeout(() => controller.abort(), 75000);
 
   try {
     const response = await requestCompletion(messages, temperature, maxTokens, controller.signal);
