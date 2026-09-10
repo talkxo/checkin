@@ -1,0 +1,868 @@
+{
+  "generated": "2026-09-10T09:55:49.310Z",
+  "nodes": [
+    {
+      "route": "/api/admin/attendance-report",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "leave_requests",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/basecamp-announcement",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/birthdays",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/chatbot-data",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/check-auth",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/daily-stats",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/employees/:id",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT"
+      ],
+      "auth": "admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employee_documents",
+        "employees"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/historical-data",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/holidays",
+      "methods": [
+        "DELETE",
+        "GET",
+        "POST"
+      ],
+      "auth": "admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "holidays"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/knowledge-base",
+      "methods": [
+        "DELETE",
+        "GET",
+        "POST",
+        "PUT"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/leaderboard",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/leave-requests/process",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "leave_requests"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/leave-requests",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "leave_requests"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/login",
+      "methods": [
+        "POST"
+      ],
+      "auth": "OPEN",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "login_attempts"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/logout",
+      "methods": [
+        "POST"
+      ],
+      "auth": "OPEN",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/mood-data",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/recent-activity",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/recommend-tags",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/reset-sessions",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/saved-responses",
+      "methods": [
+        "DELETE",
+        "GET",
+        "POST",
+        "PUT"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "saved_responses"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/set-pin",
+      "methods": [
+        "DELETE",
+        "POST"
+      ],
+      "auth": "admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/stats",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/today",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "leave_requests",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/today-export",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/update-leave-balance",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "leave_balances",
+        "leave_types"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/user-stats",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin/users",
+      "methods": [
+        "DELETE",
+        "GET",
+        "POST",
+        "PUT"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "leave_balances",
+        "leave_types"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/admin-chat",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/ai/assistant",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/ai/insights",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/ai/notification",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/ai/report",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/ai/schedule-suggestions",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/ai/sentiment",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/attendance/history",
+      "methods": [
+        "GET"
+      ],
+      "auth": "user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/attendance/monthly",
+      "methods": [
+        "GET"
+      ],
+      "auth": "user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "holidays",
+        "leave_requests",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/auth/change-pin",
+      "methods": [
+        "POST"
+      ],
+      "auth": "user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/auth/verify-pin",
+      "methods": [
+        "POST"
+      ],
+      "auth": "OPEN",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "login_attempts"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/basecamp/auth",
+      "methods": [
+        "GET"
+      ],
+      "auth": "OPEN",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/basecamp/callback",
+      "methods": [
+        "GET"
+      ],
+      "auth": "OPEN",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/basecamp/create-chatbot",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/basecamp/setup-chatbot",
+      "methods": [
+        "GET"
+      ],
+      "auth": "admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/basecamp/test-webhook",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/basecamp/webhook",
+      "methods": [
+        "POST"
+      ],
+      "auth": "OPEN",
+      "calls": [
+        "/api/checkin",
+        "/api/checkout",
+        "/api/admin/chatbot-data"
+      ],
+      "selfFetchCookie": "MISSING",
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/beta-signup",
+      "methods": [
+        "POST"
+      ],
+      "auth": "OPEN",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "beta_signups"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/checkin",
+      "methods": [
+        "POST"
+      ],
+      "auth": "user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/checkout",
+      "methods": [
+        "POST"
+      ],
+      "auth": "user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/cron/auto-checkout",
+      "methods": [
+        "POST"
+      ],
+      "auth": "cron-secret",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/cron/summary",
+      "methods": [
+        "POST"
+      ],
+      "auth": "cron-secret",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/dashboard/init",
+      "methods": [
+        "GET"
+      ],
+      "auth": "user",
+      "calls": [
+        "/api/leave/balance",
+        "/api/monthly/stats",
+        "/api/stats/punctuality",
+        "/api/today/summary"
+      ],
+      "selfFetchCookie": "ok",
+      "tables": [
+        "employees"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/employee",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/employees",
+      "methods": [
+        "GET"
+      ],
+      "auth": "OPEN",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/giphy/get-well",
+      "methods": [
+        "GET"
+      ],
+      "auth": "user|admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/leave/accrual",
+      "methods": [
+        "POST"
+      ],
+      "auth": "admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "leave_accruals",
+        "leave_balances",
+        "leave_types",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/leave/balance",
+      "methods": [
+        "GET"
+      ],
+      "auth": "user-own ∨ user|admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/leave/request",
+      "methods": [
+        "GET",
+        "PATCH",
+        "POST"
+      ],
+      "auth": "user-own ∨ user|admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "leave_balances",
+        "leave_requests",
+        "leave_types"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/leave/types",
+      "methods": [
+        "GET"
+      ],
+      "auth": "user|admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "leave_types"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/monthly/stats",
+      "methods": [
+        "GET"
+      ],
+      "auth": "user-own ∨ user|admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/session/open",
+      "methods": [
+        "GET"
+      ],
+      "auth": "user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/sessions/update-mood",
+      "methods": [
+        "PUT"
+      ],
+      "auth": "user|admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/stats/punctuality",
+      "methods": [
+        "GET"
+      ],
+      "auth": "user-own ∨ user|admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/summary/me",
+      "methods": [
+        "GET"
+      ],
+      "auth": "user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/today",
+      "methods": [
+        "GET"
+      ],
+      "auth": "user|admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [],
+      "rpcs": []
+    },
+    {
+      "route": "/api/today/summary",
+      "methods": [
+        "GET"
+      ],
+      "auth": "user|admin",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "employees",
+        "sessions"
+      ],
+      "rpcs": []
+    },
+    {
+      "route": "/api/wfh-schedule",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "admin ∨ user",
+      "calls": [],
+      "selfFetchCookie": null,
+      "tables": [
+        "wfh_schedule"
+      ],
+      "rpcs": []
+    }
+  ]
+}

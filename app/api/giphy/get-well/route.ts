@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/route-guard';
 
 export async function GET() {
+  const guard = requireAuth();
+  if (!guard.ok) return guard.response;
+
   const apiKey = process.env.GIPHY_API_KEY || process.env.NEXT_PUBLIC_GIPHY_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: 'Giphy API key not configured' }, { status: 500 });

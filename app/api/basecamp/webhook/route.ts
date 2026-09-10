@@ -102,6 +102,14 @@ async function handleCheckout(sender: any, origin: string): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
+  // Shared-secret gate: Basecamp webhooks aren't signed, so the secret travels
+  // in the callback URL (?token=...). Fails closed if the env isn't configured.
+  const expected = process.env.BASECAMP_WEBHOOK_TOKEN;
+  const provided = new URL(req.url).searchParams.get('token') || req.headers.get('x-webhook-token');
+  if (!expected || provided !== expected) {
+    return NextResponse.json({ error: expected ? 'Invalid webhook token' : 'Webhook token not configured' }, { status: expected ? 401 : 503 });
+  }
+
   try {
     const body = await req.json();
     if (process.env.NODE_ENV === 'development') {

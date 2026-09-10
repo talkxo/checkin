@@ -14,6 +14,10 @@ export async function GET(req: NextRequest) {
 
     const { id: employeeId, slug } = session;
 
+    // Self-fetches must forward the session cookie — the internal routes are
+    // auth-gated, and a cookieless fetch silently 401s.
+    const internalHeaders = { cookie: req.headers.get('cookie') ?? '' };
+
     // We fetch EVERYTHING in parallel
     const [
       employeeRes,
@@ -24,18 +28,18 @@ export async function GET(req: NextRequest) {
     ] = await Promise.all([
       // 1. Employee Detail
       supabaseAdmin.from('employees').select('*').eq('id', employeeId).maybeSingle(),
-      
+
       // 2. Leave Balance
-      fetch(`${req.nextUrl.origin}/api/leave/balance?slug=${slug}`).then(r => r.json()).catch(() => null),
-      
+      fetch(`${req.nextUrl.origin}/api/leave/balance?slug=${slug}`, { headers: internalHeaders }).then(r => r.json()).catch(() => null),
+
       // 3. Monthly Stats
-      fetch(`${req.nextUrl.origin}/api/monthly/stats?slug=${slug}`).then(r => r.json()).catch(() => null),
-      
+      fetch(`${req.nextUrl.origin}/api/monthly/stats?slug=${slug}`, { headers: internalHeaders }).then(r => r.json()).catch(() => null),
+
       // 4. Punctuality (Deep Score)
-      fetch(`${req.nextUrl.origin}/api/stats/punctuality?slug=${slug}`).then(r => r.json()).catch(() => null),
+      fetch(`${req.nextUrl.origin}/api/stats/punctuality?slug=${slug}`, { headers: internalHeaders }).then(r => r.json()).catch(() => null),
 
       // 5. Today's Presence (Team)
-      fetch(`${req.nextUrl.origin}/api/today/summary`).then(r => r.json()).catch(() => [])
+      fetch(`${req.nextUrl.origin}/api/today/summary`, { headers: internalHeaders }).then(r => r.json()).catch(() => [])
     ]);
 
     // Construct the response

@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/route-guard';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  const guard = requireAdmin();
+  if (!guard.ok) return guard.response;
   try {
     const body = await req.json();
     

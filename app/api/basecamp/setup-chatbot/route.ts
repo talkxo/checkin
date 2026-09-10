@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/route-guard';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  const guard = requireAdmin();
+  if (!guard.ok) return guard.response;
   try {
     // Check environment variables
     const envCheck = {

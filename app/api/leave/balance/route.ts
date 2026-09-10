@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEmployeeLeaveBalance } from '@/lib/leave';
+import { requireAuthFor } from '@/lib/route-guard';
 
 export async function GET(req: NextRequest) {
   try {
@@ -7,6 +8,9 @@ export async function GET(req: NextRequest) {
     const slug = url.searchParams.get('slug') || '';
     const email = url.searchParams.get('email') || '';
     const year = parseInt(url.searchParams.get('year') || new Date().getFullYear().toString());
+
+    const guard = requireAuthFor(slug, email);
+    if (!guard.ok) return guard.response;
 
     if (!slug && !email) {
       return NextResponse.json({ error: 'slug or email required' }, { status: 400 });

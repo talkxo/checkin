@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { requireAuth } from '@/lib/route-guard';
 
 export async function GET() {
+  const guard = requireAuth();
+  if (!guard.ok) return guard.response;
   try {
     const { data: leaveTypes, error } = await supabaseAdmin
       .from('leave_types')

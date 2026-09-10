@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { nowIST } from '@/lib/time';
 import { computeDeepScore, deepScoreWindow } from '@/lib/deep-score';
+import { requireAuthFor } from '@/lib/route-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +10,9 @@ export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const slug = url.searchParams.get('slug') || '';
+
+    const guard = requireAuthFor(slug);
+    if (!guard.ok) return guard.response;
 
     if (!slug) {
       return NextResponse.json({ error: 'slug required' }, { status: 400 });

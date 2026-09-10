@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { requireAdmin } from '@/lib/route-guard';
 export async function POST(req: NextRequest){
+  const guard = requireAdmin();
+  if (!guard.ok) return guard.response;
   const { fullName, email } = await req.json();
   if(!fullName) return NextResponse.json({ error: 'fullName required' }, { status: 400 });
   const { data: existing } = await supabaseAdmin.from('employees').select('id, slug').ilike('full_name', fullName).maybeSingle();

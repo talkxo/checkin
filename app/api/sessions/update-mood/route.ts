@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { requireAuth } from '@/lib/route-guard';
 
-// Valid mood values
-const VALID_MOODS = ['great', 'good', 'challenging', 'exhausted', 'productive'];
+// Valid mood values — must stay in sync with the sessions_mood_check DB constraint
+const VALID_MOODS = ['great', 'good', 'okay', 'challenging', 'exhausted', 'productive'];
 
 export async function PUT(req: NextRequest) {
   try {
+    const guard = requireAuth();
+    if (!guard.ok) return guard.response;
+
     const { slug, sessionId, date, mood, moodComment } = await req.json();
     
     // Validate required fields
@@ -112,6 +116,13 @@ export async function PUT(req: NextRequest) {
     }
     
     // Update session with mood data
+    if (!guard.admin && session.employees?.slug !== guard.session?.slug) {
+      return NextResponse.json({
+        success: false,
+        error: 'Forbidden: you can only update your own sessions'
+      }, { status: 403 });
+    }
+
     const updateData: any = { mood };
     if (moodComment !== undefined) {
       updateData.mood_comment = moodComment;

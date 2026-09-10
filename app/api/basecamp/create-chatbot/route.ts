@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/route-guard';
 import { getAccessToken, BASECAMP_API_HOST, basecampAccountId, basecampProjectId, basecampChatId } from '@/lib/basecamp';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  const guard = requireAdmin();
+  if (!guard.ok) return guard.response;
   try {
     if (process.env.NODE_ENV === 'development') console.log('Creating Basecamp chatbot...');
     

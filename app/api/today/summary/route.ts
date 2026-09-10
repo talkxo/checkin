@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { nowIST, hhmmIST } from '@/lib/time';
+import { requireAuth } from '@/lib/route-guard';
 
 export async function GET(req: NextRequest) {
+  const guard = requireAuth();
+  if (!guard.ok) return guard.response;
   const url = new URL(req.url);
   const offsetDaysParam = url.searchParams.get('offsetDays');
   const offsetDays = offsetDaysParam ? parseInt(offsetDaysParam, 10) : 0;

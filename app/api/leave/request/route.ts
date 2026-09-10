@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { requireAuthFor } from '@/lib/route-guard';
 
 export async function POST(req: NextRequest) {
   try {
     const { slug, email, leaveTypeId, startDate, endDate, reason } = await req.json();
+
+    const guard = requireAuthFor(slug, email);
+    if (!guard.ok) return guard.response;
 
     if (!slug && !email) {
       return NextResponse.json({ error: 'slug or email required' }, { status: 400 });
@@ -173,6 +177,9 @@ export async function GET(req: NextRequest) {
     const email = url.searchParams.get('email') || '';
     const status = url.searchParams.get('status') || 'all';
 
+    const guard = requireAuthFor(slug, email);
+    if (!guard.ok) return guard.response;
+
     if (!slug && !email) {
       return NextResponse.json({ error: 'slug or email required' }, { status: 400 });
     }
@@ -247,6 +254,9 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const { requestId, slug, email } = await req.json();
+
+    const guard = requireAuthFor(slug, email);
+    if (!guard.ok) return guard.response;
 
     if (!requestId) {
       return NextResponse.json({ error: 'requestId required' }, { status: 400 });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { requireAdmin } from '@/lib/route-guard';
 
 const EXPECTED_OFFICE_DAYS = 12;
 const YEARLY_BONUS_CAP = 15;
@@ -52,6 +53,8 @@ function calculateBonusLeaves(extraOfficeDays: number, earnedEarlierThisYear: nu
 }
 
 export async function POST(req: NextRequest) {
+  const guard = requireAdmin();
+  if (!guard.ok) return guard.response;
   try {
     const body = await req.json().catch(() => ({}));
     const fallback = getLastCompletedMonth();
