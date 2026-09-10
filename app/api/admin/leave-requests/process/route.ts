@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
       console.error('Error updating leave balance atomically:', balanceUpdateError);
       return NextResponse.json({
         success: true,
-        warning: 'Approved, but the leave balance could not be updated automatically — adjust it in Leave → Balances.',
+        warning: `Approved, but the balance update failed (${balanceUpdateError.message}). Adjust it in Leave → Balances.`,
         message: `Leave request ${action}d, but the balance update failed`,
         leaveRequest: {
           ...leaveRequest,
