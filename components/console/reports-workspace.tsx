@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Check, Copy, Loader2, Sparkles } from "lucide-react";
 import { PageHeader } from "./console-shell";
 import { SectionCard, Chip } from "./ui/bento";
@@ -13,6 +14,7 @@ import {
   apiAiSentiment,
   getHistoricalData,
   getMoodData,
+  normalizeAiMarkdown,
   useToday,
 } from "./data";
 
@@ -107,6 +109,7 @@ export function ReportsWorkspace() {
       }
 
       if (!content) throw new Error("AI returned nothing for this range.");
+      content = normalizeAiMarkdown(content);
       setReports((prev) => [
         { id: Date.now(), kind, rangeLabel: timeRangeLabel, meta, content },
         ...prev.slice(0, 4),
@@ -240,7 +243,7 @@ export function ReportsWorkspace() {
               }
             >
               <div className="prose prose-sm dark:prose-invert max-w-none text-sm">
-                <ReactMarkdown>{report.content}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{normalizeAiMarkdown(report.content)}</ReactMarkdown>
               </div>
             </SectionCard>
           ))}

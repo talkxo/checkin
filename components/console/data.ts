@@ -151,6 +151,17 @@ export function useHolidays() {
   return useApiData<{ holidays: Holiday[] }>("/api/admin/holidays");
 }
 
+
+// Free models emit literal "\n" sequences and <br> tags instead of real
+// newlines, and GFM tables need every row on its own line — normalize before
+// handing AI text to the markdown renderer.
+export function normalizeAiMarkdown(text: string): string {
+  return text
+    .replace(/\\n/g, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/\r\n/g, "\n");
+}
+
 // ---------------------------------------------------------------------------
 // Mutations — thin typed wrappers over the admin APIs.
 // ---------------------------------------------------------------------------
@@ -214,7 +225,7 @@ export function apiProcessLeave(
   action: "approve" | "reject",
   rejectionReason?: string
 ) {
-  return sendJSON<{ success: boolean; message: string }>(
+  return sendJSON<{ success: boolean; message: string; warning?: string }>(
     "/api/admin/leave-requests/process",
     "POST",
     { requestId, action, adminId: "00000000-0000-0000-0000-000000000000", rejectionReason }

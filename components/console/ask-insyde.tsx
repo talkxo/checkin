@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   ArrowUp,
   Check,
@@ -16,7 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { apiAdminChat } from "./data";
+import { apiAdminChat, normalizeAiMarkdown } from "./data";
 
 export interface AskInsideMessage {
   role: "user" | "assistant";
@@ -201,7 +202,7 @@ function AskInsydePanelBody({
               ) : (
                 <div>
                   <div className="prose prose-sm dark:prose-invert max-w-none text-[15px] leading-relaxed text-foreground/90">
-                    <ReactMarkdown>{msg.text}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{normalizeAiMarkdown(msg.text)}</ReactMarkdown>
                   </div>
                   <div className="mt-2 flex items-center gap-0.5 text-muted-foreground/50">
                     <button

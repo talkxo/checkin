@@ -78,8 +78,21 @@ export async function POST(req: NextRequest) {
     });
 
     if (balanceUpdateError) {
+      // The status update is already committed — reverting here would be
+      // worse than reporting the partial success. Surface it as a warning
+      // so the admin can adjust the balance manually.
       console.error('Error updating leave balance atomically:', balanceUpdateError);
-      return NextResponse.json({ error: 'Failed to update leave balance' }, { status: 500 });
+      return NextResponse.json({
+        success: true,
+        warning: 'Approved, but the leave balance could not be updated automatically — adjust it in Leave → Balances.',
+        message: `Leave request ${action}d, but the balance update failed`,
+        leaveRequest: {
+          ...leaveRequest,
+          status: newStatus,
+          approved_by: adminId,
+          approved_at: new Date().toISOString()
+        }
+      });
     }
 
     return NextResponse.json({

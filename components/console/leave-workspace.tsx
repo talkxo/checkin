@@ -97,7 +97,7 @@ function QueueTab() {
   const [filter, setFilter] = useState<QueueFilter>("pending");
   const requests = useLeaveRequests(filter);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [notice, setNotice] = useState<{ tone: "success" | "danger"; text: string } | null>(null);
+  const [notice, setNotice] = useState<{ tone: "success" | "warning" | "danger"; text: string } | null>(null);
 
   const process = useCallback(
     async (row: LeaveRequestRow, action: "approve" | "reject") => {
@@ -105,7 +105,11 @@ function QueueTab() {
       setNotice(null);
       try {
         const result = await apiProcessLeave(row.id, action);
-        setNotice({ tone: "success", text: result.message || `Request ${action}d.` });
+        setNotice(
+          result.warning
+            ? { tone: "warning", text: result.warning }
+            : { tone: "success", text: result.message || `Request ${action}d.` }
+        );
         await requests.refresh();
       } catch (err) {
         setNotice({ tone: "danger", text: err instanceof Error ? err.message : "Could not process the request." });
@@ -247,6 +251,8 @@ function QueueTab() {
             className={
               notice.tone === "success"
                 ? "mb-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-600 dark:text-emerald-400"
+                : notice.tone === "warning"
+                ? "mb-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-600 dark:text-amber-400"
                 : "mb-3 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400"
             }
           >
