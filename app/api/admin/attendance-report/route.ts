@@ -203,9 +203,9 @@ export async function GET(req: NextRequest) {
         let hours = 0;
         if (checkoutTime) {
           const diffMs = checkoutTime.getTime() - checkinTime.getTime();
-          hours = diffMs / (1000 * 60 * 60);
+          hours = diffMs > 0 ? diffMs / (1000 * 60 * 60) : 0;
           const hoursInt = Math.floor(hours);
-          const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+          const minutes = diffMs > 0 ? Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60)) : 0;
           hoursWorked = `${hoursInt}h ${minutes}m`;
           empTotalHours += hours;
           if (session.mode === 'office') {

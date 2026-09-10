@@ -45,13 +45,16 @@ export async function GET(request: Request) {
           const checkin = new Date(session.checkin_ts);
           const checkout = new Date(session.checkout_ts);
           const diffMs = checkout.getTime() - checkin.getTime();
+          // Corrupt rows (checkout earlier than check-in) would drag the
+          // average negative — exclude them instead of averaging nonsense.
+          if (diffMs <= 0) continue;
           totalWorkMinutes += Math.round(diffMs / 60000);
           completedSessions++;
         }
       }
     }
 
-    const averageHours = completedSessions > 0 ? Math.round(totalWorkMinutes / completedSessions / 60 * 10) / 10 : 0;
+    const averageHours = completedSessions > 0 ? Math.max(0, Math.round(totalWorkMinutes / completedSessions / 60 * 10) / 10) : 0;
 
     return NextResponse.json({
       totalEmployees: totalEmployees || 0,
