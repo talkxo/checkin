@@ -155,7 +155,7 @@ export default function PinLogin({ onLoginSuccess }: PinLoginProps) {
           alt=""
           className="h-full w-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/40 to-black/70" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/15 to-black/45" />
       </div>
 
       <div className="glass-strong relative z-10 rounded-3xl p-8 ring-1 ring-white/25">

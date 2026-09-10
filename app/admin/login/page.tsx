@@ -60,9 +60,9 @@ function AdminLoginContent() {
         <img
           src={`https://picsum.photos/id/${BACKDROP_IDS[Math.floor(Date.now() / 86400000) % BACKDROP_IDS.length]}/1920/1080?grayscale`}
           alt=""
-          className="h-full w-full object-cover opacity-90"
+          className="h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/55 to-black/85" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/25 to-black/60" />
       </div>      <div className="relative z-10 mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-lg items-center justify-center">
         <div className="relative w-full glass-strong rounded-[24px] p-7 ring-1 ring-white/25 sm:p-8">
           <div className="mb-6 flex items-center">
