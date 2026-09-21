@@ -25,6 +25,9 @@ export function useAttendanceSession({
   refreshDashboard,
 }: UseAttendanceSessionOptions) {
   const [hasOpen, setHasOpen] = useState(false);
+  // Optimistic check-in timestamp — set the moment the hold completes so the
+  // card morphs instantly; reconciled with the server response (or reverted).
+  const [pendingCheckInTs, setPendingCheckInTs] = useState<string | null>(null);
   const [currentSession, setCurrentSession] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mode, setMode] = useState<'office' | 'remote'>('office');
@@ -32,6 +35,8 @@ export function useAttendanceSession({
   const [msgIsError, setMsgIsError] = useState(false);
   const [checkInSuccess, setCheckInSuccess] = useState(false);
   const [lateCheckIn, setLateCheckIn] = useState(false);
+  // Transient checkout confirmation shown inside the check-in card.
+  const [checkoutConfirmation, setCheckoutConfirmation] = useState<string | null>(null);
   const [autoCheckoutWarning, setAutoCheckoutWarning] = useState(false);
   const [showMoodCheck, setShowMoodCheck] = useState(false);
   const [selectedMood, setSelectedMood] = useState('');
@@ -61,6 +66,7 @@ export function useAttendanceSession({
       } else {
         setHasOpen(false);
         setCurrentSession(null);
+        setPendingCheckInTs(null);
         localStorage.removeItem('currentSession');
         return 'closed';
       }
@@ -84,6 +90,12 @@ export function useAttendanceSession({
       return;
     }
 
+    // Optimistic: morph the card and celebrate now, using the local clock.
+    // The server timestamp takes over on success; failure reverts the card.
+    const optimisticTs = new Date().toISOString();
+    setPendingCheckInTs(optimisticTs);
+    celebrateCheckIn(optimisticTs);
+
     try {
       const r = await fetch('/api/checkin', {
         method: 'POST',
@@ -97,37 +109,17 @@ export function useAttendanceSession({
         localStorage.setItem('currentSession', JSON.stringify(j));
         setCurrentSession(j);
         setHasOpen(true);
+        setPendingCheckInTs(null);
 
         if (j.message && j.message.includes('already exists')) {
           // Existing session
           setMsg(`You already have an open session from ${formatISTTimeShort(j.session.checkin_ts)}`);
-        } else {
-          // New session
-          setMsg(`Checked in at ${formatISTTimeShort(j.session.checkin_ts)}`);
-
-          // Reward animation — intensity based on punctuality
-          const checkinHour = new Date(j.session.checkin_ts).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Kolkata' });
-          const [h, m] = checkinHour.split(':').map(Number);
-          const checkinMinutes = h * 60 + m;
-          const isOnTime = checkinMinutes <= 10 * 60 + 45; // 10:45 AM IST threshold
-
-          if (isOnTime) {
-            fireCheckInConfetti();
-            setTimeout(() => fireOnTimeEmojis(), 200);
-            if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 50]);
-            setLateCheckIn(false);
-          } else {
-            fireLateCheckInPuff();
-            if (navigator.vibrate) navigator.vibrate([40]);
-            setLateCheckIn(true);
-            setTimeout(() => setLateCheckIn(false), 1200);
-          }
-          setCheckInSuccess(true);
-          setTimeout(() => setCheckInSuccess(false), 1200);
         }
+        // New session: no message box — the card already shows the open state.
 
         optionsRef.current.refreshDashboard();
       } else {
+        setPendingCheckInTs(null);
         if (r.status === 401) {
           optionsRef.current.onUnauthorized();
           setMsg('Your session has expired. Please log in again.');
@@ -149,11 +141,36 @@ export function useAttendanceSession({
         }
       }
     } catch (error) {
+      setPendingCheckInTs(null);
       setMsgIsError(true);
       setMsg('Connection issue. Please check your network and try again.');
     }
 
     setIsSubmitting(false);
+  };
+
+  /** Celebration fired at hold-release time (optimistic), not after the API
+   *  round trip — the punctuality check uses the local clock, same threshold
+   *  the server-displayed time reflects. */
+  const celebrateCheckIn = (checkinTs: string) => {
+    const checkinHour = new Date(checkinTs).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Kolkata' });
+    const [h, m] = checkinHour.split(':').map(Number);
+    const checkinMinutes = h * 60 + m;
+    const isOnTime = checkinMinutes <= 10 * 60 + 45; // 10:45 AM IST threshold
+
+    if (isOnTime) {
+      fireCheckInConfetti();
+      setTimeout(() => fireOnTimeEmojis(), 200);
+      if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 50]);
+      setLateCheckIn(false);
+    } else {
+      fireLateCheckInPuff();
+      if (navigator.vibrate) navigator.vibrate([40]);
+      setLateCheckIn(true);
+      setTimeout(() => setLateCheckIn(false), 1200);
+    }
+    setCheckInSuccess(true);
+    setTimeout(() => setCheckInSuccess(false), 1200);
   };
 
   // Core checkout function - reusable for both manual and auto checkout
@@ -182,6 +199,11 @@ export function useAttendanceSession({
         // Reward animation
         fireCheckOutConfetti();
         if (navigator.vibrate) navigator.vibrate([80]);
+
+        // In-card confirmation instead of an external message box
+        const checkoutTs = j.session?.checkout_ts ?? new Date().toISOString();
+        setCheckoutConfirmation(`Checked out at ${formatISTTimeShort(checkoutTs)} ✓`);
+        setTimeout(() => setCheckoutConfirmation(null), 3000);
 
         // Refresh summaries (non-blocking)
         optionsRef.current.refreshDashboard();
@@ -277,6 +299,7 @@ export function useAttendanceSession({
   const reset = () => {
     setCurrentSession(null);
     setHasOpen(false);
+    setPendingCheckInTs(null);
     setMsg('');
     setMsgIsError(false);
     setShowMoodCheck(false);
@@ -302,18 +325,21 @@ export function useAttendanceSession({
     if (typeof window !== 'undefined') localStorage.setItem('mode', mode);
   }, [mode]);
 
-  // Live elapsed time for the open session — drives the check-in pod
+  // Live elapsed time for the open session — drives the check-in pod.
+  // Runs during the optimistic window too, so the timer starts the instant
+  // the hold completes rather than when the server confirms.
   useEffect(() => {
-    if (!hasOpen || !currentSession?.session?.checkin_ts) {
+    const ts = pendingCheckInTs ?? currentSession?.session?.checkin_ts;
+    if ((!hasOpen && !pendingCheckInTs) || !ts) {
       setElapsedSeconds(0);
       return;
     }
-    const checkin = new Date(currentSession.session.checkin_ts).getTime();
+    const checkin = new Date(ts).getTime();
     const update = () => setElapsedSeconds(Math.max(0, Math.floor((Date.now() - checkin) / 1000)));
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [hasOpen, currentSession?.session?.checkin_ts]);
+  }, [hasOpen, pendingCheckInTs, currentSession?.session?.checkin_ts]);
 
   // Auto-checkout after N hours (default 12) with a warning 10 minutes prior
   useEffect(() => {
@@ -378,6 +404,7 @@ export function useAttendanceSession({
   return {
     // state
     hasOpen,
+    pendingCheckInTs,
     currentSession,
     isSubmitting,
     mode,
@@ -385,6 +412,7 @@ export function useAttendanceSession({
     msgIsError,
     checkInSuccess,
     lateCheckIn,
+    checkoutConfirmation,
     autoCheckoutWarning,
     showMoodCheck,
     selectedMood,

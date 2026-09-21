@@ -3,6 +3,9 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { getUserSession, isAdminAuthenticated } from '@/lib/auth';
 
 // GET ?week=2026-03-30 or ?week=2026-03-30&employeeId=xxx
+// Without employeeId: returns EVERY active employee for the week, with
+// wfh_days merged in (empty array when they haven't declared a plan) — so
+// the team view can list people, not just declarations.
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const week = searchParams.get('week');
@@ -16,15 +19,42 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing week query parameter' }, { status: 400 });
   }
 
-  let query = supabaseAdmin
-    .from('wfh_schedule')
-    .select('*, employees(full_name, slug)')
-    .eq('week_start', week);
+  if (employeeId) {
+    const { data, error } = await supabaseAdmin
+      .from('wfh_schedule')
+      .select('*, employees(full_name, slug)')
+      .eq('week_start', week)
+      .eq('employee_id', employeeId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ data });
+  }
 
-  if (employeeId) query = query.eq('employee_id', employeeId);
+  const [employeesRes, plansRes] = await Promise.all([
+    supabaseAdmin
+      .from('employees')
+      .select('id, full_name, slug')
+      .eq('active', true)
+      .order('full_name'),
+    supabaseAdmin
+      .from('wfh_schedule')
+      .select('employee_id, wfh_days')
+      .eq('week_start', week),
+  ]);
 
-  const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (employeesRes.error) return NextResponse.json({ error: employeesRes.error.message }, { status: 500 });
+  if (plansRes.error) return NextResponse.json({ error: plansRes.error.message }, { status: 500 });
+
+  const plansById = new Map(
+    (plansRes.data ?? []).map((p) => [p.employee_id, p.wfh_days ?? []])
+  );
+
+  const data = (employeesRes.data ?? []).map((e) => ({
+    employee_id: e.id,
+    full_name: e.full_name,
+    slug: e.slug,
+    wfh_days: plansById.get(e.id) ?? [],
+  }));
+
   return NextResponse.json({ data });
 }
 

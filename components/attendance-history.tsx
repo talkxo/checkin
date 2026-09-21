@@ -355,8 +355,9 @@ export default function AttendanceHistory({ userSlug, onDateSelect }: Attendance
         </div>
         <div className="min-h-[200px] transition-all duration-300 ease-in-out">
           {isLoadingMonthly ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+            // Vertically centered, nudged slightly above center for optics
+            <div className="flex h-[200px] flex-col items-center justify-center -translate-y-3">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
               <p className="text-sm text-muted-foreground">Loading monthly data...</p>
             </div>
           ) : (

@@ -17,11 +17,11 @@ const TABS: Array<{ id: HomeTab; icon: string; label: string }> = [
 
 /**
  * Floating glass nav — 64px (between iOS's 49pt tab bar and Material 3's
- * 80dp nav bar, sized for inline icon+label items). Rendered sticky inside
- * the content column's flow: it floats at the viewport bottom while the page
- * scrolls, and because it lives IN the column, its center is the column's
- * center at every width — no fixed-position viewport math to drift out of
- * sync with the cards (scrollbar gutters etc.).
+ * 80dp nav bar, sized for inline icon+label items). Fixed to the viewport
+ * bottom so tab switches and card loading never move it: content height
+ * changes don't shift the nav. Horizontally it re-creates the content
+ * column's own constraint chain (max-w-md mx-auto px-4), so the pill stays
+ * centered with the cards at every width.
  *
  * Selection is color-only: each label transitions per character with a
  * directional stagger, so the tint drains out of the old tab and fills the
@@ -39,38 +39,40 @@ export default function BottomNav({ activeTab, onChange }: BottomNavProps) {
   }
 
   return (
-    <nav className="pointer-events-none sticky bottom-[calc(1rem+env(safe-area-inset-bottom))] z-50 mt-4 flex justify-center">
-      <div className="glass-strong pointer-events-auto flex h-16 w-fit max-w-full items-center justify-center gap-5 rounded-full px-5 sm:gap-8">
-        {TABS.map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => onChange(tab.id)}
-              aria-current={isActive ? 'page' : undefined}
-              className="relative flex h-full items-center justify-center gap-2 px-1"
-            >
-              <i
-                className={`fas ${tab.icon} text-[14px] transition-colors duration-500 ease-out ${
-                  isActive ? 'text-primary' : 'text-muted-foreground'
-                }`}
-              />
-              <span className="text-[13px] font-medium">
-                {tab.label.split('').map((ch, i) => (
-                  <span
-                    key={i}
-                    className={`transition-colors duration-[400ms] ease-out ${
-                      isActive ? 'text-primary' : 'text-muted-foreground'
-                    }`}
-                    style={{ transitionDelay: `${i * 35 * dir}ms` }}
-                  >
-                    {ch}
-                  </span>
-                ))}
-              </span>
-            </button>
-          );
-        })}
+    <nav className="pointer-events-none fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-50">
+      <div className="mx-auto flex w-full max-w-md justify-center px-4 sm:px-6">
+        <div className="glass-strong pointer-events-auto flex h-16 w-fit max-w-full items-center justify-center gap-5 rounded-full px-5 sm:gap-8">
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onChange(tab.id)}
+                aria-current={isActive ? 'page' : undefined}
+                className="relative flex h-full items-center justify-center gap-2 px-1"
+              >
+                <i
+                  className={`fas ${tab.icon} text-[14px] transition-colors duration-500 ease-out ${
+                    isActive ? 'text-primary' : 'text-muted-foreground'
+                  }`}
+                />
+                <span className="text-[13px] font-medium">
+                  {tab.label.split('').map((ch, i) => (
+                    <span
+                      key={i}
+                      className={`transition-colors duration-[400ms] ease-out ${
+                        isActive ? 'text-primary' : 'text-muted-foreground'
+                      }`}
+                      style={{ transitionDelay: `${i * 35 * dir}ms` }}
+                    >
+                      {ch}
+                    </span>
+                  ))}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </nav>
   );

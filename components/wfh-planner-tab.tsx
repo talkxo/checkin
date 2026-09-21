@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { House } from 'lucide-react';
-import WeekStrip from './week-strip';
 import { getMondayOfWeek } from '@/lib/time';
 import { firePlanSavedConfetti } from '@/lib/use-reward';
 
@@ -11,7 +10,24 @@ interface WFHPlannerTabProps {
   onScheduleSaved?: (days: string[]) => void;
 }
 
+interface TeamRow {
+  employee_id: string;
+  full_name: string;
+  slug: string;
+  wfh_days: string[];
+}
+
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+const MAX_REMOTE_DAYS = 2;
+
+/**
+ * One merged week-plan card: the whole team on a Mon–Fri grid, with the
+ * logged-in user's own row pinned first and tappable to toggle remote days.
+ * undeclared teammates still appear (empty row) so the card shows everyone,
+ * not just the people who filled the form.
+ */
 export default function WFHPlannerTab({ employeeId, onScheduleSaved }: WFHPlannerTabProps) {
+  const [rows, setRows] = useState<TeamRow[] | null>(null);
   const [wfhDays, setWfhDays] = useState<string[]>([]);
   const [savedDays, setSavedDays] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -20,25 +36,28 @@ export default function WFHPlannerTab({ employeeId, onScheduleSaved }: WFHPlanne
   const weekStart = getMondayOfWeek(new Date());
 
   useEffect(() => {
-    if (!employeeId) return;
-    fetch(`/api/wfh-schedule?week=${weekStart}&employeeId=${employeeId}`)
+    fetch(`/api/wfh-schedule?week=${weekStart}`)
       .then(r => r.json())
       .then(({ data }) => {
-        if (data?.length > 0) {
-          setWfhDays(data[0].wfh_days || []);
-          setSavedDays(data[0].wfh_days || []);
+        const list: TeamRow[] = data || [];
+        setRows(list);
+        const mine = employeeId ? list.find(r => r.employee_id === employeeId) : undefined;
+        if (mine?.wfh_days?.length) {
+          setWfhDays(mine.wfh_days);
+          setSavedDays(mine.wfh_days);
           setSaved(true);
         }
       })
-      .catch(() => {});
+      .catch(() => setRows([]));
   }, [employeeId, weekStart]);
 
-  const MAX_REMOTE_DAYS = 2;
   const isEmployeeReady = Boolean(employeeId);
+  const myName = rows?.find(r => r.employee_id === employeeId)?.full_name;
 
   const toggleDay = (day: string) => {
     if (!isEmployeeReady) return;
     setSaved(false);
+    setError('');
     setWfhDays(prev => {
       if (prev.includes(day)) return prev.filter(d => d !== day);
       if (prev.length >= MAX_REMOTE_DAYS) return prev; // enforce max
@@ -69,6 +88,10 @@ export default function WFHPlannerTab({ employeeId, onScheduleSaved }: WFHPlanne
 
       setSavedDays(wfhDays);
       setSaved(true);
+      // Reflect the change in the grid immediately
+      setRows(prev =>
+        (prev ?? []).map(r => (r.employee_id === employeeId ? { ...r, wfh_days: wfhDays } : r))
+      );
       firePlanSavedConfetti();
       if (navigator.vibrate) navigator.vibrate([30, 20, 30]);
       onScheduleSaved?.(wfhDays);
@@ -79,17 +102,111 @@ export default function WFHPlannerTab({ employeeId, onScheduleSaved }: WFHPlanne
 
   const hasChanges = JSON.stringify([...wfhDays].sort()) !== JSON.stringify([...savedDays].sort());
 
+  // Sort: me first, then teammates alphabetically
+  const orderedRows = rows === null ? null : [
+    ...rows.filter(r => r.employee_id === employeeId),
+    ...rows
+      .filter(r => r.employee_id !== employeeId)
+      .sort((a, b) => a.full_name.localeCompare(b.full_name)),
+  ];
+
+  const todayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];
+
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-      {/* Personal plan — Raised card */}
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
       <div className="glass rounded-2xl p-4 space-y-4">
         <div>
-          <h3 className="card-label">Your Plan</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">Tap the days you&apos;ll be remote. Max 2/week.</p>
+          <h3 className="card-label">Week Plan</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Tap your row to set remote days. Max {MAX_REMOTE_DAYS}/week.
+          </p>
         </div>
 
-        <WeekStrip wfhDays={wfhDays} size="full" onToggle={toggleDay} />
+        {orderedRows === null ? (
+          <div className="space-y-2" aria-busy="true">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-8 rounded-lg bg-muted/40 animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {/* Header — today's column tinted to match the cells */}
+            <div className="grid grid-cols-[minmax(72px,88px)_repeat(5,minmax(0,1fr))] items-center gap-2 text-xs font-medium text-muted-foreground">
+              <div className="w-16 truncate" aria-label="Teammate name"></div>
+              {DAYS.map(day => (
+                <div key={day} className={`text-center ${day === todayName ? 'font-semibold text-primary' : ''}`}>{day}</div>
+              ))}
+            </div>
 
+            {/* My row — editable */}
+            {isEmployeeReady && orderedRows.some(r => r.employee_id === employeeId) ? (
+              <div className="grid grid-cols-[minmax(72px,88px)_repeat(5,minmax(0,1fr))] items-center gap-2">
+                <div className="w-16 truncate text-sm font-semibold text-primary">
+                  {myName?.split(' ')[0] || 'You'}
+                </div>
+                {DAYS.map(day => {
+                  const isWFH = wfhDays.includes(day);
+                  return (
+                    <button
+                      key={day}
+                      onClick={() => toggleDay(day)}
+                      aria-pressed={isWFH}
+                      aria-label={`${day}: ${isWFH ? 'remote' : 'office'}. Tap to change.`}
+                      className={`rounded h-9 flex items-center justify-center text-xs transition-all active:scale-95 border ${
+                        isWFH
+                          ? 'bg-primary/12 border-primary/30 text-primary'
+                          : 'bg-muted/40 border-border/50 text-muted-foreground hover:border-border'
+                      }`}
+                    >
+                      {isWFH && (
+                        <>
+                          <House className="h-3.5 w-3.5" aria-hidden="true" />
+                          <span className="sr-only">Remote</span>
+                        </>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            {/* Teammates — read-only */}
+            {orderedRows
+              .filter(r => r.employee_id !== employeeId)
+              .map(member => (
+                <div
+                  key={member.employee_id}
+                  className="grid grid-cols-[minmax(72px,88px)_repeat(5,minmax(0,1fr))] items-center gap-2"
+                >
+                  <div className="w-16 truncate text-foreground">
+                    {member.full_name.split(' ')[0]}
+                  </div>
+                  {DAYS.map(day => {
+                    const isWFH = member.wfh_days.includes(day);
+                    return (
+                      <div
+                        key={day}
+                        className={`rounded h-9 flex items-center justify-center text-xs border ${
+                          isWFH
+                            ? 'bg-primary/12 border-primary/30 text-primary'
+                            : 'bg-muted/40 border-border/50 text-muted-foreground'
+                        }`}
+                      >
+                        {isWFH && (
+                          <>
+                            <House className="h-3.5 w-3.5" aria-hidden="true" />
+                            <span className="sr-only">Remote</span>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+          </div>
+        )}
+
+        {/* Legend + counter + save state */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
             <div className="flex items-center gap-1">
@@ -135,79 +252,6 @@ export default function WFHPlannerTab({ employeeId, onScheduleSaved }: WFHPlanne
           >✓ Plan saved for this week</motion.p>
         )}
       </div>
-
-      {/* Team plan — Raised card */}
-      <div className="glass rounded-2xl p-4 space-y-3">
-        <h3 className="card-label">Team&apos;s Plan</h3>
-        <TeamWeekView weekStart={weekStart} />
-      </div>
     </motion.div>
-  );
-}
-
-function TeamWeekView({ weekStart }: { weekStart: string }) {
-  const [team, setTeam] = useState<{ name: string; wfhDays: string[] }[]>([]);
-
-  useEffect(() => {
-    fetch(`/api/wfh-schedule?week=${weekStart}`)
-      .then(r => r.json())
-      .then(({ data }) => {
-        setTeam((data || []).map((row: any) => ({
-          name: row.employees?.full_name?.split(' ')[0] || '?',
-          wfhDays: row.wfh_days || [],
-        })));
-      });
-  }, [weekStart]);
-
-  if (!team.length)
-    return <p className="text-xs text-muted-foreground">No team members have set their plan yet.</p>;
-
-  const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-
-  return (
-    <div className="space-y-3">
-      {/* Header */}
-      <div className="grid grid-cols-[minmax(72px,88px)_repeat(5,minmax(0,1fr))] items-center gap-2 text-xs font-medium text-muted-foreground">
-        <div className="w-16 truncate" aria-label="Teammate name"></div>
-        {DAYS.map(day => (
-          <div key={day} className="text-center">{day}</div>
-        ))}
-      </div>
-      {/* Rows */}
-      {team
-        .slice()
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map(member => (
-          <div key={member.name} className="grid grid-cols-[minmax(72px,88px)_repeat(5,minmax(0,1fr))] items-center gap-2">
-            {/* Name */}
-            <div className="w-16 truncate text-foreground">{member.name}</div>
-            {/* Weekday cells */}
-            {DAYS.map(day => {
-              const isWFH = member.wfhDays.includes(day);
-              const today = new Date();
-              const todayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][today.getDay()];
-              const isToday = day === todayName;
-
-              return (
-                <div
-                  key={day}
-                  className={`rounded h-9 flex items-center justify-center text-xs ${
-                    isWFH
-                      ? 'bg-primary/12 border-primary/30 text-primary'
-                      : 'bg-muted/40 border-border/50 text-muted-foreground'
-                  } ${isToday ? 'ring-2 ring-primary/40 ring-offset-2 ring-offset-background' : ''}`}
-                >
-                  {isWFH && (
-                    <>
-                      <House className="h-3.5 w-3.5" aria-hidden="true" />
-                      <span className="sr-only">Remote</span>
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ))}
-    </div>
   );
 }

@@ -28,6 +28,9 @@ import { useStreak } from '@/hooks/use-streak';
 import { useWeeklyPlan } from '@/hooks/use-weekly-plan';
 import { useReminders } from '@/hooks/use-reminders';
 import { isWorkdayIST } from '@/lib/time';
+import { useExperimentalShown } from '@/lib/experimental-features';
+
+const DayInsightCard = dynamic(() => import('@/components/home/day-insight-card'), { ssr: false });
 
 const getClientUserSlug = () =>
   (typeof window !== 'undefined' ? localStorage.getItem('userSlug') : null) || undefined;
@@ -99,6 +102,7 @@ export default function HomePage() {
     session.hasOpen,
     session.currentSession
   );
+  const experimentalShown = useExperimentalShown(userSlugState);
 
   const plannerEmployeeId =
     me?.id ||
@@ -222,11 +226,24 @@ export default function HomePage() {
     }
   };
 
+  // Warm the other tabs' chunks shortly after login so the first tab switch
+  // mounts instantly instead of popping cards in as chunks arrive.
+  useEffect(() => {
+    if (!isLoggedIn || typeof window === 'undefined') return;
+    const t = setTimeout(() => {
+      import('@/components/attendance-history');
+      import('@/components/wfh-planner-tab');
+      import('@/components/leave-management');
+      import('@/components/team-leaderboard');
+      import('@/components/today-presence-card');
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [isLoggedIn]);
+
   // Register the service worker for PWA installability + offline app shell.
   // Not gated behind login — the login screen itself is part of the app
   // shell, and installability should be available to any visitor.
-  useEffect(() => {
-    if (!('serviceWorker' in navigator)) return;
+  useEffect(() => {    if (!('serviceWorker' in navigator)) return;
 
     // When a freshly deployed service worker activates, reload once so
     // users land on the new shell instead of staying on the stale one.
@@ -365,8 +382,9 @@ export default function HomePage() {
                         <CheckInCard
                           mode={session.mode}
                           onModeChange={session.setMode}
-                          hasOpen={session.hasOpen}
-                          checkinTs={session.currentSession?.session?.checkin_ts ?? null}
+                          hasOpen={session.hasOpen || Boolean(session.pendingCheckInTs)}
+                          checkinTs={session.currentSession?.session?.checkin_ts ?? session.pendingCheckInTs}
+                          confirmation={session.checkoutConfirmation}
                           checkInSuccess={session.checkInSuccess}
                           lateCheckIn={session.lateCheckIn}
                           isHolding={hold.isHolding}
@@ -434,6 +452,9 @@ export default function HomePage() {
                       <h3 className="card-label">Who&apos;s in today</h3>
                       <TodayPresenceCard />
                     </motion.div>
+
+                    {/* Experimental: JEV day insight — only after opt-in */}
+                    {experimentalShown && <DayInsightCard />}
                   </motion.div>
                 ) : activeTab === 'team' ? (
                   // Team Tab — plans, announcements, collective activity
@@ -545,8 +566,8 @@ export default function HomePage() {
               </AnimatePresence>
             </div>
 
-            {/* Breathing room above the sticky nav */}
-            <div className="pb-4" />
+            {/* Clearance for the fixed bottom nav (64px pill + 1rem offset) */}
+            <div className="h-[calc(6rem+env(safe-area-inset-bottom))]" />
           </div>
         )}
 

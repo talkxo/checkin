@@ -60,7 +60,16 @@ export default function TeamLeaderboard() {
       </div>
 
       {rows === null ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        // Placeholder rows keep the card at its loaded height — no pop-in
+        // when the leaderboard data lands.
+        <div className="space-y-1.5" aria-busy="true">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex items-center gap-3 rounded-xl bg-muted/30 px-3 py-2">
+              <span className="h-6 w-6 shrink-0 rounded-full bg-muted/60 animate-pulse" />
+              <span className="h-3.5 flex-1 rounded bg-muted/60 animate-pulse" />
+            </div>
+          ))}
+        </div>
       ) : rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">No check-ins in the last 14 days.</p>
       ) : (

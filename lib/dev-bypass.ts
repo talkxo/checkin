@@ -629,15 +629,26 @@ const ROUTES: Array<{ method: string; match: RegExp; handle: Handler }> = [
       return historyPayloadForDate(date);
   } },
   { method: 'GET', match: /^\/api\/attendance\/monthly$/, handle: () => monthlyAttendance() },
-  { method: 'GET', match: /^\/api\/wfh-schedule$/, handle: ({ url }) => ({
-      data: world.wfhDays.length
-        ? [{
-            employee_id: url.searchParams.get('employeeId') || ME.id,
-            wfh_days: world.wfhDays,
-            employees: { full_name: ME.full_name, slug: ME.slug },
-          }]
-        : [],
-  }) },
+  { method: 'GET', match: /^\/api\/wfh-schedule$/, handle: ({ url }) => {
+      const employeeId = url.searchParams.get('employeeId');
+      if (employeeId) {
+        // Single-employee fetch: only rows where a plan exists
+        return {
+          data: world.wfhDays.length
+            ? [{ employee_id: employeeId, wfh_days: world.wfhDays }]
+            : [],
+        };
+      }
+      // Team fetch: every roster member, merged with their plan (empty = undeclared)
+      return {
+        data: ROSTER.map((e) => ({
+          employee_id: e.id,
+          full_name: e.full_name,
+          slug: e.slug,
+          wfh_days: e.id === ME.id ? world.wfhDays : [],
+        })),
+      };
+  } },
   { method: 'POST', match: /^\/api\/wfh-schedule$/, handle: ({ body }) => {
       world.wfhDays = Array.isArray(body?.wfhDays) ? body.wfhDays : [];
       return { success: true, data: [{ employee_id: ME.id, wfh_days: world.wfhDays }] };
