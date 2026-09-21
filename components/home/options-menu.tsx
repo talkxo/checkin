@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { LogOut, Moon, Bell, BellOff, IdCard, Sun, Copy, BadgeCheck } from 'lucide-react';
+import { LogOut, Moon, Bell, BellOff, IdCard, Sun, Copy, BadgeCheck, FlaskConical } from 'lucide-react';
 import { useTheme, type Theme } from '@/components/theme-provider';
+import { setExperimentalShown, useExperimentalShown } from '@/lib/experimental-features';
 
 interface OptionsMenuProps {
   slug: string;
@@ -30,6 +31,7 @@ export default function OptionsMenu({
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const experimentalShown = useExperimentalShown(slug);
 
   const copySlug = async () => {
     try {
@@ -158,6 +160,36 @@ export default function OptionsMenu({
                 })}
               </div>
             </div>
+
+            <div className="my-3 h-px bg-glass-border" />
+
+            {/* Experimental features — one opt-in switch, same row hierarchy
+                as Timing reminders */}
+            <button
+              onClick={() => setExperimentalShown(slug, !experimentalShown)}
+              className="flex w-full items-start justify-between gap-3 rounded-lg px-1 py-2 transition-colors hover:bg-muted/40"
+            >
+              <span className="flex items-start gap-2.5">
+                <FlaskConical className="mt-0.5 h-4 w-4" />
+                <span className="flex flex-col items-start">
+                  <span className="text-sm text-foreground">Show experimental</span>
+                  <span className="text-[11px] text-muted-foreground">Previews, on this device</span>
+                </span>
+              </span>
+              <span
+                className={`relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition-colors ${
+                  experimentalShown ? 'bg-success-500' : 'bg-muted-foreground/40'
+                }`}
+                role="switch"
+                aria-checked={experimentalShown}
+              >
+                <span
+                  className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${
+                    experimentalShown ? 'left-[18px]' : 'left-0.5'
+                  }`}
+                />
+              </span>
+            </button>
 
             <div className="my-3 h-px bg-glass-border" />
 
