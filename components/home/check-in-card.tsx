@@ -1,7 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { formatISTTimeShort } from '@/lib/time';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface CheckInCardProps {
   mode: 'office' | 'remote';
@@ -16,6 +16,8 @@ interface CheckInCardProps {
   onHoldEnd: () => void;
   now: Date;
   elapsedSeconds: number;
+  /** Transient in-card confirmation (e.g. "Checked out at 18:42"). */
+  confirmation?: string | null;
 }
 
 function formatElapsed(totalSeconds: number): string {
@@ -45,6 +47,7 @@ export default function CheckInCard({
   onHoldEnd,
   now,
   elapsedSeconds,
+  confirmation,
 }: CheckInCardProps) {
   const covered = holdProgress > 40;
   const accent = hasOpen
@@ -81,22 +84,35 @@ export default function CheckInCard({
         />
       )}
 
-      {/* Liquid fill — rises bottom → top while holding */}
+      {/* Liquid fill — rises bottom → top while holding, then dissolves out
+          on release instead of snapping away */}
       <div
         aria-hidden
         className={`absolute inset-x-0 bottom-0 z-0 ${hasOpen ? 'glow-danger' : 'glow-success'}`}
-        style={{ height: `${holdProgress}%`, background: accent, transition: 'height 90ms linear' }}
+        style={{
+          height: `${holdProgress}%`,
+          background: accent,
+          transition: 'height 120ms linear, opacity 480ms ease-out',
+          opacity: isHolding || holdProgress > 0 ? 1 : 0,
+        }}
       />
 
       {/* State caption */}
       <div className="relative z-10 flex h-4 items-center justify-between">
-        <span
-          className={`card-label transition-colors duration-150 ${
-            covered ? 'text-white/85' : ''
-          }`}
-        >
-          {hasOpen ? 'On the clock' : 'Check in'}
-        </span>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.span
+            key={hasOpen ? 'open' : 'idle'}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18 }}
+            className={`card-label transition-colors duration-150 ${
+              covered ? 'text-white/85' : ''
+            }`}
+          >
+            {hasOpen ? 'On the clock' : 'Check in'}
+          </motion.span>
+        </AnimatePresence>
         <span
           className={`h-2 w-2 rounded-full transition-colors duration-150 ${
             covered ? 'bg-white' : hasOpen ? 'animate-pulse bg-success-500' : 'bg-primary/50'
@@ -134,48 +150,81 @@ export default function CheckInCard({
 
       {/* Hero metric — live clock as a casual sentence when idle, elapsed timer when on the clock */}
       <div className="relative z-10 flex flex-1 items-center">
-        {hasOpen ? (
-          <p
-            className={`text-[28px] font-semibold leading-none tracking-tight tabular-nums transition-colors duration-150 ${
-              covered ? 'text-white' : 'text-foreground'
-            }`}
-            style={{ fontFamily: 'Funnel Display, system-ui, sans-serif' }}
-          >
-            {formatElapsed(elapsedSeconds)}
-          </p>
-        ) : (
-          <p
-            className={`text-[15px] font-normal leading-snug transition-colors duration-150 ${
-              covered ? 'text-white' : 'text-foreground/90'
-            }`}
-          >
-            It's{' '}
-            {now
-              .toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true,
-                timeZone: 'Asia/Kolkata',
-              })
-              .toLowerCase()}
-            <br />
-            right now
-          </p>
-        )}
+        <AnimatePresence mode="wait" initial={false}>
+          {hasOpen ? (
+            <motion.p
+              key="elapsed"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.22 }}
+              className={`text-[28px] font-semibold leading-none tracking-tight tabular-nums transition-colors duration-150 ${
+                covered ? 'text-white' : 'text-foreground'
+              }`}
+              style={{ fontFamily: 'Funnel Display, system-ui, sans-serif' }}
+            >
+              {formatElapsed(elapsedSeconds)}
+            </motion.p>
+          ) : (
+            <motion.p
+              key="clock"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.22 }}
+              className={`text-[15px] font-normal leading-snug transition-colors duration-150 ${
+                covered ? 'text-white' : 'text-foreground/90'
+              }`}
+            >
+              It's{' '}
+              {now
+                .toLocaleTimeString('en-US', {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true,
+                  timeZone: 'Asia/Kolkata',
+                })
+                .toLowerCase()}
+              <br />
+              right now
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Meta — pinned to the bottom edge */}
-      <p
-        className={`relative z-10 text-[11px] font-medium transition-colors duration-150 ${
-          covered ? 'text-white/75' : 'text-muted-foreground'
-        }`}
-      >
-        {isHolding
-          ? `Keep holding · ${Math.round(holdProgress)}%`
-          : hasOpen
-            ? `since ${checkinTs ? formatISTTimeShort(checkinTs) : '--'}`
-            : 'press & hold'}
-      </p>
+      {/* Meta — pinned to the bottom edge; success flashes confirm in-card */}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.p
+          key={
+            confirmation
+              ? 'confirm'
+              : isHolding
+                ? 'holding'
+                : checkInSuccess && hasOpen && checkinTs
+                  ? 'checked-in'
+                  : hasOpen
+                    ? 'since'
+                    : 'idle'
+          }
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.16 }}
+          className={`relative z-10 text-[11px] font-medium transition-colors duration-150 ${
+            covered ? 'text-white/75' : 'text-muted-foreground'
+          }`}
+        >
+          {confirmation
+            ? confirmation
+            : isHolding
+              ? `Keep holding · ${Math.round(holdProgress)}%`
+              : checkInSuccess && hasOpen && checkinTs
+                ? `Checked in at ${formatISTTimeShort(checkinTs)} ✓`
+                : hasOpen
+                  ? `since ${checkinTs ? formatISTTimeShort(checkinTs) : '--'}`
+                  : 'press & hold'}
+        </motion.p>
+      </AnimatePresence>
     </motion.div>
   );
 }
