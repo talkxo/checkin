@@ -3,6 +3,7 @@
 // Extracted verbatim from /api/stats/punctuality so every surface shows the
 // same number.
 import { nowIST } from './time';
+import { istDateKeyOf } from './streak';
 
 export interface ScoredSession {
   checkin_ts: string;
@@ -37,6 +38,69 @@ export interface DeepScoreResult {
   streakBonus: number;
   noFillDays: number;
   avgCheckinTimeMinutes: number;
+  windowDays: WindowDay[]; // per-day facts for the whole window, sorted ascending
+}
+
+export interface LeaveSpan {
+  start_date: string; // 'YYYY-MM-DD' inclusive
+  end_date: string; // 'YYYY-MM-DD' inclusive
+}
+
+/**
+ * Per-day facts for one window day. A weekday counts as "no-fill" only when it
+ * is not worked AND not excused (leave or holiday) — the single definition every
+ * surface (tile, modal, leaderboard) must derive from.
+ */
+export interface WindowDay {
+  dateKey: string;
+  isWeekend: boolean;
+  isHoliday: boolean;
+  onLeave: boolean;
+  worked: boolean;
+}
+
+const toDateKey = (d: Date) =>
+  `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+
+/**
+ * IST date keys of every calendar day in the window, ascending. Mirrors the
+ * wall-clock enumeration the punctuality route has always used (windowStartIST
+ * through today inclusive — a windowDays-back window spans windowDays+1 days).
+ */
+export function windowDateKeys(win: DeepScoreWindow): string[] {
+  const keys: string[] = [];
+  const cursor = new Date(win.windowStartIST);
+  const endKey = toDateKey(win.istNow);
+  for (let i = 0; i < 400; i++) {
+    const key = cursor.toISOString().split('T')[0];
+    keys.push(key);
+    if (key === endKey) break;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return keys;
+}
+
+const overlaps = (key: string, start: string, end: string) => key >= start && key <= end;
+
+/**
+ * The canonical per-day facts for the window. Weekend/holiday/leave days are
+ * excused; "worked" is any session check-in on that IST date.
+ */
+export function buildWindowDays(
+  win: DeepScoreWindow,
+  sessions: ScoredSession[],
+  leaves: LeaveSpan[] = [],
+  holidays: string[] = []
+): WindowDay[] {
+  const workedKeys = new Set(sessions.map((s) => istDateKeyOf(s.checkin_ts)));
+  const holidayKeys = new Set(holidays);
+  return windowDateKeys(win).map((dateKey) => ({
+    dateKey,
+    isWeekend: [0, 6].includes(new Date(dateKey + 'T00:00:00Z').getUTCDay()),
+    isHoliday: holidayKeys.has(dateKey),
+    onLeave: leaves.some((l) => overlaps(dateKey, l.start_date, l.end_date)),
+    worked: workedKeys.has(dateKey),
+  }));
 }
 
 const istWallClock = (d: Date) => new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
@@ -63,7 +127,7 @@ const scoreCheckoutBonus = (c: number | null) =>
 
 export function computeDeepScore(
   sessions: ScoredSession[],
-  opts: { windowDays?: number; now?: Date } = {}
+  opts: { windowDays?: number; now?: Date; leaves?: LeaveSpan[]; holidays?: string[] } = {}
 ): DeepScoreResult {
   const windowDays = opts.windowDays ?? 14;
   const now = opts.now ?? nowIST();
@@ -159,12 +223,19 @@ export function computeDeepScore(
     ? dayScores.reduce((sum, d) => sum + d.checkinTime, 0) / dayScores.length
     : 0;
 
+  // No-fill = unexcused, unworked weekdays in the window (never weekends,
+  // holidays, or approved leave). Derived from the same facts every surface sees.
+  const win = deepScoreWindow(windowDays, now);
+  const facts = buildWindowDays(win, sessions, opts.leaves ?? [], opts.holidays ?? []);
+  const noFillDays = facts.filter((d) => !d.worked && !d.isWeekend && !d.isHoliday && !d.onLeave).length;
+
   return {
     dayScores,
     punctualityScore: Math.min(windowDays * 3, dayTotal + consistencyBonus + streakBonus),
     consistencyBonus,
     streakBonus,
-    noFillDays: windowDays - dayScores.length,
+    noFillDays,
     avgCheckinTimeMinutes,
+    windowDays: facts,
   };
 }

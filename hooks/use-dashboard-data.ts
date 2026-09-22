@@ -25,6 +25,14 @@ export interface PunctualityStats {
   consistencyBonus?: number;
   streakBonus?: number;
   windowDates?: string[];
+  /** Canonical per-day facts from the server (weekend/holiday/leave/worked). */
+  windowDays?: Array<{
+    dateKey: string;
+    isWeekend: boolean;
+    isHoliday: boolean;
+    onLeave: boolean;
+    worked: boolean;
+  }>;
 }
 
 /**

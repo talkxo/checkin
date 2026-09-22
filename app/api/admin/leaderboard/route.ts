@@ -18,9 +18,11 @@ export async function GET(req: NextRequest) {
   try {
     const now = nowIST();
     const win = deepScoreWindow(14, now);
+    const windowStartKey = win.windowStartIST.toISOString().split('T')[0];
+    const windowEndKey = win.istNow.toISOString().split('T')[0];
     const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
 
-    const [empRes, deepRes, streakRes] = await Promise.all([
+    const [empRes, deepRes, streakRes, leaveRes, holidayRes] = await Promise.all([
       supabaseAdmin.from('employees').select('id, full_name, slug').eq('active', true).order('full_name'),
       supabaseAdmin
         .from('sessions')
@@ -29,11 +31,29 @@ export async function GET(req: NextRequest) {
         .lte('checkin_ts', win.end.toISOString()),
       // A year of check-ins per person, matching the personal streak's history span
       supabaseAdmin.from('sessions').select('employee_id, checkin_ts').gte('checkin_ts', yearAgo.toISOString()),
+      // Excused absences for the window — same definition as the personal tile
+      supabaseAdmin
+        .from('leave_requests')
+        .select('employee_id, start_date, end_date')
+        .eq('status', 'approved')
+        .lte('start_date', windowEndKey)
+        .gte('end_date', windowStartKey),
+      supabaseAdmin.from('holidays').select('date').lte('date', windowEndKey).gte('date', windowStartKey),
     ]);
 
     if (empRes.error) return NextResponse.json({ error: empRes.error.message }, { status: 500 });
     if (deepRes.error) return NextResponse.json({ error: deepRes.error.message }, { status: 500 });
     if (streakRes.error) return NextResponse.json({ error: streakRes.error.message }, { status: 500 });
+
+    const holidays = (holidayRes.error ? [] : (holidayRes.data ?? []).map((h: any) => h.date)) as string[];
+    const leavesByEmployee = new Map<string, any[]>();
+    if (!leaveRes.error) {
+      (leaveRes.data ?? []).forEach((l: any) => {
+        const list = leavesByEmployee.get(l.employee_id);
+        if (list) list.push(l);
+        else leavesByEmployee.set(l.employee_id, [l]);
+      });
+    }
 
     const sessionsByEmployee = new Map<string, any[]>();
     (deepRes.data ?? []).forEach((s: any) => {
@@ -53,7 +73,11 @@ export async function GET(req: NextRequest) {
     const deepScores: Array<{ name: string; slug: string; score: number }> = [];
 
     (empRes.data ?? []).forEach((emp: any) => {
-      const deep = computeDeepScore(sessionsByEmployee.get(emp.id) ?? [], { now });
+      const deep = computeDeepScore(sessionsByEmployee.get(emp.id) ?? [], {
+        now,
+        leaves: leavesByEmployee.get(emp.id) ?? [],
+        holidays,
+      });
       const keys = Array.from(keysByEmployee.get(emp.id) ?? []).sort();
       streaks.push({ name: emp.full_name, slug: emp.slug, streak: currentStreak(keys) });
       deepScores.push({

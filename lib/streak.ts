@@ -38,3 +38,27 @@ export function currentStreak(dateKeys: string[]): number {
   }
   return current;
 }
+
+/** Longest consecutive-workday run anywhere in the history (`dateKeys` ascending). */
+export function bestStreak(dateKeys: string[]): number {
+  let best = 0;
+  let run = 0;
+  let prev: Date | null = null;
+  for (const key of dateKeys) {
+    const [y, m, d] = key.split('-').map(Number);
+    const date = new Date(Date.UTC(y, m - 1, d));
+    if (prev && toDateKey(nextWorkday(prev)) === key) run += 1;
+    else run = 1;
+    best = Math.max(best, run);
+    prev = date;
+  }
+  return best;
+}
+
+function nextWorkday(date: Date): Date {
+  const cursor = new Date(date);
+  do {
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  } while (!isWorkday(cursor));
+  return cursor;
+}

@@ -30,6 +30,16 @@ interface ScoreBreakdownModalProps {
   consistencyBonus?: number;
   streakBonus?: number;
   windowDates?: string[];
+  windowFacts?: WindowDayFact[];
+}
+
+/** Per-day facts from /api/stats/punctuality — the canonical no-fill definition. */
+interface WindowDayFact {
+  dateKey: string;
+  isWeekend: boolean;
+  isHoliday: boolean;
+  onLeave: boolean;
+  worked: boolean;
 }
 
 function formatDate(dateStr: string) {
@@ -455,14 +465,23 @@ export default function ScoreBreakdownModal({
   consistencyBonus = 0,
   streakBonus = 0,
   windowDates = [],
+  windowFacts,
 }: ScoreBreakdownModalProps) {
 
   // Build a set of dates that have check-ins for quick lookup
   const checkedInDates = new Set(dayBreakdown.map(d => d.date));
 
-  // No-fill dates: windowDates that are weekdays and have no check-in
-  const noFillDates = windowDates.filter(d => !checkedInDates.has(d) && !isWeekend(d));
-  const weekendDates = windowDates.filter(d => !checkedInDates.has(d) && isWeekend(d));
+  // Canonical facts from the server when available; legacy client-side
+  // derivation only as fallback (weekends excused, but not leave/holidays).
+  const noFillDates = windowFacts
+    ? windowFacts.filter(d => !d.worked && !d.isWeekend && !d.isHoliday && !d.onLeave).map(d => d.dateKey)
+    : windowDates.filter(d => !checkedInDates.has(d) && !isWeekend(d));
+  const excusedCount = windowFacts
+    ? windowFacts.filter(d => !d.worked && (d.isWeekend || d.isHoliday || d.onLeave)).length
+    : windowDates.filter(d => !checkedInDates.has(d) && isWeekend(d)).length;
+  const excusedLabel = windowFacts
+    ? `${excusedCount} weekend/holiday/leave day${excusedCount !== 1 ? 's' : ''} in this window are not counted.`
+    : `${excusedCount} weekend day${excusedCount !== 1 ? 's' : ''} in this window are not counted.`;
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
@@ -629,7 +648,7 @@ export default function ScoreBreakdownModal({
               <div className="rounded-xl bg-muted/20 p-3">
                 <p className="text-[10px] text-muted-foreground leading-relaxed">
                   No-fill days are weekdays in the last 14 calendar days where no check-in was recorded. Weekends are excluded.
-                  {weekendDates.length > 0 && ` (${weekendDates.length} weekend day${weekendDates.length > 1 ? 's' : ''} in this window are not counted.)`}
+                  {excusedCount > 0 && ` (${excusedLabel})`}
                 </p>
               </div>
             </>

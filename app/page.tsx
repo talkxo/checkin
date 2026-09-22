@@ -597,6 +597,7 @@ export default function HomePage() {
         consistencyBonus={punctualityStats?.consistencyBonus}
         streakBonus={punctualityStats?.streakBonus}
         windowDates={punctualityStats?.windowDates}
+        windowFacts={punctualityStats?.windowDays}
       />
     </div>
   );

@@ -31,24 +31,46 @@ export async function GET(req: NextRequest) {
 
     const now = nowIST();
     const win = deepScoreWindow(14, now);
+    const windowStartKey = win.windowStartIST.toISOString().split('T')[0];
+    const windowEndKey = win.istNow.toISOString().split('T')[0];
 
-    // Get all sessions in last 14 days with checkout and mode info
-    const { data: sessions, error } = await supabaseAdmin
-      .from('sessions')
-      .select('checkin_ts, checkout_ts, mode')
-      .eq('employee_id', emp.id)
-      .gte('checkin_ts', win.start.toISOString())
-      .lte('checkin_ts', win.end.toISOString())
-      .order('checkin_ts', { ascending: true });
+    // Get all sessions in last 14 days with checkout and mode info, plus the
+    // excused-absence facts (approved leave + holidays) the window overlaps.
+    const [sessRes, leaveRes, holidayRes] = await Promise.all([
+      supabaseAdmin
+        .from('sessions')
+        .select('checkin_ts, checkout_ts, mode')
+        .eq('employee_id', emp.id)
+        .gte('checkin_ts', win.start.toISOString())
+        .lte('checkin_ts', win.end.toISOString())
+        .order('checkin_ts', { ascending: true }),
+      supabaseAdmin
+        .from('leave_requests')
+        .select('start_date, end_date')
+        .eq('employee_id', emp.id)
+        .eq('status', 'approved')
+        .lte('start_date', windowEndKey)
+        .gte('end_date', windowStartKey),
+      supabaseAdmin
+        .from('holidays')
+        .select('date')
+        .lte('date', windowEndKey)
+        .gte('date', windowStartKey),
+    ]);
 
+    const error = sessRes.error;
     if (error) {
       console.error('Error fetching sessions:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     // Canonical scoring — shared with the team leaderboard (lib/deep-score.ts)
-    const { dayScores, punctualityScore, consistencyBonus, streakBonus, noFillDays, avgCheckinTimeMinutes } =
-      computeDeepScore(sessions ?? [], { now });
+    const { dayScores, punctualityScore, consistencyBonus, streakBonus, noFillDays, avgCheckinTimeMinutes, windowDays } =
+      computeDeepScore(sessRes.data ?? [], {
+        now,
+        leaves: leaveRes.error ? [] : leaveRes.data ?? [],
+        holidays: holidayRes.error ? [] : (holidayRes.data ?? []).map((h: { date: string }) => h.date),
+      });
 
     // Calculate average check-in time
     let avgCheckinTimeFormatted = '--:--';
@@ -112,12 +134,7 @@ export async function GET(req: NextRequest) {
       totalScore: Math.round(d.totalScore * 100) / 100,
     }));
 
-    const windowDates: string[] = [];
-    for (let i = 0; i < 14; i++) {
-      const d = new Date(win.windowStartIST);
-      d.setDate(d.getDate() + i);
-      windowDates.push(d.toISOString().split('T')[0]);
-    }
+    const windowDates = windowDays.map((d) => d.dateKey);
 
     return NextResponse.json({
       punctualityScore,
@@ -131,6 +148,9 @@ export async function GET(req: NextRequest) {
       checkinStatus,
       dayBreakdown: dayBreakdownSerialized,
       windowDates,
+      // Canonical per-day facts — the modal renders from these instead of
+      // re-deriving weekend/leave status client-side.
+      windowDays,
       consistencyBonus: Math.round(consistencyBonus * 100) / 100,
       streakBonus: Math.round(streakBonus * 100) / 100,
     });
