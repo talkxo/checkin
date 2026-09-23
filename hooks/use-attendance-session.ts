@@ -49,6 +49,29 @@ export function useAttendanceSession({
 
   const autoCheckoutWarningSentRef = useRef(false);
 
+  /** POST JSON with a 20s cap and one retry on pure network failure (fetch
+   *  itself throwing) — survives Vercel deployment swaps and momentary
+   *  drops. HTTP error responses are NOT retried; they carry real state
+   *  (e.g. 404 after a retried checkout that actually succeeded). */
+  const postJson = async (url: string, body: unknown): Promise<Response> => {
+    const attempt = () =>
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(20000),
+      });
+    try {
+      return await attempt();
+    } catch (e) {
+      if (e instanceof TypeError) {
+        await new Promise((r) => setTimeout(r, 1200));
+        return attempt();
+      }
+      throw e;
+    }
+  };
+
   const checkSessionStatus = async (): Promise<'open' | 'closed' | 'unauthorized' | 'error'> => {
     try {
       const r = await fetch('/api/session/open');
@@ -97,11 +120,7 @@ export function useAttendanceSession({
     celebrateCheckIn(optimisticTs);
 
     try {
-      const r = await fetch('/api/checkin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: checkMode })
-      });
+      const r = await postJson('/api/checkin', { mode: checkMode });
       const j = await r.json();
 
       if (r.ok) {
@@ -178,11 +197,7 @@ export function useAttendanceSession({
     if (!currentSession) return false;
 
     try {
-      const r = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mood, moodComment, checkoutTs })
-      });
+      const r = await postJson('/api/checkout', { mood, moodComment, checkoutTs });
       const j = await r.json();
 
       if (r.ok) {
