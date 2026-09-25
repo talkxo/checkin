@@ -24,16 +24,19 @@ export function requireAuth(): GuardResult {
 /**
  * Authenticated AND allowed to act on the target employee. Admins may target
  * anyone; employees only themselves (matched by slug — sessions carry no email).
+ *
+ * The admin console shares a browser with the userside app, so both cookies
+ * arrive together: a user session that doesn't match the target slug must fall
+ * through to the admin check instead of denying, or the admin can only act on
+ * their own userside profile.
  */
 export function requireAuthFor(slug?: string | null, email?: string | null): GuardResult {
   const session = getUserSession();
-  if (session) {
-    // The employee app always sends its own slug; email-only lookups from a
-    // user session are ambiguous, so they're admin-only.
-    if (slug && slug === session.slug) return { ok: true, session, admin: false };
-    return denied(403, 'Forbidden: you can only access your own records');
-  }
+  if (session && slug && slug === session.slug) return { ok: true, session, admin: false };
   if (isAdminAuthenticated()) return { ok: true, session: null, admin: true };
+  // The employee app always sends its own slug; email-only lookups from a
+  // user session are ambiguous, so they're admin-only.
+  if (session) return denied(403, 'Forbidden: you can only access your own records');
   return denied(401, 'Unauthorized');
 }
 

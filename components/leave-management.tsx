@@ -56,6 +56,21 @@ function normalizeLeaveTypeName(name: string) {
   return name.trim().toLowerCase();
 }
 
+// Weekday count matching the server's day-count logic (date-only math in UTC,
+// weekends excluded) so the client pre-check never rejects a range the API
+// would accept — or vice versa.
+function countWeekdaysInRange(startDate: string, endDate: string): number {
+  const start = new Date(startDate + 'T00:00:00Z');
+  const end = new Date(endDate + 'T00:00:00Z');
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
+  let days = 0;
+  for (let cur = new Date(start); cur <= end; cur.setUTCDate(cur.getUTCDate() + 1)) {
+    const dow = cur.getUTCDay();
+    if (dow !== 0 && dow !== 6) days++;
+  }
+  return days;
+}
+
 interface LeaveManagementProps {
   employeeSlug?: string;
   employeeEmail?: string;
@@ -353,7 +368,11 @@ export default function LeaveManagement({ employeeSlug, employeeEmail }: LeaveMa
       const selectedBalance = leaveData?.leaveBalance.find(
         (balance) => balance.leave_type_name.toLowerCase() === (selectedType?.name || '').toLowerCase(),
       );
-      const requestedDays = Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
+      const requestedDays = countWeekdaysInRange(effectiveForm.startDate, effectiveForm.endDate);
+      if (requestedDays <= 0) {
+        setFormError('No working days in the selected range.');
+        return;
+      }
       if ((selectedBalance?.available_leaves ?? 0) < requestedDays) {
         setFormError(
           `Insufficient ${selectedType?.name || 'leave'} balance. Requested ${requestedDays} day(s), available ${

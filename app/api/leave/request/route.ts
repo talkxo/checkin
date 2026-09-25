@@ -41,18 +41,22 @@ export async function POST(req: NextRequest) {
     }
 
     // Calculate total days (excluding weekends)
-    // Force dates to be evaluated in IST so they don't drift across midnights
-    const start = new Date(startDate + 'T00:00:00+05:30');
-    const end = new Date(endDate + 'T23:59:59+05:30');
+    // Date-only math in UTC: getUTCDay() doesn't depend on the runtime
+    // timezone, so the count is identical on local dev (IST) and on Vercel
+    // (UTC). The previous +05:30 construction + getDay() shifted every IST
+    // date one day back on the server, skipping Mondays and charging
+    // weekends — and zero-counting single-day Monday requests outright.
+    const start = new Date(startDate + 'T00:00:00Z');
+    const end = new Date(endDate + 'T00:00:00Z');
     let totalDays = 0;
     const current = new Date(start);
-    
+
     while (current <= end) {
-      const dayOfWeek = current.getDay();
+      const dayOfWeek = current.getUTCDay();
       if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Exclude Sunday (0) and Saturday (6)
         totalDays++;
       }
-      current.setDate(current.getDate() + 1);
+      current.setUTCDate(current.getUTCDate() + 1);
     }
 
     if (totalDays <= 0) {
